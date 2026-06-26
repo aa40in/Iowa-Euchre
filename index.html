@@ -1508,7 +1508,7 @@ const resolveHand = () => {
     }
 };
 
-const drawCard = (card, x, y, faceUp = true, highlight = false, isHovered = false) => {
+const drawCard = (card, x, y, faceUp = true, showIcon = false, highlight = false, isHovered = false) => {
     ctx.save();
     
     if (state.trickQueue.length >= 4) isHovered = false;
@@ -1545,10 +1545,12 @@ const drawCard = (card, x, y, faceUp = true, highlight = false, isHovered = fals
         ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 7);
         
         // Make center suit symbol significantly larger and distinct
-        ctx.font = 'bold 28px "Inter", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(suitsIcons[card.suit], 0, 6);
+		if (showIcon) {
+			ctx.font = 'bold 28px "Inter", sans-serif';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(suitsIcons[card.suit], 0, 6);
+		}
 
         ctx.font = 'bold 11px "Inter", sans-serif';
         ctx.textAlign = 'right';
@@ -1566,7 +1568,7 @@ const drawCard = (card, x, y, faceUp = true, highlight = false, isHovered = fals
 };
 
 // Specialized support drawing cards that can be rotated 90 degrees
-const drawRotatedCard = (card, x, y, angle, faceUp = true, highlight = false, isHovered = false) => {
+const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, highlight = false, isHovered = false) => {
     ctx.save();
     
     if (state.trickQueue.length >= 4) isHovered = false;
@@ -1606,10 +1608,12 @@ const drawRotatedCard = (card, x, y, angle, faceUp = true, highlight = false, is
         ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 7);
         
         // Make center suit symbol significantly larger and distinct
-        ctx.font = 'bold 26px "Inter", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(suitsIcons[card.suit], 0, 6);
+		if (showIcon) {
+			ctx.font = 'bold 26px "Inter", sans-serif';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(suitsIcons[card.suit], 0, 6);
+		}
 
         ctx.font = 'bold 10px "Inter", sans-serif';
         ctx.textAlign = 'right';
@@ -1785,6 +1789,7 @@ const renderLoop = () => {
     const width = rect.width || 800;
     const height = rect.height || 600;
     const isMobile = width < 600;
+	const showIcon = !isMobile;
     
     if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
@@ -1832,11 +1837,11 @@ const renderLoop = () => {
                     }
                 }
                 
-                drawRotatedCard(card, ox, oy, 0, true, highlight, isHovered);
+                drawRotatedCard(card, ox, oy, 0, true, showIcon, highlight, isHovered);
             });
         } else if (p === 2) {
             // Partner (Top): Spaced out and rotated 180 degrees to face the center
-            const step = isMobile ? 32 : 20;
+            const step = isMobile ? 32 : 26;
             const spread = (hand.length - 1) * step;
             playerSpreads[2] = spread;
 
@@ -1847,11 +1852,11 @@ const renderLoop = () => {
                 const ox = pos.x - spread / 2 + i * step;
                 const oy = pos.y;
                 const showFaceUp = state.revealAllCards;
-                drawRotatedCard(card, ox, oy, 0, showFaceUp, false, false);
+                drawRotatedCard(card, ox, oy, 0, showFaceUp, showIcon, false, false);
             }
         } else if (p === 1) {
             // Left Opponent (P1): Rotated 90 degrees and spaced out vertically
-            const step = isMobile ? 24 : 20;
+            const step = isMobile ? 24 : 26;
             const spread = (hand.length - 1) * step;
             playerSpreads[1] = spread;
             if (isMobile) {
@@ -1859,19 +1864,19 @@ const renderLoop = () => {
                     const ox = pos.x; 
                     const oy = pos.y - spread / 2 + i * step;
                     const showFaceUp = state.revealAllCards;
-                    drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, false, false);
+                    drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, showIcon, false, false);
                 });
             } else {
                 hand.forEach((card, i) => {
                     const ox = pos.x;
                     const oy = pos.y - spread / 2 + i * step;
                     const showFaceUp = state.revealAllCards;
-                    drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, false, false);
+                    drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, showIcon, false, false);
                 });
             }
         } else if (p === 3) {
             // Right Opponent (P3): Rotated 180 degrees from -90 degrees (which is 90 degrees/Math.PI/2)
-            const step = isMobile ? 24 : 20;
+            const step = isMobile ? 24 : 26;
             const spread = (hand.length - 1) * step;
             playerSpreads[3] = spread;
 
@@ -1881,7 +1886,7 @@ const renderLoop = () => {
                 const ox = pos.x;
                 const oy = pos.y - spread / 2 + i * step;
                 const showFaceUp = state.revealAllCards;
-                drawRotatedCard(card, ox, oy, Math.PI *1.5, showFaceUp, false, false);
+                drawRotatedCard(card, ox, oy, Math.PI *1.5, showFaceUp, showIcon, false, false);
             }
         }
     }
@@ -1901,7 +1906,8 @@ const renderLoop = () => {
         const radiusFactor = isMobile ? 0.22 : 0.35;
         const tx = (width / 2) + (target.x - (width / 2)) * radiusFactor;
         const ty = (height / 2) + (target.y - (height / 2)) * radiusFactor;
-        drawCard(q.card, tx, ty, true);
+		const showIcon = !isMobile;
+        drawCard(q.card, tx, ty, true, showIcon);
     });
 
     if (state.gameState === 'GAMEOVER') {
