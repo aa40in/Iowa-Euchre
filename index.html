@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Iowa-Style Euchre - Aces Edition</title>
+    <title>Iowa-Style Euchre</title>
     <!-- Tailwind CSS for Premium Responsive UI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
+            background-color: #020617;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
@@ -29,236 +29,296 @@
             border-radius: 2px;
         }
         
-        /* Dynamic landscape lock modal strictly for small viewports */
-        @media (orientation: landscape) and (max-height: 580px), (orientation: landscape) and (max-width: 900px) {
-            #landscape-blocker {
-                display: flex !important;
+        /* Dynamic landscape lock strictly for small viewports to force portrait mode */
+        @media (orientation: landscape) and (max-width: 950px) {
+            #main-app-container {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                width: 100vh;
+                height: 100vw;
+                transform: translate(-50%, -50%) rotate(-90deg);
+                transform-origin: center;
             }
         }
     </style>
 </head>
 <body class="h-screen w-screen overflow-hidden text-slate-100 flex flex-col select-none bg-slate-950">
 
-<!-- Landscape Blocker Overlay -->
-<div id="landscape-blocker" class="hidden fixed inset-0 bg-slate-950 z-50 flex-col items-center justify-center p-6 text-center">
-    <span class="text-4xl mb-4">📱</span>
-    <h1 class="text-lg font-bold text-amber-400">Please Rotate to Portrait</h1>
-    <p class="text-xs text-slate-400 mt-2">Iowa-Style Euchre is optimized for portrait mode on mobile devices.</p>
-</div>
+<div id="main-app-container" class="h-full w-full flex flex-col overflow-hidden">
 
-<!-- Header Status Panel: Scores + Contract Details (Sticky at the top) -->
-<header class="w-full bg-slate-900 border-b border-slate-800 p-2 shrink-0 flex flex-col gap-1.5 z-20">
-    <div class="flex items-center justify-between gap-2 max-w-xl mx-auto w-full">
-         <!-- Team 1 Score (Us) -->
-         <div class="flex-1 bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-700/50 flex justify-between items-center gap-1.5">
-             <span class="text-[10px] md:text-xs text-slate-300 font-medium">Us: <strong id="score-us" class="text-emerald-400">0</strong></span>
-             <div class="w-10 md:w-16 bg-slate-700 h-1.5 rounded-full overflow-hidden shrink-0">
-                 <div id="progress-us" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
-             </div>
-         </div>
-         
-         <!-- Live Current Contract Panel -->
-         <div id="contract-panel" class="flex-[1.4] bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 flex flex-col justify-center text-center">
-             <div id="contract-display" class="text-[10px] md:text-xs font-bold text-center truncate leading-snug">&nbsp;</div>
-         </div>
-         
-         <!-- Team 2 Score (Them) -->
-         <div class="flex-1 bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-700/50 flex justify-between items-center gap-1.5">
-             <span class="text-[10px] md:text-xs text-slate-300 font-medium">Them: <strong id="score-them" class="text-rose-400">0</strong></span>
-             <div class="w-10 md:w-16 bg-slate-700 h-1.5 rounded-full overflow-hidden shrink-0">
-                 <div id="progress-them" class="bg-rose-500 h-full transition-all duration-500" style="width: 0%"></div>
-             </div>
-         </div>
-    </div>
-</header>
-
-<!-- Main Container Split vertically on mobile, horizontally on desktop -->
-<div class="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full">
-
-    <!-- Play Section: Card Canvas Felt (Height locked to 45% of viewport height on mobile) -->
-    <div class="w-full h-[45vh] md:h-full relative bg-emerald-950 flex flex-col overflow-hidden shrink-0 border-b border-slate-800 md:border-b-0">
-        <!-- Visual green felt background effect -->
-        <div class="absolute inset-0 bg-radial-felt pointer-events-none opacity-45 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.3)_0%,rgba(6,78,59,0.9)_100%)]"></div>
+    <!-- Sleek Top Bar Header containing the elements required by updateHUD and updateContractUI -->
+    <header class="w-full bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center gap-1.5">
+            <span class="text-emerald-400 text-base">♦</span>
+            <h1 class="text-[11px] md:text-xs font-bold tracking-wide uppercase text-white">Iowa Style Euchre</h1>
+        </div>
         
-        <div class="flex-1 w-full h-full relative" id="canvas-container">
-            <canvas id="table-canvas" class="block w-full h-full touch-none"></canvas>
+        <!-- Center: Active Contract -->
+        <div class="hidden sm:flex items-center gap-1.5 bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-800">
+            <span class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Contract:</span>
+            <div id="contract-display-header" class="text-[10px] font-extrabold text-emerald-400">Waiting...</div>
         </div>
 
-        <!-- Rules panel inside Canvas Area -->
-        <div id="help-panel" class="absolute bottom-4 left-4 right-4 bg-slate-900/95 border border-amber-500/40 p-4 rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] space-y-3 transition-all duration-300 hidden z-40">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                <span class="text-xs uppercase tracking-wider font-bold text-amber-400 flex items-center gap-1.5 text-[11px]">
-                    <span>📖</span> Rules Explained
-                </span>
-                <button id="btn-close-help" class="text-slate-400 hover:text-white text-xs p-1 h-8 w-8 flex items-center justify-center text-[11px]">✕</button>
+        <!-- Right Side Scoreboard -->
+        <div class="flex items-center gap-3">
+            <!-- Us Score -->
+            <div class="flex flex-col items-end">
+                <div class="flex items-center gap-1">
+                    <span class="text-[8px] text-slate-400 font-semibold uppercase">Us</span>
+                    <span id="score-us-header" class="text-[10px] font-black text-emerald-400">0</span>
+                </div>
+                <div class="w-12 bg-slate-950 h-1 rounded-full overflow-hidden border border-slate-800 mt-0.5">
+                    <div id="progress-us-header" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                </div>
             </div>
-            <div class="text-[11px] text-slate-300 space-y-2.5 overflow-y-auto max-h-[180px] md:max-h-80 pr-1 leading-relaxed">
-                <div>
-                    <strong class="text-amber-300 block mb-0.5">The Deal & Goal</strong>
-                    <p>Iowa Euchre is played with 24 cards (9 through Ace). Each player is dealt exactly <strong class="text-white">6 cards</strong>. The goal is to win tricks, playing to a maximum of 6 tricks per hand.</p>
+            <!-- Them Score -->
+            <div class="flex flex-col items-end">
+                <div class="flex items-center gap-1">
+                    <span class="text-[8px] text-slate-400 font-semibold uppercase">Them</span>
+                    <span id="score-them-header" class="text-[10px] font-black text-rose-400">0</span>
                 </div>
-                <div>
-                    <strong class="text-amber-300 block mb-0.5">Bidding Process</strong>
-                    <p>Players take turns bidding the number of tricks they think they can win (1 to 6) along with their selected Trump suit or Aces (No Trump). The Jacks are bowers under standard suit trumps.</p>
-                </div>
-                <div>
-                    <strong class="text-amber-300 block mb-0.5">Aces (No Trump) Mode</strong>
-                    <p>If "Aces" is chosen as the contract, Jacks behave as normal cards (9, 10, Jack, Queen, King, Ace). There are no bower swaps, suits remain natural, and Aces are high.</p>
-                </div>
-                <div>
-                    <strong class="text-amber-300 block mb-0.5">First Lead Rule</strong>
-                    <p>Play always starts with the player situated immediately to the <strong class="text-white">left of the winning bidder</strong>, regardless of who dealt.</p>
-                </div>
-                <div>
-                    <strong class="text-amber-300 block mb-0.5">NT Conventions</strong>
-                    <p>To communicate with your partner without bidding high right away:
-                    <br>• <strong class="text-white">1NT Bid</strong> signals you hold at least one Jack and one Ace.
-                    <br>• <strong class="text-white">2NT Bid</strong> signals you hold at least one Red Jack, one Black Jack, and an Ace.</p>
-                </div>
-                <div>
-                    <strong class="text-amber-300 block mb-0.5">Scoring & Penalties</strong>
-                    <p>If your team meets the contract, you score trick points. If your team is "Set" (fails to meet the contract), you suffer a penalty equal to your contract bid (<strong class="text-rose-400">-bid points</strong>). First to 21 points wins!</p>
+                <div class="w-12 bg-slate-950 h-1 rounded-full overflow-hidden border border-slate-800 mt-0.5">
+                    <div id="progress-them-header" class="bg-rose-500 h-full transition-all duration-300" style="width: 0%"></div>
                 </div>
             </div>
         </div>
+    </header>
+
+    <!-- Main Container Split vertically on mobile, horizontally (reversed for left-sidebar) on desktop -->
+    <div class="flex-1 flex flex-col md:flex-row-reverse overflow-hidden w-full h-full">
+
+        <!-- Play Section: Card Canvas Felt (Fixed at 72% height on mobile, full height on desktop) -->
+        <div class="w-full h-[72vh] md:h-full md:flex-1 relative bg-emerald-950 flex flex-col overflow-hidden shrink-0 border-b border-slate-800 md:border-b-0">
+            <!-- Visual green felt background effect -->
+            <div class="absolute inset-0 bg-radial-felt pointer-events-none opacity-45 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.3)_0%,rgba(6,78,59,0.9)_100%)]"></div>
+            
+            <div class="flex-1 w-full h-full relative" id="canvas-container">
+                <canvas id="table-canvas" class="block w-full h-full touch-none"></canvas>
+            </div>
+
+            <!-- Rules panel inside Canvas Area -->
+            <div id="help-panel" class="absolute bottom-4 left-4 right-4 bg-slate-900/95 border border-amber-500/40 p-4 rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] space-y-3 transition-all duration-300 hidden z-40">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <span class="text-xs uppercase tracking-wider font-bold text-amber-400 flex items-center gap-1.5 text-[11px]">
+                        <span>📖</span> Rules Explained
+                    </span>
+                    <button id="btn-close-help" class="text-slate-400 hover:text-white text-xs p-1 h-8 w-8 flex items-center justify-center text-[11px]">✕</button>
+                </div>
+                <div class="text-[11px] text-slate-300 space-y-2.5 overflow-y-auto max-h-[180px] md:max-h-80 pr-1 leading-relaxed">
+                    <div>
+                        <strong class="text-amber-300 block mb-0.5">The Deal & Goal</strong>
+                        <p>Iowa Euchre is played with 24 cards (9 through Ace). Each player is dealt exactly <strong class="text-white">6 cards</strong>. The goal is to win tricks, playing to a maximum of 6 tricks per hand.</p>
+                    </div>
+                    <div>
+                        <strong class="text-amber-300 block mb-0.5">Bidding Process</strong>
+                        <p>Players take turns bidding the number of tricks they think they can win (1 to 6) along with their selected Trump suit or Aces (No Trump). The Jacks are bowers under standard suit trumps.</p>
+                    </div>
+                    <div>
+                        <strong class="text-amber-300 block mb-0.5">Aces (No Trump) Mode</strong>
+                        <p>If "Aces" is chosen as the contract, Jacks behave as normal cards (9, 10, Jack, Queen, King, Ace). There are no bower swaps, suits remain natural, and Aces are high.</p>
+                    </div>
+                    <div>
+                        <strong class="text-amber-300 block mb-0.5">First Lead Rule</strong>
+                        <p>Play always starts with the player situated immediately to the <strong class="text-white">left of the winning bidder</strong>, regardless of who dealt.</p>
+                    </div>
+                    <div>
+                        <strong class="text-amber-300 block mb-0.5">NT Conventions</strong>
+                        <p>To communicate with your partner without bidding high right away:
+                        <br>• <strong class="text-white">1NT Bid</strong> signals you hold at least one Jack and one Ace.
+                        <br>• <strong class="text-white">2NT Bid</strong> signals you hold at least one Red Jack, one Black Jack, and an Ace.</p>
+                    </div>
+                    <div>
+                        <strong class="text-amber-300 block mb-0.5">Scoring & Penalties</strong>
+                        <p>If your team meets the contract, you score trick points. If your team is "Set" (fails to meet the contract), you suffer a penalty equal to your contract bid (<strong class="text-rose-400">-bid points</strong>). First to 21 points wins! <strong class="text-amber-400">Tiebreaker:</strong> If both teams reach 21 on the same hand, the team whose bid is played wins.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Section: Occupies exactly 28% height on mobile (scrollable), and left-aligned full sidebar panel on desktop -->
+        <aside class="w-full h-[28vh] md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col overflow-y-auto shrink-0 select-none z-10">
+
+            <!-- Bidding Panel: Displays instantly below canvas during the Bidding phase -->
+            <div id="bidding-panel" class="hidden h-full md:h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 flex flex-col justify-between gap-1">
+                <div class="flex justify-between items-center border-b border-slate-800/80 pb-1.5 gap-2">
+                    <div>
+                        <span class="text-[9px] uppercase tracking-wider font-bold text-emerald-400 block leading-none">Your Turn</span>
+                        <h2 class="text-[10px] md:text-xs font-bold text-white mt-0.5">Iowa Euchre Bidding</h2>
+                    </div>
+                    <button id="btn-pass" class="py-0.5 px-2.5 rounded-lg border border-rose-500/30 hover:border-rose-500 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 font-semibold text-[10px] h-6 transition-all">
+                        Pass
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <!-- Select Bid Number -->
+                    <div class="flex flex-col gap-0.5">
+                        <span class="text-[9px] font-semibold text-slate-400 block">1. Select Tricks:</span>
+                        <div class="flex flex-wrap items-center gap-1" id="bid-num-selector">
+                            <button data-bid="1" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">1</button>
+                            <button data-bid="2" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">2</button>
+                            <button data-bid="3" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">3</button>
+                            <button data-bid="4" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">4</button>
+                            <button data-bid="5" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">5</button>
+                            <button data-bid="6" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">6</button>
+                        </div>
+                    </div>
+
+                    <!-- Select Suit -->
+                    <div class="flex flex-col gap-0.5">
+                        <span class="text-[9px] font-semibold text-slate-400 block">2. Select Suit / Aces / NT:</span>
+                        <div class="flex flex-wrap gap-1" id="suit-selector">
+                            <button data-suit="S" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
+                                <span>♠</span><span class="text-[9px] font-normal text-slate-400">S</span>
+                            </button>
+                            <button data-suit="C" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
+                                <span>♣</span><span class="text-[9px] font-normal text-slate-400">C</span>
+                            </button>
+                            <button data-suit="H" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-rose-500 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
+                                <span>♥</span><span class="text-[9px] font-normal text-rose-400">H</span>
+                            </button>
+                            <button data-suit="D" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-rose-500 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
+                                <span>♦</span><span class="text-[9px] font-normal text-rose-400">D</span>
+                            </button>
+                            <button data-suit="ACES" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
+                                <span>Aces</span>
+                            </button>
+                            <button data-suit="NT" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
+                                <span>NT</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Auction Log list (Collapsible & Compact) -->
+                <div class="bg-slate-950 rounded-lg p-1.5 border border-slate-800/80">
+                    <span class="text-[9px] uppercase font-bold text-slate-500 block mb-0.5">Round Auction Log</span>
+                    <div id="bidding-history-list" class="space-y-0.5 text-[9px] max-h-12 overflow-y-auto pr-6">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Bid block: Occupies 28% vertical split-screen during standard Play/Scoring phases -->
+            <div id="current-bid-block" class="h-full md:h-auto w-full flex flex-col justify-center items-center p-3 bg-slate-950 border-b border-slate-800 shrink-0 text-center gap-1.5">
+                <span class="text-[9px] tracking-wider uppercase font-extrabold text-slate-500">Current Contract</span>
+                <div id="current-bid-display" class="text-base md:text-lg font-black text-emerald-400 flex items-center gap-2">
+                    Waiting for Bid...
+                </div>
+                <div id="current-bid-counts" class="flex flex-wrap gap-1.5 items-center justify-center mt-1">
+                    <!-- Dynamic counters drawn here on mobile -->
+                </div>
+                <span class="text-[9px] text-slate-400 italic md:hidden">Scroll down for scores & settings ⬇</span>
+            </div>
+
+            <!-- Scrollable Sidebar Content: Accessible by scrolling down below the primary bid/play panels -->
+            <div id="sidebar-scrollable-content" class="p-3 md:p-4 space-y-3 flex-1 flex flex-col shrink-0">
+
+                <!-- Overall Match Scoring Panel (Always fully visible below primary panels) -->
+                <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 space-y-2.5">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-bold text-slate-300">Match Scores</span>
+                        <span class="text-[10px] font-mono text-emerald-400">First to 21</span>
+                    </div>
+                    <div class="space-y-2">
+                        <!-- Team Us -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center text-[11px]">
+                                <span class="text-slate-300">Player & Partner (Us):</span>
+                                <strong id="score-us-sidebar" class="text-emerald-400 font-bold">0</strong>
+                            </div>
+                            <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+                                <div id="progress-us-sidebar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <!-- Team Them -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center text-[11px]">
+                                <span class="text-slate-300">Left & Right (Them):</span>
+                                <strong id="score-them-sidebar" class="text-rose-400 font-bold">0</strong>
+                            </div>
+                            <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+                                <div id="progress-them-sidebar" class="bg-rose-500 h-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collapsible Game Settings Accordion -->
+                <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-800/20 shrink-0">
+                    <button id="toggle-settings-btn" class="w-full flex justify-between items-center p-3 text-left focus:outline-none hover:bg-slate-800/40 transition-all">
+                        <span class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold">Game Settings</span>
+                        <span id="settings-arrow" class="inline-block text-xs text-slate-400 transition-transform duration-200">►</span>
+                    </button>
+                    <div id="settings-content" class="p-3 pt-0 space-y-2.5 hidden">
+                        <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                            <div class="flex flex-col pr-2">
+                                <span class="text-[11px] font-semibold text-slate-200">Partner Cooperative Bidding</span>
+                                <span class="text-[9px] text-slate-400 mt-0.5">Let AI raise bids to support partner.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="toggle-cooperative" class="sr-only peer" checked>
+                                <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                            <div class="flex flex-col pr-2">
+                                <span class="text-[11px] font-semibold text-slate-200">Show Trump Card Count</span>
+                                <span class="text-[9px] text-slate-400 mt-0.5">Displays active trump count in contract panel.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="toggle-trump-count" class="sr-only peer" checked>
+                                <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                            <div class="flex flex-col pr-2">
+                                <span class="text-[11px] font-semibold text-slate-200">Show All Suits Count</span>
+                                <span class="text-[9px] text-slate-400 mt-0.5">Displays all active suit counts in contract panel.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="toggle-all-suits-count" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                            <div class="flex flex-col pr-2">
+                                <span class="text-[11px] font-semibold text-slate-200">Show All Players' Cards</span>
+                                <span class="text-[9px] text-slate-400 mt-0.5">Reveal AI hands for debugging/learning.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="toggle-reveal-all" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Navigation Buttons -->
+                <div class="grid grid-cols-2 gap-2 shrink-0">
+                    <button id="btn-toggle-help" class="py-2 bg-amber-950/20 hover:bg-amber-950/40 text-amber-400 font-bold text-xs rounded-xl transition-all border border-amber-500/30 flex items-center justify-center gap-1 h-10 text-[11px]">
+                        <span>📖</span> Rules Explained
+                    </button>
+                    <button id="btn-reset" class="py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs rounded-xl transition-all border border-slate-700 h-10 text-[11px]">
+                        Restart Game
+                    </button>
+                </div>
+
+                <!-- Console Log Panel -->
+                <div class="flex-1 min-h-[120px] flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-2.5 font-mono text-[10px]">
+                    <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1">Deal Log Console</div>
+                    <div id="game-log" class="flex-1 overflow-y-auto space-y-1 text-slate-300 pr-1 select-none font-mono text-[10px]">
+                        <!-- Dynamic logs append here -->
+                    </div>
+                </div>
+            </div>
+        </aside>
+
     </div>
-
-    <!-- Sidebar Section: Scrolls on Mobile, containing Bidding + Settings + Console -->
-    <aside class="flex-1 w-full md:w-80 bg-slate-900 border-l border-slate-800 md:border-l border-slate-800 flex flex-col p-3 md:p-4 overflow-y-auto z-10 space-y-3">
-
-        <!-- Bidding Panel: Placed inline here on mobile so it is below canvas, absolute centered on desktop -->
-        <div id="bidding-panel" class="hidden shrink-0 border border-emerald-500/30 p-3 rounded-xl bg-slate-950/80 shadow-lg space-y-3">
-            <div class="flex justify-between items-center border-b border-slate-800/80 pb-2 gap-2">
-                <div>
-                    <span class="text-[10px] uppercase tracking-wider font-bold text-emerald-400 block leading-none">Your Turn</span>
-                    <h2 class="text-[11px] md:text-xs font-bold text-white mt-0.5">Iowa Euchre Bidding</h2>
-                </div>
-                <button id="btn-pass" class="py-1 px-3 rounded-lg border border-rose-500/30 hover:border-rose-500 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 font-semibold text-[10px] h-7 transition-all">
-                    Pass
-                </button>
-            </div>
-
-            <div class="flex flex-col gap-2.5">
-                <!-- Select Bid Number -->
-                <div class="flex flex-col gap-1">
-                    <span class="text-[10px] font-semibold text-slate-400 block">1. Select Tricks:</span>
-                    <div class="flex flex-wrap items-center gap-1" id="bid-num-selector">
-                        <button data-bid="1" class="bid-val-btn px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-7 transition-all">1</button>
-                        <button data-bid="2" class="bid-val-btn px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-7 transition-all">2</button>
-                        <button data-bid="3" class="bid-val-btn px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-7 transition-all">3</button>
-                        <button data-bid="4" class="bid-val-btn px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-7 transition-all">4</button>
-                        <button data-bid="5" class="bid-val-btn px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-7 transition-all">5</button>
-                        <button data-bid="6" class="bid-val-btn px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-7 transition-all">6</button>
-                    </div>
-                </div>
-
-                <!-- Select Suit -->
-                <div class="flex flex-col gap-1">
-                    <span class="text-[10px] font-semibold text-slate-400 block">2. Select Suit / Aces / NT:</span>
-                    <div class="flex flex-wrap gap-1" id="suit-selector">
-                        <button data-suit="S" class="suit-btn px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-7" disabled>
-                            <span>♠</span><span class="text-[9px] font-normal text-slate-400">S</span>
-                        </button>
-                        <button data-suit="C" class="suit-btn px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-7" disabled>
-                            <span>♣</span><span class="text-[9px] font-normal text-slate-400">C</span>
-                        </button>
-                        <button data-suit="H" class="suit-btn px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-rose-500 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-7" disabled>
-                            <span>♥</span><span class="text-[9px] font-normal text-rose-400">H</span>
-                        </button>
-                        <button data-suit="D" class="suit-btn px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-rose-500 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-7" disabled>
-                            <span>♦</span><span class="text-[9px] font-normal text-rose-400">D</span>
-                        </button>
-                        <button data-suit="ACES" class="suit-btn px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-7" disabled>
-                            <span>Aces</span>
-                        </button>
-                        <button data-suit="NT" class="suit-btn px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-7" disabled>
-                            <span>NT</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Auction Log list (Collapsible & Compact) -->
-            <div class="bg-slate-950 rounded-lg p-2 border border-slate-800/80">
-                <span class="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">Round Auction Log</span>
-                <div id="bidding-history-list" class="space-y-0.5 text-[10px] max-h-16 overflow-y-auto pr-6">
-                    <!-- Populated dynamically -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Collapsible Game Settings Accordion -->
-        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-800/20 shrink-0">
-            <button id="toggle-settings-btn" class="w-full flex justify-between items-center p-3 text-left focus:outline-none hover:bg-slate-800/40 transition-all">
-                <span class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold">Game Settings</span>
-                <span id="settings-arrow" class="inline-block text-xs text-slate-400 transition-transform duration-200">►</span>
-            </button>
-            <div id="settings-content" class="p-3 pt-0 space-y-2.5 hidden">
-                <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
-                    <div class="flex flex-col pr-2">
-                        <span class="text-[11px] font-semibold text-slate-200">Partner Cooperative Bidding</span>
-                        <span class="text-[9px] text-slate-400 mt-0.5">Let AI raise bids to support partner.</span>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer select-none">
-                        <input type="checkbox" id="toggle-cooperative" class="sr-only peer" checked>
-                        <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
-                </div>
-
-                <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
-                    <div class="flex flex-col pr-2">
-                        <span class="text-[11px] font-semibold text-slate-200">Show Trump Card Count</span>
-                        <span class="text-[9px] text-slate-400 mt-0.5">Displays active trump count in contract panel.</span>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer select-none">
-                        <input type="checkbox" id="toggle-trump-count" class="sr-only peer" checked>
-                        <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
-                </div>
-
-                <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
-                    <div class="flex flex-col pr-2">
-                        <span class="text-[11px] font-semibold text-slate-200">Show All Suits Count</span>
-                        <span class="text-[9px] text-slate-400 mt-0.5">Displays all active suit counts in contract panel.</span>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer select-none">
-                        <input type="checkbox" id="toggle-all-suits-count" class="sr-only peer">
-                        <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
-                </div>
-
-                <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
-                    <div class="flex flex-col pr-2">
-                        <span class="text-[11px] font-semibold text-slate-200">Show All Players' Cards</span>
-                        <span class="text-[9px] text-slate-400 mt-0.5">Reveal AI hands for debugging/learning.</span>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer select-none">
-                        <input type="checkbox" id="toggle-reveal-all" class="sr-only peer">
-                        <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Interactive Navigation Buttons -->
-        <div class="grid grid-cols-2 gap-2 shrink-0">
-            <button id="btn-toggle-help" class="py-2 bg-amber-950/20 hover:bg-amber-950/40 text-amber-400 font-bold text-xs rounded-xl transition-all border border-amber-500/30 flex items-center justify-center gap-1 h-10 text-[11px]">
-                <span>📖</span> Rules Explained
-            </button>
-            <button id="btn-reset" class="py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs rounded-xl transition-all border border-slate-700 h-10 text-[11px]">
-                Restart Game
-            </button>
-        </div>
-
-        <!-- Console Log Panel -->
-        <div class="flex-1 min-h-[120px] flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-2.5 font-mono text-[10px]">
-            <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1">Deal Log Console</div>
-            <div id="game-log" class="flex-1 overflow-y-auto space-y-1 text-slate-300 pr-1 select-none font-mono text-[10px]">
-                <!-- Dynamic logs append here -->
-            </div>
-        </div>
-    </aside>
-
 </div>
 
 <script>
@@ -330,7 +390,8 @@ const state = {
     playerBids: [null, null, null, null], // Visual bid tags [P0, P1, P2, P3]
     bidsThisRound: [], // Array of { player, bid, suit, passed, convention }
     playedCards: [], // Tracks all played cards in this hand for AI memory
-    unplayedCounts: {'S':6,'C':6,'H':6,'D':6}
+    unplayedCounts: {'S':6,'C':6,'H':6,'D':6},
+    winnerTeam: null // Tracks the final winning team index (0 for Us, 1 for Them)
 };
 
 let aiTimeout = null;
@@ -375,6 +436,7 @@ const ctx = canvas.getContext('2d');
 const container = document.getElementById('canvas-container');
 const logConsole = document.getElementById('game-log');
 const biddingPanel = document.getElementById('bidding-panel');
+const currentBidBlock = document.getElementById('current-bid-block');
 const suitSelector = document.getElementById('suit-selector');
 const bidNumSelector = document.getElementById('bid-num-selector');
 const toggleCooperative = document.getElementById('toggle-cooperative');
@@ -412,7 +474,7 @@ const addLog = (msg) => {
     logConsole.scrollTop = logConsole.scrollHeight;
 };
 
-// Pointer & Touch gesture hooks
+// Pointer & Touch gesture hooks (Includes robust mapping to counteract portrait simulation)
 const pointer = { x: -1000, y: -1000, isDown: false, justPressed: false };
 
 const getPointerPos = (e) => {
@@ -420,9 +482,22 @@ const getPointerPos = (e) => {
     const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
     
-    // Scale tracking input precisely across viewport transformations
-    pointer.x = (clientX - rect.left) * (canvas.width / rect.width);
-    pointer.y = (clientY - rect.top) * (canvas.height / rect.height);
+    const isLandscapeMobile = window.innerWidth > window.innerHeight && window.innerWidth <= 950;
+    
+    if (isLandscapeMobile) {
+        // Clockwise coordinate rotation to map raw landscape inputs to the locked portrait canvas
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const rx = -dy + cy;
+        const ry = dx + cx;
+        pointer.x = (rx - rect.left) * (canvas.width / rect.width);
+        pointer.y = (ry - rect.top) * (canvas.height / rect.height);
+    } else {
+        pointer.x = (clientX - rect.left) * (canvas.width / rect.width);
+        pointer.y = (clientY - rect.top) * (canvas.height / rect.height);
+    }
 };
 
 canvas.addEventListener('mousemove', getPointerPos);
@@ -462,8 +537,8 @@ let cardH = 104;
 const updateCardScaling = (width, height) => {
     const isMobile = width < 600;
     if (isMobile) {
-        cardW = 42;
-        cardH = 62;
+        cardW = 44;
+        cardH = 64;
     } else {
         // Dynamic scale based on canvas viewport dimensions
         const factor = Math.min(width / 800, height / 600);
@@ -479,14 +554,11 @@ const getPlayerCoords = (p, width, height) => {
     const isMobile = width < 600;
     
     if (isMobile) {
-        // High density vertical placement to clear the center trick-taking space
-        const vertPadding = 48;
-        const horizPadding = 30;
-        
-        if (p === 0) return { x: cx, y: height - vertPadding }; // P0 (Player)
-        if (p === 1) return { x: horizPadding, y: cy };         // P1 (Left Opponent)
-        if (p === 2) return { x: cx, y: vertPadding };          // P2 (Partner)
-        if (p === 3) return { x: width - horizPadding, y: cy }; // P3 (Right Opponent)
+        // Left, Right, Partner are fanned off-screen showing only 30% of their length
+        if (p === 0) return { x: cx, y: height - 42 };       // Player (Bottom)
+        if (p === 1) return { x: -cardH * 0.2, y: cy };      // Left Opponent (Left edge shifted)
+        if (p === 2) return { x: cx, y: -cardH * 0.2 };      // Partner (Top edge shifted)
+        if (p === 3) return { x: width + cardH * 0.2, y: cy }; // Right Opponent (Right edge shifted)
     } else {
         const factor = Math.min(width / 800, height / 600);
         const vertPadding = Math.max(80, Math.min(140, 120 * factor));
@@ -561,31 +633,36 @@ const evaluateAIHand = (hand, suit) => {
 };
 
 const updateHUD = () => {
-    let scoreUsText = state.scores[0].toString();
-    let scoreThemText = state.scores[1].toString();
+    const scoreUs = state.scores[0].toString() + (state.gameState === 'PLAYING' || state.gameState === 'SCORING' ? ` (+${state.tricksWon[0]})` : '');
+    const scoreThem = state.scores[1].toString() + (state.gameState === 'PLAYING' || state.gameState === 'SCORING' ? ` (+${state.tricksWon[1]})` : '');
 
-    // Show live hand trick status as (+N) during playing or scoring phases
-    if (state.gameState === 'PLAYING' || state.gameState === 'SCORING') {
-        scoreUsText += ` (+${state.tricksWon[0]})`;
-        scoreThemText += ` (+${state.tricksWon[1]})`;
-    }
-
-    document.getElementById('score-us').innerText = scoreUsText;
-    document.getElementById('score-them').innerText = scoreThemText;
+    // Synchronize both responsive Score HUD elements (Header + Sidebar scroll panel)
+    document.getElementById('score-us-header').innerText = scoreUs;
+    document.getElementById('score-them-header').innerText = scoreThem;
+    document.getElementById('score-us-sidebar').innerText = scoreUs;
+    document.getElementById('score-them-sidebar').innerText = scoreThem;
     
-    document.getElementById('progress-us').style.width = `${Math.min(100, (state.scores[0] / 21) * 100)}%`;
-    document.getElementById('progress-them').style.width = `${Math.min(100, (state.scores[1] / 21) * 100)}%`;
+    const progressUs = `${Math.min(100, (state.scores[0] / 21) * 100)}%`;
+    const progressThem = `${Math.min(100, (state.scores[1] / 21) * 100)}%`;
+    
+    document.getElementById('progress-us-header').style.width = progressUs;
+    document.getElementById('progress-them-header').style.width = progressThem;
+    document.getElementById('progress-us-sidebar').style.width = progressUs;
+    document.getElementById('progress-them-sidebar').style.width = progressThem;
 
     updateContractUI();
 };
 
 const updateContractUI = () => {
-    const displayEl = document.getElementById('contract-display');
+    const headerDisplayEl = document.getElementById('contract-display-header');
+    const displayEl = document.getElementById('current-bid-display');
+    const countsEl = document.getElementById('current-bid-counts');
+    
     if (!displayEl) return;
     
     let contractText = "";
+    let suitHTML = "";
     
-    // Setup primary contract text layout
     if (state.gameState === 'PLAYING' || state.gameState === 'SCORING') {
         const bid = state.highestBid;
         const bidder = state.winningBidder;
@@ -606,21 +683,26 @@ const updateContractUI = () => {
                 colorClass = "text-rose-500";
             }
         }
-        contractText = `<span class="${colorClass} font-extrabold">${bid}${suitText}</span> <span class="text-slate-400 font-normal">(${team})</span>`;
+        suitHTML = `<span class="${colorClass} font-extrabold">${bid}${suitText}</span> <span class="text-slate-400 font-normal">(${team})</span>`;
+        contractText = `${bid}${suitText} (${team})`;
     } else {
-        contractText = `<span class="text-slate-400 font-normal">Bidding Round</span>`;
+        suitHTML = `<span class="text-slate-400 font-normal">Bidding Round</span>`;
+        contractText = "Bidding Round";
     }
     
-    // Draw dynamically generated active trump & suit stats inside Contract Block rather than Canvas
+    displayEl.innerHTML = suitHTML;
+    headerDisplayEl.innerHTML = suitHTML;
+    
+    // Draw dynamically generated active trump & suit stats inside the primary Mobile Contract Block
     let pillsList = [];
     if (state.showTrumpCount && state.trumpSuit && state.gameState === 'PLAYING') {
         if (state.trumpSuit === 'NT') {
-            pillsList.push(`<span class="bg-amber-950/40 text-amber-400 px-1.5 py-0.5 rounded text-[9px] border border-amber-500/20 font-medium">Aces Active</span>`);
+            pillsList.push(`<span class="bg-amber-950/40 text-amber-400 px-2 py-0.5 rounded text-[10px] border border-amber-500/20 font-medium">Aces Active</span>`);
         } else {
             const count = state.unplayedCounts[state.trumpSuit];
             const trumpIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
             const badgeColor = (state.trumpSuit === 'H' || state.trumpSuit === 'D') ? 'text-rose-400 border-rose-500/20 bg-rose-950/40' : 'text-slate-300 border-slate-700/50 bg-slate-800/40';
-            pillsList.push(`<span class="${badgeColor} px-1.5 py-0.5 rounded text-[9px] border font-bold">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
+            pillsList.push(`<span class="${badgeColor} px-2 py-0.5 rounded text-[10px] border font-bold">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
         }
     }
     
@@ -632,11 +714,10 @@ const updateContractUI = () => {
             const col = (s === 'H' || s === 'D') ? 'text-rose-400' : 'text-slate-300';
             suitsHTML.push(`<span class="${col}">${suitIcons[s]}:${count}</span>`);
         });
-        pillsList.push(`<span class="bg-slate-950/80 text-[9px] px-1.5 py-0.5 rounded border border-slate-800/50 flex gap-1 font-semibold">${suitsHTML.join(' ')}</span>`);
+        pillsList.push(`<span class="bg-slate-950/80 text-[10px] px-2 py-0.5 rounded border border-slate-800/50 flex gap-1.5 font-semibold">${suitsHTML.join(' ')}</span>`);
     }
     
-    const countContainer = pillsList.length > 0 ? `<div class="flex gap-1 items-center justify-center mt-1">${pillsList.join('')}</div>` : '';
-    displayEl.innerHTML = `<div class="flex flex-col items-center justify-center">${contractText}${countContainer}</div>`;
+    countsEl.innerHTML = pillsList.join('');
 };
 
 const runReset = () => {
@@ -674,6 +755,7 @@ const startNewHand = () => {
     state.playedCards = [];
     state.playerBids = [null, null, null, null];
     state.unplayedCounts = {'S':6,'C':6,'H':6,'D':6};
+    state.winnerTeam = null;
     
     const deck = [];
     SUITS.forEach(s => RANKS.forEach(r => deck.push({ rank: r, suit: s })));
@@ -709,6 +791,7 @@ const triggerNextTurn = () => {
     
     if (state.gameState === 'BIDDING') {
         biddingPanel.classList.add('hidden');
+        currentBidBlock.classList.add('hidden');
         
         if (state.biddingTurnsCount >= 4) {
             if (state.winningBidder === -1) {
@@ -742,6 +825,9 @@ const triggerNextTurn = () => {
             aiTimeout = setTimeout(handleAIBid, 1000);
         }
     } else if (state.gameState === 'PLAYING') {
+        biddingPanel.classList.add('hidden');
+        currentBidBlock.classList.remove('hidden');
+        
         if (state.trickQueue.length === 4) {
             aiTimeout = setTimeout(resolveTrick, 1400);
         } else {
@@ -756,6 +842,7 @@ const triggerNextTurn = () => {
 
 const openHumanBiddingUI = () => {
     biddingPanel.classList.remove('hidden');
+    currentBidBlock.classList.add('hidden');
     
     const historyList = document.getElementById('bidding-history-list');
     historyList.innerHTML = '';
@@ -765,13 +852,13 @@ const openHumanBiddingUI = () => {
 
     if (state.bidsThisRound.length === 0) {
         const row = document.createElement('div');
-        row.className = "text-slate-500 italic text-center text-[11px] py-1";
+        row.className = "text-slate-500 italic text-center text-[10px] py-1";
         row.innerText = "No bids placed yet.";
         historyList.appendChild(row);
     } else {
         state.bidsThisRound.forEach(entry => {
             const row = document.createElement('div');
-            row.className = "flex justify-between items-center py-0.5 border-b border-slate-800/40 last:border-b text-[11px]";
+            row.className = "flex justify-between items-center py-0.5 border-b border-slate-800/40 last:border-b text-[10px]";
             
             const nameSpan = document.createElement('span');
             nameSpan.className = "font-semibold " + (entry.player === 0 ? "text-emerald-400" : "text-slate-300");
@@ -807,13 +894,13 @@ const updateBiddingButtons = () => {
         btn.disabled = disabled;
         
         if (disabled) {
-            btn.className = "bid-val-btn px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-semibold cursor-not-allowed text-[10px] transition-all h-7";
+            btn.className = "bid-val-btn px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-semibold cursor-not-allowed text-[10px] transition-all h-6";
         } else {
             const isSelected = (state.tempSelectedBid === val);
             if (isSelected) {
-                btn.className = "bid-val-btn px-3.5 py-1.5 rounded-lg border-emerald-400 bg-emerald-900/60 ring-2 ring-emerald-400 text-emerald-300 font-bold transition-all text-[10px] h-7";
+                btn.className = "bid-val-btn px-2.5 py-1 rounded-lg border-emerald-400 bg-emerald-900/60 ring-2 ring-emerald-400 text-emerald-300 font-bold transition-all text-[10px] h-6";
             } else {
-                btn.className = "bid-val-btn px-3.5 py-1.5 rounded-lg border border-emerald-500/30 hover:border-emerald-400 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold transition-all text-[10px] h-7";
+                btn.className = "bid-val-btn px-2.5 py-1 rounded-lg border border-emerald-500/30 hover:border-emerald-400 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold transition-all text-[10px] h-6";
             }
             btn.onclick = () => {
                 state.tempSelectedBid = val;
@@ -838,7 +925,7 @@ const updateBiddingButtons = () => {
         btn.disabled = disabled;
 
         if (disabled) {
-            btn.className = "suit-btn px-2 py-1 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-bold text-[10px] flex items-center justify-center gap-1 opacity-40 cursor-not-allowed h-7";
+            btn.className = "suit-btn px-1.5 py-0.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-bold text-[9px] flex items-center justify-center gap-1 opacity-40 cursor-not-allowed h-6";
         } else {
             const isSelected = (state.tempSelectedSuit === suit);
             const isRed = (suit === 'H' || suit === 'D');
@@ -846,9 +933,9 @@ const updateBiddingButtons = () => {
             let colorClass = isRed ? 'text-rose-500' : (isSpecial ? 'text-amber-400' : 'text-slate-100');
 
             if (isSelected) {
-                btn.className = `suit-btn px-2 py-1 rounded-lg border-emerald-400 bg-emerald-900/60 ring-2 ring-emerald-400 ${colorClass} font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-7`;
+                btn.className = `suit-btn px-1.5 py-0.5 rounded-lg border-emerald-400 bg-emerald-900/60 ring-2 ring-emerald-400 ${colorClass} font-bold text-[9px] flex items-center justify-center gap-1 transition-all h-6`;
             } else {
-                btn.className = `suit-btn px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 ${colorClass} font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-7`;
+                btn.className = `suit-btn px-1.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 ${colorClass} font-bold text-[9px] flex items-center justify-center gap-1 transition-all h-6`;
             }
 
             btn.onclick = () => {
@@ -1307,7 +1394,21 @@ const resolveHand = () => {
 
     if (state.scores[0] >= 21 || state.scores[1] >= 21) {
         state.gameState = 'GAMEOVER';
-        const winnerMsg = state.scores[0] >= 21 ? "PLAYER & PARTNER WIN THE GAME!" : "LEFT & RIGHT WIN THE GAME!";
+        let winnerMsg = "";
+        if (state.scores[0] >= 21 && state.scores[1] >= 21) {
+            // Tiebreaker rule: Bidding team wins if both reached 21 on the same hand
+            state.winnerTeam = biddingTeam;
+            if (biddingTeam === 0) {
+                winnerMsg = "PLAYER & PARTNER WIN THE GAME! (Tiebreaker)";
+                addLog(`<strong>Tiebreaker!</strong> Both teams reached 21. Bidding team (<strong>${team1Name}</strong>) wins the game!`);
+            } else {
+                winnerMsg = "LEFT & RIGHT WIN THE GAME! (Tiebreaker)";
+                addLog(`<strong>Tiebreaker!</strong> Both teams reached 21. Bidding team (<strong>${team2Name}</strong>) wins the game!`);
+            }
+        } else {
+            state.winnerTeam = state.scores[0] >= 21 ? 0 : 1;
+            winnerMsg = state.winnerTeam === 0 ? "PLAYER & PARTNER WIN THE GAME!" : "LEFT & RIGHT WIN THE GAME!";
+        }
         addLog(`<strong>=== ${winnerMsg} ===</strong>`);
     } else {
         aiTimeout = setTimeout(startNewHand, 3000);
@@ -1343,19 +1444,19 @@ const drawCard = (card, x, y, faceUp = true, highlight = false, isHovered = fals
         const suitsIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
         
         ctx.font = 'bold 13px "Inter", sans-serif';
-        ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 6, -cardH / 2 + 6);
+        ctx.textAlign = 'left';
+        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 5);
         
         ctx.font = 'bold 22px "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(suitsIcons[card.suit], 0, 8);
+        ctx.fillText(suitsIcons[card.suit], 0, 4);
 
         ctx.font = 'bold 11px "Inter", sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, cardW / 2 - 6, cardH / 2 - 6);
+        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, cardW / 2 - 5, cardH / 2 - 5);
     } else {
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1.5;
@@ -1402,17 +1503,17 @@ const drawRotatedCard = (card, x, y, angle, faceUp = true, highlight = false, is
         ctx.font = 'bold 11px "Inter", sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 6, -cardH / 2 + 6);
+        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 5);
         
         ctx.font = 'bold 20px "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(suitsIcons[card.suit], 0, 8);
+        ctx.fillText(suitsIcons[card.suit], 0, 4);
 
         ctx.font = 'bold 10px "Inter", sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, cardW / 2 - 6, cardH / 2 - 6);
+        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, cardW / 2 - 5, cardH / 2 - 5);
     } else {
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1.5;
@@ -1424,32 +1525,46 @@ const drawRotatedCard = (card, x, y, angle, faceUp = true, highlight = false, is
     ctx.restore();
 };
 
-const drawPlayerPlate = (p, name, pos, width, height) => {
+const drawPlayerPlate = (p, name, pos, width, height, spread) => {
     const isMobile = width < 600;
-    const isBottom = (p === 0);
-    const isTop = (p === 2);
     
-    let labelY;
+    let lx = pos.x;
+    let ly = pos.y;
+    
+    // Dynamic coordinate relocation based on player index strictly adhering to instructions
     if (isMobile) {
-        // Position labels compact and away from overlapping tricks in the center
-        labelY = isBottom ? pos.y - 45 : isTop ? pos.y + 40 : pos.y + 40;
+        if (p === 0) { // Player: below and to the left of cards
+            lx = Math.max(52, pos.x - spread / 2 - 28);
+            ly = height - 18;
+        } else if (p === 1) { // Left: above its cards
+            lx = 42;
+            ly = pos.y - spread / 2 - 18;
+        } else if (p === 2) { // Partner: above and to the right of its cards (safe bounds)
+            lx = Math.min(width - 52, pos.x + spread / 2 + 28);
+            ly = 18;
+        } else if (p === 3) { // Right: above its cards
+            lx = width - 42;
+            ly = pos.y - spread / 2 - 18;
+        }
     } else {
-        labelY = isBottom ? pos.y - 75 : isTop ? pos.y + 75 : pos.y + 75;
+        // Desktop Standard relative placement
+        if (p === 0) ly = pos.y - 75;
+        else if (p === 2) ly = pos.y + 75;
+        else ly = pos.y + 75;
     }
     
     ctx.save();
     
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-    ctx.strokeStyle = (state.currentPlayer === p && state.gameState !== 'SCORING' && state.gameState !== 'GAMEOVER') ? '#f59e0b' : '#334155';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.strokeStyle = (state.currentPlayer === p && state.gameState !== 'SCORING' && state.gameState !== 'GAMEOVER') ? '#fbbf24' : '#334155';
     ctx.lineWidth = 1.5;
     
-    // Scale plate bounds down for mobile screens
-    const plateW = isMobile ? 90 : 140;
-    const plateH = isMobile ? 20 : 28;
-    const plateR = isMobile ? 10 : 14;
+    const plateW = isMobile ? 80 : 130;
+    const plateH = isMobile ? 18 : 26;
+    const plateR = isMobile ? 8 : 12;
     
     ctx.beginPath();
-    ctx.roundRect(pos.x - plateW / 2, labelY - plateH / 2, plateW, plateH, plateR);
+    ctx.roundRect(lx - plateW / 2, ly - plateH / 2, plateW, plateH, plateR);
     ctx.fill();
     ctx.stroke();
     
@@ -1457,12 +1572,13 @@ const drawPlayerPlate = (p, name, pos, width, height) => {
     ctx.font = isMobile ? 'bold 9px "Inter", sans-serif' : 'bold 11px "Inter", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(name, pos.x, labelY + (isMobile ? 0.5 : 1));
+    ctx.fillText(name, lx, ly + 0.5);
     
+    // Draw Dealer chip aligned to follow the Plate center
     if (state.dealer === p) {
-        const dX = pos.x - (plateW / 2 + 10);
-        const dY = labelY;
-        const radius = isMobile ? 7 : 10;
+        const dX = lx - (plateW / 2 + 8);
+        const dY = ly;
+        const radius = isMobile ? 6 : 9;
         
         ctx.fillStyle = '#eab308';
         ctx.beginPath();
@@ -1473,14 +1589,14 @@ const drawPlayerPlate = (p, name, pos, width, height) => {
         ctx.stroke();
         
         ctx.fillStyle = '#0f172a';
-        ctx.font = isMobile ? 'bold 8px "Inter", sans-serif' : 'bold 10px "Inter", sans-serif';
-        ctx.fillText("D", dX, dY + (isMobile ? 0.2 : 0.5));
+        ctx.font = isMobile ? 'bold 7px "Inter", sans-serif' : 'bold 9px "Inter", sans-serif';
+        ctx.fillText("D", dX, dY + 0.5);
     }
 
     ctx.restore();
 };
 
-const drawPlayerBid = (p, pos, width, height) => {
+const drawPlayerBid = (p, pos, width, height, spread) => {
     if (!state.playerBids || !state.playerBids[p]) return;
     const bidInfo = state.playerBids[p];
     let text = "";
@@ -1503,34 +1619,51 @@ const drawPlayerBid = (p, pos, width, height) => {
     let by = pos.y;
     const isMobile = width < 600;
 
-    if (p === 0) {
-        by = isMobile ? pos.y - 45 : pos.y - 75; 
-        bx = isMobile ? pos.x - 75 : pos.x - 140; 
-    } else if (p === 1) {
-        bx = isMobile ? pos.x + 40 : pos.x + 100; 
-        by = isMobile ? pos.y + 40 : pos.y;
-    } else if (p === 2) {
-        by = isMobile ? pos.y + 40 : pos.y + 75; 
-        bx = isMobile ? pos.x - 75 : pos.x - 140; 
-    } else if (p === 3) {
-        bx = isMobile ? pos.x - 40 : pos.x - 100; 
-        by = isMobile ? pos.y + 40 : pos.y;
+    // Reposition bids to stack cleanly directly relative to relocated plates
+    if (isMobile) {
+        if (p === 0) { // Player: stacked above Player Plate
+            bx = Math.max(52, pos.x - spread / 2 - 28);
+            by = height - 36;
+        } else if (p === 1) { // Left: stacked above Left Plate
+            bx = 42;
+            by = pos.y - spread / 2 - 36;
+        } else if (p === 2) { // Partner: stacked below Partner Plate
+            bx = Math.min(width - 52, pos.x + spread / 2 + 28);
+            by = 36;
+        } else if (p === 3) { // Right: stacked above Right Plate
+            bx = width - 42;
+            by = pos.y - spread / 2 - 36;
+        }
+    } else {
+        if (p === 0) {
+            by = pos.y - 75; 
+            bx = pos.x - 130; 
+        } else if (p === 1) {
+            bx = pos.x + 95; 
+            by = pos.y;
+        } else if (p === 2) {
+            by = pos.y + 75; 
+            bx = pos.x - 130; 
+        } else if (p === 3) {
+            bx = pos.x - 95; 
+            by = pos.y;
+        }
     }
 
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
     ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.2;
 
-    const badgeW = isMobile ? 65 : 90;
-    const badgeH = isMobile ? 18 : 24;
+    const badgeW = isMobile ? 60 : 85;
+    const badgeH = isMobile ? 15 : 22;
 
     ctx.beginPath();
-    ctx.roundRect(bx - badgeW / 2, by - badgeH / 2, badgeW, badgeH, 6);
+    ctx.roundRect(bx - badgeW / 2, by - badgeH / 2, badgeW, badgeH, 5);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = '#f8fafc';
-    ctx.font = isMobile ? 'bold 8px "Inter", sans-serif' : 'bold 11px "Inter", sans-serif';
+    ctx.font = isMobile ? 'bold 8px "Inter", sans-serif' : 'bold 10px "Inter", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, bx, by);
@@ -1553,15 +1686,19 @@ const renderLoop = () => {
 
     if (!state.hands) return;
 
+    // Track dynamic spreads to align relocated plates and bids flawlessly
+    const playerSpreads = [0, 0, 0, 0];
+
     for (let p = 0; p < 4; p++) {
         const pos = getPlayerCoords(p, width, height);
         const hand = state.hands[p];
         const isHuman = (p === 0);
         
         if (isHuman) {
-            // Human Hand: Wide spacing for easy tap-selection
-            const step = cardW + 8;
+            // Human Hand: Wide fanning for clear interactive visibility
+            const step = isMobile ? 42 : (cardW + 8);
             const spread = (hand.length - 1) * step;
+            playerSpreads[0] = spread;
             hand.forEach((card, i) => {
                 const ox = pos.x - spread / 2 + i * step;
                 const oy = pos.y;
@@ -1588,68 +1725,71 @@ const renderLoop = () => {
                 drawRotatedCard(card, ox, oy, 0, true, highlight, isHovered);
             });
         } else if (p === 2) {
-            // Partner (Top Opponent): Fan horizontal cards closer together on mobile
-            const step = isMobile ? 12 : (state.revealAllCards ? 36 : 20);
+            // Partner (Top): Spaced out so it is easy to tell cards apart
+            const step = isMobile ? 32 : 20;
             const spread = (hand.length - 1) * step;
+            playerSpreads[2] = spread;
             hand.forEach((card, i) => {
                 const ox = pos.x - spread / 2 + i * step;
-                const oy = isMobile ? pos.y - 15 : pos.y; // Shift slightly higher on mobile portrait
+                const oy = pos.y;
                 const showFaceUp = state.revealAllCards;
                 drawRotatedCard(card, ox, oy, 0, showFaceUp, false, false);
             });
         } else if (p === 1) {
-            // Left Opponent (P1): Stacks vertical and rotated 90 degrees on mobile viewports
+            // Left Opponent (P1): Rotated 90 degrees and spaced out vertically
+            const step = isMobile ? 24 : 20;
+            const spread = (hand.length - 1) * step;
+            playerSpreads[1] = spread;
             if (isMobile) {
-                const step = 12; // Extra tight stack on mobile margins
-                const spread = (hand.length - 1) * step;
                 hand.forEach((card, i) => {
-                    const ox = pos.x - 15; // Shift left margin
+                    const ox = pos.x; 
                     const oy = pos.y - spread / 2 + i * step;
                     const showFaceUp = state.revealAllCards;
                     drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, false, false);
                 });
             } else {
-                const step = state.revealAllCards ? 36 : 20;
-                const spread = (hand.length - 1) * step;
                 hand.forEach((card, i) => {
-                    const ox = pos.x - spread / 2 + i * step;
-                    const oy = pos.y;
+                    const ox = pos.x;
+                    const oy = pos.y - spread / 2 + i * step;
                     const showFaceUp = state.revealAllCards;
-                    drawRotatedCard(card, ox, oy, 0, showFaceUp, false, false);
+                    drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, false, false);
                 });
             }
         } else if (p === 3) {
-            // Right Opponent (P3): Vertical stacking & rotated -90 degrees on mobile viewports
+            // Right Opponent (P3): Rotated -90 degrees and spaced out vertically
+            const step = isMobile ? 24 : 20;
+            const spread = (hand.length - 1) * step;
+            playerSpreads[3] = spread;
             if (isMobile) {
-                const step = 12;
-                const spread = (hand.length - 1) * step;
                 hand.forEach((card, i) => {
-                    const ox = pos.x + 15; // Shift right margin
+                    const ox = pos.x; 
                     const oy = pos.y - spread / 2 + i * step;
                     const showFaceUp = state.revealAllCards;
                     drawRotatedCard(card, ox, oy, -Math.PI / 2, showFaceUp, false, false);
                 });
             } else {
-                const step = state.revealAllCards ? 36 : 20;
-                const spread = (hand.length - 1) * step;
                 hand.forEach((card, i) => {
-                    const ox = pos.x - spread / 2 + i * step;
-                    const oy = pos.y;
+                    const ox = pos.x;
+                    const oy = pos.y - spread / 2 + i * step;
                     const showFaceUp = state.revealAllCards;
-                    drawRotatedCard(card, ox, oy, 0, showFaceUp, false, false);
+                    drawRotatedCard(card, ox, oy, -Math.PI / 2, showFaceUp, false, false);
                 });
             }
         }
-        
-        drawPlayerPlate(p, PLAYER_NAMES[p], pos, width, height);
-        drawPlayerBid(p, pos, width, height);
+    }
+
+    // Secondary pass to render relocated plates/bids on top of cards
+    for (let p = 0; p < 4; p++) {
+        const pos = getPlayerCoords(p, width, height);
+        drawPlayerPlate(p, PLAYER_NAMES[p], pos, width, height, playerSpreads[p]);
+        drawPlayerBid(p, pos, width, height, playerSpreads[p]);
     }
 
     // Draw Center Table Trick queue
     state.trickQueue.forEach((q) => {
         const p = q.player;
         const target = getPlayerCoords(p, width, height);
-        // Shrink card cluster radius slightly for mobile limits
+        // Normalized center trick fanning bounds
         const radiusFactor = isMobile ? 0.22 : 0.35;
         const tx = (width / 2) + (target.x - (width / 2)) * radiusFactor;
         const ty = (height / 2) + (target.y - (height / 2)) * radiusFactor;
@@ -1665,7 +1805,7 @@ const renderLoop = () => {
         ctx.font = 'bold 18px "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const winnerText = state.scores[0] >= 21 ? "PLAYER & PARTNER WIN!" : "LEFT & RIGHT WIN!";
+        const winnerText = state.winnerTeam === 0 ? "PLAYER & PARTNER WIN!" : "LEFT & RIGHT WIN!";
         ctx.fillText(winnerText, width / 2, height / 2 - 15);
         
         ctx.fillStyle = '#94a3b8';
