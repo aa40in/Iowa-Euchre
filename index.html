@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Iowa-Style Euchre - Aces Edition</title>
     <!-- Tailwind CSS for Premium Responsive UI -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,285 +11,289 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0f172a;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         .font-mono {
             font-family: 'JetBrains Mono', monospace;
         }
+        /* Mobile-friendly custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 2px;
+        }
+        
+        /* Dynamic scale of the bidding popup for different vertical dimensions to prevent card overlap */
+        @media (max-height: 720px) {
+            #bidding-panel > div {
+                transform: scale(0.92);
+                transform-origin: center;
+            }
+        }
+        @media (max-height: 600px) {
+            #bidding-panel > div {
+                transform: scale(0.85);
+                transform-origin: center;
+            }
+        }
+        @media (max-height: 480px) {
+            #bidding-panel > div {
+                transform: scale(0.75);
+                transform-origin: center;
+            }
+        }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden text-slate-100 flex flex-col md:flex-row">
+<body class="h-screen w-screen overflow-hidden text-slate-100 flex flex-col md:flex-row select-none">
 
 <!-- Left Side: Interactive Felt Card Table -->
-<main class="flex-1 h-2/3 md:h-full relative bg-emerald-950 flex flex-col overflow-hidden">
+<main class="flex-1 h-[60%] md:h-full relative bg-emerald-950 flex flex-col overflow-hidden">
     <!-- Visual green felt background effect -->
     <div class="absolute inset-0 bg-radial-felt pointer-events-none opacity-45 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.3)_0%,rgba(6,78,59,0.9)_100%)]"></div>
     
     <div class="flex-1 w-full h-full relative" id="canvas-container">
-        <canvas id="table-canvas" class="block w-full h-full"></canvas>
+        <canvas id="table-canvas" class="block w-full h-full touch-none"></canvas>
     </div>
 
-    <!-- Interactive HTML Bidding Panel Overlay -->
-    <div id="bidding-panel" class="absolute inset-x-0 top-12 md:top-20 flex items-start justify-center p-4 transition-all duration-300 hidden z-30 pointer-events-none">
-        <div class="bg-slate-900/95 border border-emerald-500/30 p-5 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] max-w-sm w-full space-y-4 pointer-events-auto">
-            <div class="text-center">
-                <span class="text-xs uppercase tracking-wider font-bold text-emerald-400">Your Bidding Turn</span>
-                <h2 class="text-lg font-bold mt-0.5">Place Your Iowa Bid</h2>
+    <!-- Interactive Rules Explained Menu -->
+    <div id="help-panel" class="absolute bottom-12 md:bottom-24 left-4 right-4 md:left-6 md:right-auto md:w-[340px] bg-slate-900/95 border border-amber-500/40 p-4 rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] space-y-3 transition-all duration-300 hidden z-40">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <span class="text-xs uppercase tracking-wider font-bold text-amber-400 flex items-center gap-1.5 text-[11px]">
+                <span>📖</span> Rules Explained
+            </span>
+            <button id="btn-close-help" class="text-slate-400 hover:text-white text-xs p-1 h-8 w-8 flex items-center justify-center text-[11px]">✕</button>
+        </div>
+        <div class="text-[11px] text-slate-300 space-y-2.5 overflow-y-auto max-h-[250px] md:max-h-80 pr-1 leading-relaxed">
+            <div>
+                <strong class="text-amber-300 block mb-0.5">The Deal & Goal</strong>
+                <p>Iowa Euchre is played with 24 cards (9 through Ace). Each player is dealt exactly <strong class="text-white">6 cards</strong>. The goal is to win tricks, playing to a maximum of 6 tricks per hand.</p>
+            </div>
+            <div>
+                <strong class="text-amber-300 block mb-0.5">Bidding Process</strong>
+                <p>Players take turns bidding the number of tricks they think they can win (1 to 6) along with their selected Trump suit or Aces (No Trump). If a Trump suit is selected, the Jack of that suit is the highest card (the "right bower"). The Jack of the same-color suit is treated as if it's also in the Trump suit as the second highest card in that suit (the "left bower"). The Trump suit cards, highest to lowest, are: right bower, left bower, A, K, Q, 10, 9. </p>
+            </div>
+            <div>
+                <strong class="text-amber-300 block mb-0.5">Aces (No Trump) Mode</strong>
+                <p>If "Aces" is chosen as the contract, Jacks behave as normal cards (9, 10, Jack, Queen, King, Ace). There are no bower swaps, suits remain natural, and Aces are high.</p>
+            </div>
+            <div>
+                <strong class="text-amber-300 block mb-0.5">First Lead Rule</strong>
+                <p>Play always starts with the player situated immediately to the <strong class="text-white">left of the winning bidder</strong>, regardless of who dealt.</p>
+            </div>
+            <div>
+                <strong class="text-amber-300 block mb-0.5">NT Conventions</strong>
+                <p>To communicate with your partner without bidding high right away:
+                <br>• <strong class="text-white">1NT Bid</strong> signals you hold at least one Jack and one Ace.
+                <br>• <strong class="text-white">2NT Bid</strong> signals you hold at least one Red Jack, one Black Jack, and an Ace.</p>
+            </div>
+            <div>
+                <strong class="text-amber-300 block mb-0.5">Scoring & Penalties</strong>
+                <p>If your team meets the contract, you score trick points. If your team is "Set" (fails to meet the contract), you suffer a penalty equal to your contract bid (<strong class="text-rose-400">-bid points</strong>). The first team to 21 points wins!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive HTML Bidding Panel Overlay - Redesigned into a Clean, Compact Snug Panel -->
+    <div id="bidding-panel" class="absolute inset-0 flex items-center justify-center p-3 md:p-4 transition-all duration-300 hidden z-30 pointer-events-none">
+        <div class="bg-slate-900/95 border border-emerald-500/30 p-4 rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] max-w-[375px] w-full flex flex-col gap-3 pointer-events-auto text-[11px] transition-all">
+            
+            <!-- Header Panel / Row -->
+            <div class="flex justify-between items-center border-b border-slate-800/80 pb-2.5 gap-2">
+                <div class="text-left shrink-0">
+                    <span class="text-[11px] uppercase tracking-wider font-bold text-emerald-400 block leading-none">Your Turn</span>
+                    <h2 class="text-[12px] md:text-sm font-bold text-white mt-0.5">Iowa Euchre Bidding</h2>
+                </div>
+
+                <!-- Pass Button (Top Right) -->
+                <div class="shrink-0">
+                    <button id="btn-pass" class="py-1.5 px-3.5 rounded-lg border border-rose-500/30 hover:border-rose-500 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 font-semibold text-[11px] h-8 transition-all">
+                        Pass
+                    </button>
+                </div>
             </div>
 
-            <!-- Auction Log list within the popup -->
-            <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800/80 space-y-1">
-                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Round Auction Log</span>
-                <div id="bidding-history-list" class="space-y-1 text-xs">
+            <!-- Bidding Actions Blocks -->
+            <div class="flex flex-col gap-3">
+                
+                <!-- Tricks row (Top Row) -->
+                <div class="flex flex-col gap-1">
+                    <span class="text-[11px] font-semibold text-slate-400 block" id="bid-num-label">1. Select Tricks:</span>
+                    <div class="flex flex-wrap items-center gap-1.5" id="bid-num-selector">
+                        <button data-bid="1" class="bid-val-btn px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold h-8 transition-all">1</button>
+                        <button data-bid="2" class="bid-val-btn px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold h-8 transition-all">2</button>
+                        <button data-bid="3" class="bid-val-btn px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold h-8 transition-all">3</button>
+                        <button data-bid="4" class="bid-val-btn px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold h-8 transition-all">4</button>
+                        <button data-bid="5" class="bid-val-btn px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold h-8 transition-all">5</button>
+                        <button data-bid="6" class="bid-val-btn px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold h-8 transition-all">6</button>
+                    </div>
+                </div>
+
+                <!-- Suit/Aces/NT Row (Second Row) -->
+                <div class="flex flex-col gap-1">
+                    <span class="text-[11px] font-semibold text-slate-400 block">2. Select Suit / Aces / NT:</span>
+                    <div class="flex flex-wrap gap-1.5" id="suit-selector">
+                        <button data-suit="S" class="suit-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-[11px] flex items-center justify-center gap-1 transition-all h-8" disabled>
+                            <span>♠</span><span class="text-[11px] font-normal text-slate-400">S</span>
+                        </button>
+                        <button data-suit="C" class="suit-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-[11px] flex items-center justify-center gap-1 transition-all h-8" disabled>
+                            <span>♣</span><span class="text-[11px] font-normal text-slate-400">C</span>
+                        </button>
+                        <button data-suit="H" class="suit-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-rose-500 font-bold text-[11px] flex items-center justify-center gap-1 transition-all h-8" disabled>
+                            <span>♥</span><span class="text-[11px] font-normal text-rose-400">H</span>
+                        </button>
+                        <button data-suit="D" class="suit-btn px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-rose-500 font-bold text-[11px] flex items-center justify-center gap-1 transition-all h-8" disabled>
+                            <span>♦</span><span class="text-[11px] font-normal text-rose-400">D</span>
+                        </button>
+                        <button data-suit="ACES" class="suit-btn px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[11px] flex items-center justify-center gap-1 transition-all h-8" disabled>
+                            <span>Aces</span><span class="text-[11px] font-normal text-amber-500"></span>
+                        </button>
+                        <button data-suit="NT" class="suit-btn px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[11px] flex items-center justify-center gap-1 transition-all h-8" disabled>
+                            <span>NT</span><span class="text-[11px] font-normal text-amber-500"></span>
+                        </button>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Auction Log list (Collapsible & Compact) -->
+            <div class="bg-slate-950/60 rounded-lg p-2 border border-slate-800/80">
+                <span class="text-[11px] uppercase font-bold text-slate-500 block mb-0.5">Round Auction Log</span>
+                <div id="bidding-history-list" class="space-y-0.5 text-[11px] max-h-16 overflow-y-auto pr-6">
                     <!-- Populated dynamically -->
                 </div>
-            </div>
-
-            <!-- Current Bid/Contract highlight -->
-            <div class="text-xs text-slate-300 text-center font-medium bg-emerald-950/30 py-2 px-3 rounded-lg border border-emerald-500/10" id="current-bid-info">
-                No active bids yet
-            </div>
-
-            <!-- Special Convention Bids (1NT & 2NT) -->
-            <div class="space-y-2" id="special-bids-container">
-                <span class="text-xs font-semibold text-slate-400 block">1. Choose Special Convention Bid (First Partner Only):</span>
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="btn-1nt" class="py-2.5 rounded-lg border border-amber-500/30 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs flex flex-col items-center justify-center transition-all">
-                        <span class="text-sm">1NT</span>
-                        <span class="text-[9px] font-normal text-amber-500/80">Jack & Ace Signal</span>
-                    </button>
-                    <button id="btn-2nt" class="py-2.5 rounded-lg border border-amber-500/30 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs flex flex-col items-center justify-center transition-all">
-                        <span class="text-sm">2NT</span>
-                        <span class="text-[9px] font-normal text-amber-500/80">Red/Black J & Ace</span>
-                    </button>
-                </div>
-                <div id="partner-restriction-notice" class="text-[10px] text-rose-400 text-center hidden font-medium">
-                    ⚠️ Special NT disabled: Your partner already took their turn.
-                </div>
-            </div>
-
-            <!-- Suit Selector Buttons with added Aces option -->
-            <div class="space-y-2">
-                <span class="text-xs font-semibold text-slate-400 block">2. Or Select Trump Suit or Aces:</span>
-                <div class="grid grid-cols-5 gap-1" id="suit-selector">
-                    <button data-suit="S" class="suit-btn py-2 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-base flex flex-col items-center justify-center transition-all">
-                        <span>♠</span><span class="text-[9px] font-normal text-slate-400">Spades</span>
-                    </button>
-                    <button data-suit="C" class="suit-btn py-2 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-base flex flex-col items-center justify-center transition-all">
-                        <span>♣</span><span class="text-[9px] font-normal text-slate-400">Clubs</span>
-                    </button>
-                    <button data-suit="H" class="suit-btn py-2 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-base flex flex-col items-center justify-center transition-all">
-                        <span>♥</span><span class="text-[9px] font-normal text-slate-400">Hearts</span>
-                    </button>
-                    <button data-suit="D" class="suit-btn py-2 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-base flex flex-col items-center justify-center transition-all">
-                        <span>♦</span><span class="text-[9px] font-normal text-slate-400">Diams</span>
-                    </button>
-                    <button data-suit="NT" class="suit-btn py-2 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-base flex flex-col items-center justify-center transition-all">
-                        <span>A</span><span class="text-[9px] font-normal text-amber-500">Aces</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Bid Magnitude Selector Buttons -->
-            <div class="space-y-2">
-                <span class="text-xs font-semibold text-slate-400 block" id="bid-num-label">3. Select Number of Tricks:</span>
-                <div class="grid grid-cols-6 gap-1.5" id="bid-num-selector">
-                    <button data-bid="1" class="bid-val-btn py-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm font-semibold transition-all">1</button>
-                    <button data-bid="2" class="bid-val-btn py-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm font-semibold transition-all">2</button>
-                    <button data-bid="3" class="bid-val-btn py-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm font-semibold transition-all">3</button>
-                    <button data-bid="4" class="bid-val-btn py-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm font-semibold transition-all">4</button>
-                    <button data-bid="5" class="bid-val-btn py-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm font-semibold transition-all">5</button>
-                    <button data-bid="6" class="bid-val-btn py-2.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm font-semibold transition-all">6</button>
-                </div>
-            </div>
-
-            <div class="pt-1 flex gap-3">
-                <button id="btn-pass" class="flex-1 py-2.5 rounded-xl border border-rose-500/30 hover:border-rose-500 bg-rose-950/20 text-rose-400 font-semibold text-sm transition-all">
-                    Pass
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Interactive HTML Rules Guide overlay -->
-    <div id="help-panel" class="absolute bottom-16 md:bottom-24 left-4 right-4 md:left-6 md:right-auto md:w-96 bg-slate-900/95 border border-amber-500/40 p-5 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] space-y-4 transition-all duration-300 hidden z-40">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span class="text-xs uppercase tracking-wider font-bold text-amber-400 flex items-center gap-1.5">
-                <span>📖</span> Learn to Play: Euchre Rules
-            </span>
-            <button id="btn-close-help" class="text-slate-400 hover:text-white text-xs select-none p-1 font-bold">✕</button>
-        </div>
-        
-        <div class="text-xs text-slate-300 space-y-3.5 overflow-y-auto max-h-[380px] pr-1.5 leading-relaxed">
-            <div>
-                <strong class="text-amber-300 block mb-0.5">🃏 1. The Core Objective</strong>
-                <p>Euchre is a cooperative trick-taking card game played with a 24-card deck (9, 10, Jack, Queen, King, and Ace of each suit). You play in a partnership with the AI teammate situated across from you to out-score the opponents.</p>
-            </div>
-            
-            <div>
-                <strong class="text-amber-300 block mb-0.5">📣 2. The Bidding Phase</strong>
-                <p>Before standard play, players take turns bidding. A bid states how many tricks (from 1 to 6) your partnership promises to win during the hand, along with a chosen <strong>Trump Suit</strong> (which beats all normal cards) or <strong>"Aces" (No Trump)</strong>.</p>
-                <p class="mt-1 text-slate-400 font-medium italic">⚠️ Rule: You cannot bid a 1-trick contract unless everyone has passed before you, making early bids highly competitive!</p>
-            </div>
-
-            <div>
-                <strong class="text-amber-300 block mb-0.5">🔄 3. Card Rankings & Bowers</strong>
-                <ul class="list-disc pl-4 space-y-1 mt-1">
-                    <li><strong class="text-white">Under standard Trump suits:</strong> Jacks change suits. The Jack of your chosen trump is the <strong class="text-amber-200">Right Bower</strong> (highest card). The Jack of the *same color* suit becomes a trump card and is the <strong class="text-amber-200">Left Bower</strong> (second highest card). For example, if Hearts are trump, the J♥ is top, and the J♦ is second!</li>
-                    <li><strong class="text-white">Under "Aces" (No Trump) Mode:</strong> No cards change suits and there are no Bower cards. Ranks follow strict face value: Aces are high, Jacks are normal cards between 10 and Queen.</li>
-                </ul>
-            </div>
-
-            <div>
-                <strong class="text-amber-300 block mb-0.5">⚔️ 4. Trick-Taking Play</strong>
-                <p>The player directly to the left of the winning bidder leads the first card. Each player must play a card matching the suit led if possible (<strong class="text-white">Following Suit</strong>). If you have no cards of that suit, you can play a Trump card to cut in, or discard an off-suit card (sluff).</p>
-                <p class="mt-1 text-slate-400 font-medium italic">💡 Pro-Tip: The Left Bower belongs fully to the Trump suit. If Spades are trump, playing the Jack of Clubs is considered a Spade card!</p>
-            </div>
-
-            <div>
-                <strong class="text-amber-300 block mb-0.5">📈 5. Scoring & Winning</strong>
-                <ul class="list-disc pl-4 space-y-1 mt-1">
-                    <li>If your team wins at least as many tricks as you bid, your team is successful. Both teams score 1 point per trick they won.</li>
-                    <li>If your team fails to make the bid, your team is <strong class="text-rose-400 font-semibold">Set</strong>, suffering a <strong class="text-rose-400 font-bold">-5 point penalty</strong>, while the defenders get 1 point per trick they won.</li>
-                    <li>First team to reach <strong class="text-emerald-400 font-bold">21 points</strong> wins the game!</li>
-                </ul>
             </div>
         </div>
     </div>
 </main>
 
-<!-- Right Side: Sidebar Scoring & Strategy Panel -->
-<aside class="w-full md:w-80 h-1/3 md:h-full bg-slate-900 border-t md:border-t-0 md:border-l border-slate-800 flex flex-col p-4 shrink-0 overflow-y-auto z-10">
+<!-- Right Side/Bottom Side: Sidebar Scoring & Parameters Panel -->
+<aside class="w-full md:w-80 h-[40%] md:h-full bg-slate-900 border-t md:border-t-0 md:border-l border-slate-800 flex flex-col p-3 md:p-4 shrink-0 overflow-y-auto z-10 space-y-4">
     <!-- Scoreboard Section -->
-    <div class="space-y-3">
-        <h2 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Iowa Scoreboard</h2>
+    <div class="space-y-2">
+        <h2 class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold">Iowa Scoreboard</h2>
         
-        <div class="grid grid-cols-2 gap-3">
-            <!-- Team 1 -->
-            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
+        <div class="grid grid-cols-2 gap-2">
+            <!-- Team 1 (Player & Partner) -->
+            <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
                 <div class="flex justify-between items-center">
-                    <span class="text-xs font-medium text-slate-300">Us</span>
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="text-[10px] md:text-xs font-medium text-slate-300">Player & Partner</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                 </div>
-                <div class="text-2xl font-bold mt-1 text-emerald-400" id="score-us">0</div>
-                <div class="w-full bg-slate-700 h-1 rounded-full mt-2 overflow-hidden">
+                <div class="text-xl md:text-2xl font-bold mt-0.5 text-emerald-400" id="score-us">0</div>
+                <div class="w-full bg-slate-700 h-1 rounded-full mt-1.5 overflow-hidden">
                     <div id="progress-us" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
                 </div>
             </div>
 
-            <!-- Team 2 -->
-            <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
+            <!-- Team 2 (Left & Right) -->
+            <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
                 <div class="flex justify-between items-center">
-                    <span class="text-xs font-medium text-slate-300">Them</span>
-                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                    <span class="text-[10px] md:text-xs font-medium text-slate-300">Left & Right</span>
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
                 </div>
-                <div class="text-2xl font-bold mt-1 text-rose-400" id="score-them">0</div>
-                <div class="w-full bg-slate-700 h-1 rounded-full mt-2 overflow-hidden">
+                <div class="text-xl md:text-2xl font-bold mt-0.5 text-rose-400" id="score-them">0</div>
+                <div class="w-full bg-slate-700 h-1 rounded-full mt-1.5 overflow-hidden">
                     <div id="progress-them" class="bg-rose-500 h-full transition-all duration-500" style="width: 0%"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <hr class="border-slate-800 my-4">
+    <!-- Current Contract Display -->
+    <div id="contract-panel" class="bg-slate-800/20 p-3 rounded-xl border border-slate-800 flex flex-col justify-center min-h-[58px]">
+        <div class="flex justify-between items-center">
+            <span class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold">Current Contract</span>
+        </div>
+        <div id="contract-display" class="text-[10px] md:text-xs font-bold mt-1 text-center">
+            &nbsp;
+        </div>
+    </div>
 
-    <!-- Active Contract Status -->
-    <div class="bg-slate-800/30 border border-slate-800 rounded-xl p-3 space-y-2">
-        <h3 class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Current Deal Status</h3>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-            <div>
-                <span class="text-slate-400 block">Trump Suit</span>
-                <span id="trump-label" class="font-bold text-slate-200">None</span>
+    <!-- Collapsible Game Settings Box (Collapsed by Default) -->
+    <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-800/20">
+        <button id="toggle-settings-btn" class="w-full flex justify-between items-center p-3 text-left focus:outline-none hover:bg-slate-800/40 transition-all">
+            <span class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold">Game Settings</span>
+            <span id="settings-arrow" class="inline-block text-xs text-slate-400 transition-transform duration-200">►</span>
+        </button>
+        <div id="settings-content" class="p-3 pt-0 space-y-2.5 hidden">
+            <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                <div class="flex flex-col pr-2">
+                    <span class="text-[11px] font-semibold text-slate-200">Partner Cooperative Bidding</span>
+                    <span class="text-[9px] text-slate-400 mt-0.5">Let AI raise bids to support their partner.</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox" id="toggle-cooperative" class="sr-only peer" checked>
+                    <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
             </div>
-            <div>
-                <span class="text-slate-400 block">Winning Bid</span>
-                <span id="contract-label" class="font-bold text-slate-200">No Contract</span>
+
+            <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                <div class="flex flex-col pr-2">
+                    <span class="text-[11px] font-semibold text-slate-200">Show Trump Card Count</span>
+                    <span class="text-[9px] text-slate-400 mt-0.5">Displays your active trump count on the table.</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox" id="toggle-trump-count" class="sr-only peer" checked>
+                    <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
             </div>
-            <div class="col-span-2 pt-1 border-t border-slate-800/80 flex justify-between">
-                <span>Hand Tricks:</span>
-                <span class="font-medium text-emerald-400" id="hand-tricks-tracker">Us: 0 | Them: 0</span>
+
+            <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                <div class="flex flex-col pr-2">
+                    <span class="text-[11px] font-semibold text-slate-200">Show All Suits Count</span>
+                    <span class="text-[9px] text-slate-400 mt-0.5">Displays counts of all suits simultaneously.</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox" id="toggle-all-suits-count" class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                <div class="flex flex-col pr-2">
+                    <span class="text-[11px] font-semibold text-slate-200">Show All Players' Cards</span>
+                    <span class="text-[9px] text-slate-400 mt-0.5">Reveal AI hands face-up for debugging/learning.</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox" id="toggle-reveal-all" class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
             </div>
         </div>
     </div>
 
-    <hr class="border-slate-800 my-4">
-
-    <!-- Bidding Strategy & UI Toggles -->
-    <div class="space-y-3">
-        <h3 class="text-xs uppercase tracking-widest text-slate-400 font-bold">Euchre Parameters</h3>
-        <div class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-800">
-            <div class="flex flex-col pr-2">
-                <span class="text-xs font-semibold text-slate-200">Partner Cooperative Bidding</span>
-                <span class="text-[10px] text-slate-400 mt-0.5">Let AI raise the bid to support their partner's suit or Aces choice.</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="toggle-cooperative" class="sr-only peer" checked>
-                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-800">
-            <div class="flex flex-col pr-2">
-                <span class="text-xs font-semibold text-slate-200">Show Trump Card Count</span>
-                <span class="text-[10px] text-slate-400 mt-0.5">Displays your active trump count (Shows 'Aces' in No Trump mode).</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="toggle-trump-count" class="sr-only peer" >
-                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-800">
-            <div class="flex flex-col pr-2">
-                <span class="text-xs font-semibold text-slate-200">Show All Suits Count</span>
-                <span class="text-[10px] text-slate-400 mt-0.5">Displays counts of all suits simultaneously (Left Bower shifted to Trump).</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="toggle-all-suits-count" class="sr-only peer">
-                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-between bg-slate-800/40 p-3 rounded-xl border border-slate-800">
-            <div class="flex flex-col pr-2">
-                <span class="text-xs font-semibold text-slate-200">Show All Players' Cards</span>
-                <span class="text-[10px] text-slate-400 mt-0.5">Reveal the hands of all AI opponents and partners face-up.</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="toggle-show-all-cards" class="sr-only peer">
-                <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-            </label>
-        </div>
+    <!-- Interactive Navigation Buttons -->
+    <div class="grid grid-cols-2 gap-2 shrink-0">
+        <button id="btn-toggle-help" class="py-2 bg-amber-950/20 hover:bg-amber-950/40 text-amber-400 font-bold text-xs rounded-xl transition-all border border-amber-500/30 flex items-center justify-center gap-1 h-10 text-[11px]">
+            <span>📖</span> Rules Explained
+        </button>
+        <button id="btn-reset" class="py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs rounded-xl transition-all border border-slate-700 h-10 text-[11px]">
+            Restart Game
+        </button>
     </div>
-
-    <!-- Toggle Help Menu button -->
-    <button id="btn-toggle-help" class="w-full mt-4 py-2.5 bg-amber-950/20 hover:bg-amber-950/40 text-amber-400 font-bold text-xs rounded-xl transition-all border border-amber-500/30 flex items-center justify-center gap-1.5">
-        <span>📖</span> Rules Explained
-    </button>
-
-    <hr class="border-slate-800 my-4">
 
     <!-- Console Log Panel -->
-    <div class="flex-1 min-h-[140px] flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-3 font-mono text-xs">
-        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1">Deal Log Console</div>
-        <div id="game-log" class="flex-1 overflow-y-auto space-y-1 text-slate-300 pr-1 select-none">
+    <div class="flex-1 min-h-[100px] flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-2.5 font-mono text-[10px]">
+        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1">Deal Log Console</div>
+        <div id="game-log" class="flex-1 overflow-y-auto space-y-1 text-slate-300 pr-1 select-none font-mono text-[10px]">
             <!-- Dynamic logs append here -->
         </div>
     </div>
-
-    <!-- System Controls -->
-    <button id="btn-reset" class="w-full mt-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-sm rounded-xl transition-all border border-slate-700">
-        Restart Game
-    </button>
 </aside>
 
+
 <script>
-// Polyfill Canvas roundRect for older browsers & headless canvas containers
+// Polyfill for roundRect to guarantee rendering across various desktop and mobile platforms
 if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
     CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
         if (typeof r === 'undefined') r = 0;
-        if (Array.isArray(r)) {
-            r = r[0] || 0;
-        }
+        if (Array.isArray(r)) r = r[0] || 0;
         if (w < 2 * r) r = w / 2;
         if (h < 2 * r) r = h / 2;
         this.beginPath();
@@ -305,7 +309,9 @@ if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D
 
 const SUITS = ['S', 'C', 'H', 'D']; // Spades, Clubs, Hearts, Diamonds
 const RANKS = ['9', '10', 'J', 'Q', 'K', 'A'];
-const TEAM_NAMES = ["Team 1 (Us)", "Team 2 (Them)"];
+
+// Standardized naming arrays mapping strictly to: Player, Left, Partner, Right
+const PLAYER_NAMES = ["Player", "Left", "Partner", "Right"];
 
 // Same-color suit lookup for Left Bower conversions
 const getSameColorSuit = (s) => {
@@ -327,10 +333,8 @@ const getEffectiveSuit = (card, trump) => {
 const getPowerValue = (card, leadSuit, trump) => {
     const isTrump = trump !== 'NT' && getEffectiveSuit(card, trump) === trump;
     const isLead = getEffectiveSuit(card, trump) === leadSuit;
-    
     let base = RANKS.indexOf(card.rank);
     
-    // Aces contract: Jacks are normal (9, 10, J, Q, K, A), Aces high. No Bower shifts.
     if (trump === 'NT') {
         if (isLead) return 50 + base;
         return base;
@@ -350,22 +354,23 @@ const getPowerValue = (card, leadSuit, trump) => {
 const state = {
     scores: [0, 0],
     gameState: 'DEALING', // DEALING, BIDDING, PLAYING, SCORING, GAMEOVER
-    hands: [[], [], [], []], // P0 (Human), P1, P2, P3
+    hands: [[], [], [], []], // P0 (Human Player), P1 (Left), P2 (Partner), P3 (Right)
     trickQueue: [], // Cards played this trick
     tricksWon: [0, 0], // Trick totals this hand
     highestBid: 0,
     winningBidder: -1,
     trumpSuit: null, // Suit or 'NT' for Aces
-    trumpConvention: null, // Stores convention label ('1NT', '2NT', etc.) for scoreboard display
+    trumpConvention: null, 
     dealer: 3,
     currentPlayer: 1,
     passCount: 0,
     leadSuit: null,
-    tempSelectedSuit: null,
+    tempSelectedBid: null,   // Tracks selected human bid value before choosing suit
+    tempSelectedSuit: null,  // Tracks selected human suit
     aiSupportPartnerTrumpToggle: true,
-    showTrumpCount: false,
+    showTrumpCount: true,
     showAllSuitsCount: false,
-    showAllCards: false,
+    revealAllCards: false,
     biddingTurnsCount: 0,
     playerBids: [null, null, null, null], // Visual bid tags [P0, P1, P2, P3]
     bidsThisRound: [], // Array of { player, bid, suit, passed, convention }
@@ -373,14 +378,13 @@ const state = {
     unplayedCounts: {'S':6,'C':6,'H':6,'D':6}
 };
 
-let aiTimeout = null; // Thread-safe container to prevent multiple turn race conditions
+let aiTimeout = null;
 
 // Dynamic Sorter function for human player hand grouping and hierarchy sorting
 const sortPlayerHand = (trump) => {
     const hand = state.hands[0];
     if (!hand) return;
 
-    // Define standard sorting group priorities for suits
     let suitPriority = ['S', 'H', 'C', 'D'];
     if (trump && trump !== 'NT') {
         if (trump === 'S' || trump === 'C') {
@@ -394,12 +398,10 @@ const sortPlayerHand = (trump) => {
         const effSuitA = getEffectiveSuit(a, trump);
         const effSuitB = getEffectiveSuit(b, trump);
 
-        // Group cards by effective suits first
         if (effSuitA !== effSuitB) {
             return suitPriority.indexOf(effSuitA) - suitPriority.indexOf(effSuitB);
         }
 
-        // Within the same effective suit, sort by relative card power lowest to highest (closure-safe)
         const getRankWeight = (card, effSuit) => {
             if (trump && trump !== 'NT' && effSuit === trump) {
                 if (card.rank === 'J' && card.suit === trump) return 100; // Right Bower
@@ -418,13 +420,22 @@ const ctx = canvas.getContext('2d');
 const container = document.getElementById('canvas-container');
 const logConsole = document.getElementById('game-log');
 const biddingPanel = document.getElementById('bidding-panel');
-const currentBidInfo = document.getElementById('current-bid-info');
 const suitSelector = document.getElementById('suit-selector');
 const bidNumSelector = document.getElementById('bid-num-selector');
 const toggleCooperative = document.getElementById('toggle-cooperative');
 const toggleTrumpCount = document.getElementById('toggle-trump-count');
 const toggleAllSuitsCount = document.getElementById('toggle-all-suits-count');
-const toggleShowAllCards = document.getElementById('toggle-show-all-cards');
+const toggleRevealAll = document.getElementById('toggle-reveal-all');
+
+// Collapsible Game Settings Accordion
+const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
+const settingsContent = document.getElementById('settings-content');
+const settingsArrow = document.getElementById('settings-arrow');
+
+toggleSettingsBtn.onclick = () => {
+    const isCollapsed = settingsContent.classList.toggle('hidden');
+    settingsArrow.innerText = isCollapsed ? '►' : '▼';
+};
 
 // Help assistant toggling DOM handles
 const helpPanel = document.getElementById('help-panel');
@@ -446,7 +457,7 @@ const addLog = (msg) => {
     logConsole.scrollTop = logConsole.scrollHeight;
 };
 
-// Pointer interaction hooks
+// Pointer & Touch gesture hooks
 const pointer = { x: -1000, y: -1000, isDown: false, justPressed: false };
 
 const getPointerPos = (e) => {
@@ -454,9 +465,9 @@ const getPointerPos = (e) => {
     const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
     
-    // Exact canvas-relative tracking (no scale skew)
-    pointer.x = clientX - rect.left;
-    pointer.y = clientY - rect.top;
+    // Scale tracking input precisely across viewport transformations
+    pointer.x = (clientX - rect.left) * (canvas.width / rect.width);
+    pointer.y = (clientY - rect.top) * (canvas.height / rect.height);
 };
 
 canvas.addEventListener('mousemove', getPointerPos);
@@ -476,10 +487,11 @@ canvas.addEventListener('touchstart', (e) => {
     pointer.justPressed = true;
     getPointerPos(e);
 });
-canvas.addEventListener('touchmove', getPointerPos);
+canvas.addEventListener('touchmove', (e) => {
+    getPointerPos(e);
+});
 canvas.addEventListener('touchend', () => { pointer.isDown = false; });
 
-// Resize Handler with built-in sandbox fail-safe dimensioning
 const handleResize = () => {
     const rect = container.getBoundingClientRect();
     canvas.width = rect.width || 800;
@@ -488,33 +500,40 @@ const handleResize = () => {
 window.addEventListener('resize', handleResize);
 handleResize();
 
-// Card dimensions
-const cardW = 72;
-const cardH = 104;
+// Card size coefficients (Auto-scaling cards for small screens)
+let cardW = 72;
+let cardH = 104;
+
+const updateCardScaling = (width, height) => {
+    // Dynamic scale based on canvas viewport dimensions
+    const factor = Math.min(width / 800, height / 600);
+    cardW = Math.max(50, Math.min(76, 72 * factor));
+    cardH = Math.max(72, Math.min(110, 104 * factor));
+};
 
 // Get Player Coordinates for layout
 const getPlayerCoords = (p, width, height) => {
     const cx = width / 2;
     const cy = height / 2;
-    if (p === 0) return { x: cx, y: height - 120 }; // P0 (Human)
-    if (p === 1) return { x: 110, y: cy - 20 };     // P1 (Left Opponent)
-    if (p === 2) return { x: cx, y: 110 };         // P2 (Top Partner)
-    if (p === 3) return { x: width - 110, y: cy - 20 }; // P3 (Right Opponent)
+    const factor = Math.min(width / 800, height / 600);
+    
+    // Dynamic positioning padding based on orientation aspect ratio
+    const vertPadding = Math.max(80, Math.min(140, 120 * factor));
+    const horizPadding = Math.max(60, Math.min(120, 110 * factor));
+    
+    if (p === 0) return { x: cx, y: height - vertPadding }; // P0 (Player)
+    if (p === 1) return { x: horizPadding, y: cy - 10 };     // P1 (Left Opponent)
+    if (p === 2) return { x: cx, y: vertPadding };          // P2 (Partner)
+    if (p === 3) return { x: width - horizPadding, y: cy - 10 }; // P3 (Right Opponent)
 };
 
-// Helper to check if a player is the second partner in their pair to bid
+// Check if player is the second partner to bid on their team
 const isSecondPartner = (playerIdx) => {
     const partnerIdx = (playerIdx + 2) % 4;
-    const startIdx = (state.dealer + 1) % 4; // First bidder of the round
-    let current = startIdx;
+    const startIdx = (state.dealer + 1) % 4;
     
-    while (current !== playerIdx) {
-        if (current === partnerIdx) {
-            return true; // Partner already took their turn
-        }
-        current = (current + 1) % 4;
-    }
-    return false; // First partner of the team to take their turn
+    if (playerIdx === startIdx || playerIdx === (startIdx + 1) % 4) return false;
+    return true;
 };
 
 // Get list of unplayed cards that are not in the specified AI hand and not played
@@ -546,16 +565,14 @@ const isBossCard = (card, trump, playedCards, aiHand) => {
 const evaluateAIHand = (hand, suit) => {
     let score = 0;
     if (suit === 'NT') {
-        // Aces evaluation
         hand.forEach(c => {
-            if (c.rank === 'A') score += 0.9;
-            else if (c.rank === 'K') score += 0.4;
-            else if (c.rank === 'Q') score += 0.2;
+            if (c.rank === 'A') score += 0.8;
+            else if (c.rank === 'K') score += 0.3;
+            else if (c.rank === 'Q') score += 0.1;
         });
         return score;
     }
     
-    // Standard suit evaluation
     hand.forEach(c => {
         const eff = getEffectiveSuit(c, suit);
         if (eff === suit) {
@@ -572,39 +589,60 @@ const evaluateAIHand = (hand, suit) => {
 };
 
 const updateHUD = () => {
-    document.getElementById('score-us').innerText = state.scores[0];
-    document.getElementById('score-them').innerText = state.scores[1];
+    let scoreUsText = state.scores[0].toString();
+    let scoreThemText = state.scores[1].toString();
+
+    // Show live hand trick status as (+N) during playing or scoring phases
+    if (state.gameState === 'PLAYING' || state.gameState === 'SCORING') {
+        scoreUsText += ` (+${state.tricksWon[0]})`;
+        scoreThemText += ` (+${state.tricksWon[1]})`;
+    }
+
+    document.getElementById('score-us').innerText = scoreUsText;
+    document.getElementById('score-them').innerText = scoreThemText;
     
-    // Set score progress bars
     document.getElementById('progress-us').style.width = `${Math.min(100, (state.scores[0] / 21) * 100)}%`;
     document.getElementById('progress-them').style.width = `${Math.min(100, (state.scores[1] / 21) * 100)}%`;
-    
-    let trumpSymbol = "None";
-    if (state.trumpSuit) {
-        if (state.trumpSuit === 'NT') {
-            if (state.trumpConvention) {
-                trumpSymbol = `Aces (${state.trumpConvention})`;
-            } else {
-                trumpSymbol = "Aces";
-            }
-        } else {
-            const icons = { 'S': '♠ Spades', 'C': '♣ Clubs', 'H': '♥ Hearts', 'D': '♦ Diamonds' };
-            trumpSymbol = icons[state.trumpSuit];
-        }
-    }
-    document.getElementById('trump-label').innerText = trumpSymbol;
-    
-    let bidText = "No Contract";
-    if (state.highestBid > 0) {
-        const names = ["You", "Left Opponent", "AI Partner", "Right Opponent"];
-        const contractSuitLabel = state.trumpConvention ? state.trumpConvention : (state.trumpSuit === 'NT' ? 'Aces' : state.trumpSuit);
-        bidText = `${state.highestBid} (${contractSuitLabel}) by ${names[state.winningBidder]}`;
-    }
-    document.getElementById('contract-label').innerText = bidText;
-    document.getElementById('hand-tricks-tracker').innerText = `Us: ${state.tricksWon[0]} | Them: ${state.tricksWon[1]}`;
+
+    updateContractUI();
 };
 
-// Run absolute dealer reset
+const updateContractUI = () => {
+    const displayEl = document.getElementById('contract-display');
+    
+    if (!displayEl) return;
+    
+    // Remain clean and blank during dealing, bidding, or when game starts over
+    if (state.gameState !== 'PLAYING' && state.gameState !== 'SCORING') {
+        displayEl.innerHTML = "&nbsp;";
+        return;
+    }
+    
+    const bid = state.highestBid;
+    const bidder = state.winningBidder;
+    const team = (bidder % 2 === 0) ? "Us" : "Them";
+    const suit = state.trumpSuit;
+    const convention = state.trumpConvention;
+    
+    let suitText = "";
+    let colorClass = "text-slate-100";
+    
+    if (suit === 'NT') {
+        suitText = convention ? convention : "Aces";
+        colorClass = "text-amber-400";
+    } else {
+        const suitIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
+        suitText = suitIcons[suit] || suit;
+        if (suit === 'H' || suit === 'D') {
+            colorClass = "text-rose-500";
+        } else {
+            colorClass = "text-slate-100";
+        }
+    }
+    
+    displayEl.innerHTML = `<span class="${colorClass} font-extrabold text-lg md:text-lg">${bid} ${suitText}</span> <span class="text-slate-400 font-normal text-lg md:text-lg">(${team})</span>`;
+};
+
 const runReset = () => {
     if (aiTimeout) {
         clearTimeout(aiTimeout);
@@ -630,40 +668,35 @@ const startNewHand = () => {
     state.trumpSuit = null;
     state.trumpConvention = null;
     state.dealer = (state.dealer + 1) % 4;
-    state.currentPlayer = (state.dealer + 1) % 4; // Bidding starts left of dealer
+    state.currentPlayer = (state.dealer + 1) % 4; // Starts left of dealer
     state.passCount = 0;
     state.biddingTurnsCount = 0;
     state.leadSuit = null;
+    state.tempSelectedBid = null;
     state.tempSelectedSuit = null;
     state.bidsThisRound = [];
-    state.playedCards = []; // Clear memory at hand start
-    state.playerBids = [null, null, null, null]; // Reset physical bids
-    state.unplayedCounts = {'S':6,'C':6,'H':6,'D':6} // Reset suit counts
+    state.playedCards = [];
+    state.playerBids = [null, null, null, null];
+    state.unplayedCounts = {'S':6,'C':6,'H':6,'D':6};
     
-    // Create Deck (24 cards total: 9 to Ace)
     const deck = [];
     SUITS.forEach(s => RANKS.forEach(r => deck.push({ rank: r, suit: s })));
     
-    // Shuffle
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
     }
     
-    // Deal 6 cards each (distributing all 24 cards with no kitty)
     for (let p = 0; p < 4; p++) {
         state.hands[p] = deck.splice(0, 6);
     }
     
-    // Sort player's hand initially (no trump active yet)
     sortPlayerHand(null);
     
-    const names = ["You", "Left Opponent", "AI Partner", "Right Opponent"];
-    addLog(`6 cards dealt to each player. Dealer button moves to: <strong>${names[state.dealer]}</strong>.`);
+    addLog(`6 cards dealt to each player. Dealer: <strong>${PLAYER_NAMES[state.dealer]}</strong>.`);
     
     updateHUD();
 
-    // Trigger state change
     aiTimeout = setTimeout(() => {
         state.gameState = 'BIDDING';
         triggerNextTurn();
@@ -679,26 +712,22 @@ const triggerNextTurn = () => {
     updateHUD();
     
     if (state.gameState === 'BIDDING') {
-        biddingPanel.classList.add('hidden'); // Hide human overlay unless explicitly opened below
+        biddingPanel.classList.add('hidden');
         
-        // Check if bidding round is complete
         if (state.biddingTurnsCount >= 4) {
             if (state.winningBidder === -1) {
-                addLog("Everyone passed the bidding round. Hands are discarded and redealt.");
+                addLog("Everyone passed the bidding round. Redealing.");
                 aiTimeout = setTimeout(startNewHand, 1500);
             } else {
                 state.gameState = 'PLAYING';
-                // Positional Lead Change: First lead starts left of the winning bidder!
-                state.currentPlayer = (state.winningBidder + 1) % 4; 
+                state.currentPlayer = (state.winningBidder + 1) % 4; // First lead left of bidding winner
                 state.trickQueue = [];
                 state.leadSuit = null;
                 
-                // Finalized bidding: sort player hand dynamically with active trump
                 sortPlayerHand(state.trumpSuit);
                 
-                const names = ["You", "Left Opponent", "Partner", "Right Opponent"];
                 const trumpSuitDisplay = state.trumpConvention ? state.trumpConvention : (state.trumpSuit === 'NT' ? 'Aces' : state.trumpSuit);
-                addLog(`Bidding round finished. <strong>${names[state.winningBidder]}</strong> won the bid for <strong>${state.highestBid} tricks</strong> (Trump: <strong>${trumpSuitDisplay}</strong>). Player <strong>${names[state.currentPlayer]}</strong> has the first lead!`);
+                addLog(`Contract won by <strong>${PLAYER_NAMES[state.winningBidder]}</strong> for <strong>${state.highestBid} tricks</strong> (${trumpSuitDisplay}). <strong>${PLAYER_NAMES[state.currentPlayer]}</strong> has the lead!`);
                 
                 if (state.trumpSuit !== 'NT') {
                     state.unplayedCounts[state.trumpSuit]++;
@@ -718,11 +747,10 @@ const triggerNextTurn = () => {
         }
     } else if (state.gameState === 'PLAYING') {
         if (state.trickQueue.length === 4) {
-            // Trick is complete, resolve it
             aiTimeout = setTimeout(resolveTrick, 1400);
         } else {
             if (state.currentPlayer === 0) {
-                addLog("Your turn. Click a highlighted card to play.");
+                addLog("Your turn. Tap a highlighted card to play.");
             } else {
                 aiTimeout = setTimeout(handleAIPlay, 1000);
             }
@@ -733,27 +761,25 @@ const triggerNextTurn = () => {
 const openHumanBiddingUI = () => {
     biddingPanel.classList.remove('hidden');
     
-    // Update dynamic auction log within the modal
     const historyList = document.getElementById('bidding-history-list');
     historyList.innerHTML = '';
     
-    const playerNames = ["You", "Left Opponent", "AI Partner", "Right Opponent"];
-    const suitIcons = { 'S': '♠ Spades', 'C': '♣ Clubs', 'H': '♥ Hearts', 'D': '♦ Diamonds', 'NT': 'Aces' };
-    const suitColors = { 'S': 'text-slate-300', 'C': 'text-slate-300', 'H': 'text-rose-400', 'D': 'text-rose-400', 'NT': 'text-amber-400' };
+    const suitIcons = { 'S': '♠ Spades', 'C': '♣ Clubs', 'H': '♥ Hearts', 'D': '♦ Diamonds', 'NT': 'Aces', 'ACES': 'Aces' };
+    const suitColors = { 'S': 'text-slate-300', 'C': 'text-slate-300', 'H': 'text-rose-400', 'D': 'text-rose-400', 'NT': 'text-amber-400', 'ACES': 'text-amber-400' };
 
     if (state.bidsThisRound.length === 0) {
         const row = document.createElement('div');
-        row.className = "text-slate-500 italic text-center text-xs";
-        row.innerText = "No bids have been placed yet.";
+        row.className = "text-slate-500 italic text-center text-[11px] py-1";
+        row.innerText = "No bids placed yet.";
         historyList.appendChild(row);
     } else {
         state.bidsThisRound.forEach(entry => {
             const row = document.createElement('div');
-            row.className = "flex justify-between items-center py-0.5 border-b border-slate-800/40 last:border-0 text-xs";
+            row.className = "flex justify-between items-center py-0.5 border-b border-slate-800/40 last:border-b text-[11px]";
             
             const nameSpan = document.createElement('span');
             nameSpan.className = "font-semibold " + (entry.player === 0 ? "text-emerald-400" : "text-slate-300");
-            nameSpan.innerText = playerNames[entry.player];
+            nameSpan.innerText = PLAYER_NAMES[entry.player];
             
             const actionSpan = document.createElement('span');
             if (entry.passed) {
@@ -771,126 +797,92 @@ const openHumanBiddingUI = () => {
         });
     }
     
-    // Update Bid Information text
-    if (state.highestBid > 0) {
-        const names = ["You", "Left Opponent", "AI Partner", "Right Opponent"];
-        const suitLabel = state.trumpConvention ? state.trumpConvention : (state.trumpSuit === 'NT' ? 'Aces' : state.trumpSuit);
-        currentBidInfo.innerHTML = `Current contract is <strong>${state.highestBid}</strong> by <strong>${names[state.winningBidder]}</strong> (${suitLabel})`;
-    } else {
-        currentBidInfo.innerHTML = `No active bids. Choose a suit/Aces and bid to start the contract.`;
-    }
-    
+    state.tempSelectedBid = null;
     state.tempSelectedSuit = null;
-    
-    // Clear selections
-    document.querySelectorAll('.suit-btn').forEach(btn => btn.classList.remove('ring-4', 'ring-emerald-400', 'bg-slate-700'));
-    
     updateBiddingButtons();
 };
 
+// Interactive Bid-First, Suit-Second Redesigned Logic
 const updateBiddingButtons = () => {
-    // Check partner restriction on 1NT & 2NT
-    const isSecond = isSecondPartner(0);
-    const btn1NT = document.getElementById('btn-1nt');
-    const btn2NT = document.getElementById('btn-2nt');
-    const notice = document.getElementById('partner-restriction-notice');
-
-    if (isSecond) {
-        btn1NT.disabled = true;
-        btn2NT.disabled = true;
-        btn1NT.className = "py-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-semibold cursor-not-allowed text-xs flex flex-col items-center justify-center flex-1";
-        btn2NT.className = "py-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-semibold cursor-not-allowed text-xs flex flex-col items-center justify-center flex-1";
-        notice.classList.remove('hidden');
-    } else {
-        notice.classList.add('hidden');
-        // Validate 1NT button
-        if (state.highestBid >= 1) {
-            btn1NT.disabled = true;
-            btn1NT.className = "py-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-semibold cursor-not-allowed text-xs flex flex-col items-center justify-center flex-1";
-        } else {
-            btn1NT.disabled = false;
-            btn1NT.className = "py-2.5 rounded-lg border border-amber-500/30 hover:border-amber-400 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 flex-1";
-            btn1NT.onclick = () => {
-                state.highestBid = 1;
-                state.trumpSuit = 'NT';
-                state.trumpConvention = '1NT';
-                state.winningBidder = 0;
-                
-                state.bidsThisRound.push({ player: 0, bid: 1, suit: 'NT', convention: '1NT', passed: false });
-                state.playerBids[0] = { bid: 1, suit: 'NT', convention: '1NT', passed: false };
-                addLog(`You bidded a convention <strong>1NT</strong> (Jack and Ace signal)!`);
-                biddingPanel.classList.add('hidden');
-                
-                state.biddingTurnsCount++;
-                state.currentPlayer = (state.currentPlayer + 1) % 4;
-                triggerNextTurn();
-            };
-        }
-
-        // Validate 2NT button
-        if (state.highestBid >= 2) {
-            btn2NT.disabled = true;
-            btn2NT.className = "py-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-semibold cursor-not-allowed text-xs flex flex-col items-center justify-center flex-1";
-        } else {
-            btn2NT.disabled = false;
-            btn2NT.className = "py-2.5 rounded-lg border border-amber-500/30 hover:border-amber-400 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95 flex-1";
-            btn2NT.onclick = () => {
-                state.highestBid = 2;
-                state.trumpSuit = 'NT';
-                state.trumpConvention = '2NT';
-                state.winningBidder = 0;
-                
-                state.bidsThisRound.push({ player: 0, bid: 2, suit: 'NT', convention: '2NT', passed: false });
-                state.playerBids[0] = { bid: 2, suit: 'NT', convention: '2NT', passed: false };
-                addLog(`You bidded a convention <strong>2NT</strong> (Red Bower, Black Bower, and Ace signal)!`);
-                biddingPanel.classList.add('hidden');
-                
-                state.biddingTurnsCount++;
-                state.currentPlayer = (state.currentPlayer + 1) % 4;
-                triggerNextTurn();
-            };
-        }
-    }
-
-    // Suit selections
-    document.querySelectorAll('.suit-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.suit-btn').forEach(b => b.classList.remove('ring-4', 'ring-emerald-400', 'bg-slate-700'));
-            btn.classList.add('ring-4', 'ring-emerald-400', 'bg-slate-700');
-            state.tempSelectedSuit = btn.getAttribute('data-suit');
-            updateBiddingButtons();
-        };
-    });
-
-    // Bid numbers (1 to 6)
+    // 1. Selectable normal bid value buttons (Tricks 1 through 6)
     document.querySelectorAll('.bid-val-btn').forEach(btn => {
         const val = parseInt(btn.getAttribute('data-bid'));
-        
-        // Strict limit rule: avoid bidding 1 in a suit or Aces unless we are the last bidder AND everyone passed
-        const isLast = (state.biddingTurnsCount === 3);
-        const nobodyBid = (state.highestBid === 0);
-        const isForbidden1Level = (val === 1 && !(isLast && nobodyBid));
-
-        const disabled = val <= state.highestBid || !state.tempSelectedSuit || isForbidden1Level;
+        const disabled = val <= state.highestBid;
         btn.disabled = disabled;
         
         if (disabled) {
-            btn.className = "bid-val-btn py-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-semibold cursor-not-allowed text-xs transition-all";
+            btn.className = "bid-val-btn px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-semibold cursor-not-allowed text-[11px] transition-all h-8";
         } else {
-            btn.className = "bid-val-btn py-2.5 rounded-lg border border-emerald-500/30 hover:border-emerald-400 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold hover:scale-105 active:scale-95 transition-all text-sm";
+            const isSelected = (state.tempSelectedBid === val);
+            if (isSelected) {
+                btn.className = "bid-val-btn px-3.5 py-1.5 rounded-lg border-emerald-400 bg-emerald-900/60 ring-2 ring-emerald-400 text-emerald-300 font-bold transition-all text-[11px] h-8";
+            } else {
+                btn.className = "bid-val-btn px-3.5 py-1.5 rounded-lg border border-emerald-500/30 hover:border-emerald-400 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold transition-all text-[11px] h-8";
+            }
             btn.onclick = () => {
-                // Place Bid!
-                state.highestBid = val;
-                state.trumpSuit = state.tempSelectedSuit;
-                state.trumpConvention = null; // Normal bid
-                state.winningBidder = 0;
+                state.tempSelectedBid = val;
+                // Auto-reset NT if trick size becomes invalid for NT convention
+                if (val >= 3 && state.tempSelectedSuit === 'NT') {
+                    state.tempSelectedSuit = null;
+                }
+                updateBiddingButtons();
+            };
+        }
+    });
+
+    // 2. Suit/Aces/NT Selector (Enabled ONLY after picking a Bid value first)
+    const bidChosen = (state.tempSelectedBid !== null);
+    document.querySelectorAll('.suit-btn').forEach(btn => {
+        const suit = btn.getAttribute('data-suit');
+        const isNT = (suit === 'NT');
+        // NT is unavailable when the minimum bid is above 3, or if the selected bid is above 3
+        const isNTDisabled = isNT && (state.highestBid >= 3 || state.tempSelectedBid >= 3);
+        
+        const disabled = !bidChosen || isNTDisabled;
+        btn.disabled = disabled;
+
+        if (disabled) {
+            btn.className = "suit-btn px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-bold text-[11px] flex items-center justify-center gap-1 opacity-40 cursor-not-allowed h-8";
+        } else {
+            const isSelected = (state.tempSelectedSuit === suit);
+            const isRed = (suit === 'H' || suit === 'D');
+            const isSpecial = (suit === 'ACES' || suit === 'NT');
+            let colorClass = isRed ? 'text-rose-500' : (isSpecial ? 'text-amber-400' : 'text-slate-100');
+
+            if (isSelected) {
+                btn.className = `suit-btn px-3 py-1.5 rounded-lg border-emerald-400 bg-emerald-900/60 ring-2 ring-emerald-400 ${colorClass} font-bold text-[11px] flex items-center justify-center gap-1 transition-all h-8`;
+            } else {
+                btn.className = `suit-btn px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 ${colorClass} font-bold text-[11px] flex items-center justify-center gap-1 transition-all h-8`;
+            }
+
+            btn.onclick = () => {
+                state.tempSelectedSuit = suit;
                 
-                state.bidsThisRound.push({ player: 0, bid: val, suit: state.trumpSuit, passed: false });
-                state.playerBids[0] = { bid: val, suit: state.trumpSuit, passed: false };
-                const bidName = state.trumpSuit === 'NT' ? 'Aces' : state.trumpSuit;
-                addLog(`You placed a bid of <strong>${val}</strong> in <strong>${bidName}</strong>!`);
+                // Clicking suit completes and submits the bid contract immediately!
+                state.highestBid = state.tempSelectedBid;
+                state.winningBidder = 0; // Set winning bidder to player (0)
+                
+                if (suit === 'ACES') {
+                    state.trumpSuit = 'NT';
+                    state.trumpConvention = null;
+                    state.bidsThisRound.push({ player: 0, bid: state.tempSelectedBid, suit: 'NT', convention: null, passed: false });
+                    state.playerBids[0] = { bid: state.tempSelectedBid, suit: 'NT', convention: null, passed: false };
+                    addLog(`Player placed a bid of <strong>${state.tempSelectedBid}</strong> in <strong>Aces</strong>!`);
+                } else if (suit === 'NT') {
+                    state.trumpSuit = 'NT';
+                    state.trumpConvention = state.tempSelectedBid + 'NT';
+                    state.bidsThisRound.push({ player: 0, bid: state.tempSelectedBid, suit: 'NT', convention: state.trumpConvention, passed: false });
+                    state.playerBids[0] = { bid: state.tempSelectedBid, suit: 'NT', convention: state.trumpConvention, passed: false };
+                    addLog(`Player bid convention <strong>${state.trumpConvention}</strong>!`);
+                } else {
+                    state.trumpSuit = suit;
+                    state.trumpConvention = null;
+                    state.bidsThisRound.push({ player: 0, bid: state.tempSelectedBid, suit: suit, passed: false });
+                    state.playerBids[0] = { bid: state.tempSelectedBid, suit: suit, passed: false };
+                    addLog(`Player placed a bid of <strong>${state.tempSelectedBid}</strong> in <strong>${suit}</strong>!`);
+                }
+                
                 biddingPanel.classList.add('hidden');
-                
                 state.biddingTurnsCount++;
                 state.currentPlayer = (state.currentPlayer + 1) % 4;
                 triggerNextTurn();
@@ -899,13 +891,14 @@ const updateBiddingButtons = () => {
     });
 };
 
+// Hooking Pass button functionality cleanly in JavaScript
 document.getElementById('btn-pass').onclick = () => {
-    addLog("You passed.");
-    biddingPanel.classList.add('hidden');
     state.passCount++;
-    state.biddingTurnsCount++;
+    addLog("You passed.");
     state.bidsThisRound.push({ player: 0, passed: true });
     state.playerBids[0] = { passed: true };
+    biddingPanel.classList.add('hidden');
+    state.biddingTurnsCount++;
     state.currentPlayer = (state.currentPlayer + 1) % 4;
     triggerNextTurn();
 };
@@ -913,76 +906,86 @@ document.getElementById('btn-pass').onclick = () => {
 const handleAIBid = () => {
     const p = state.currentPlayer;
     const hand = state.hands[p];
-    const names = ["You", "Left Opponent", "AI Partner", "Right Opponent"];
     const partner = (p + 2) % 4;
     
     let bestSuit = null;
     let bestScore = 0;
     
-    // Evaluate standard suit options
+    // Evaluate if the partner (Player 2) is cooperative and Player (0) bid special NT conventions
+    let partnerSupportTricks = 0;
+    if (p === 2) {
+        const playerBid = state.playerBids[0];
+        if (playerBid && !playerBid.passed) {
+            if (playerBid.convention === '1NT') {
+                partnerSupportTricks = 1.5; // Player signaled holding at least one Jack and one Ace
+            } else if (playerBid.convention === '2NT') {
+                partnerSupportTricks = 2.5; // Player signaled holding Red Jack, Black Jack, and Ace
+            }
+        }
+    }
+
     SUITS.forEach(s => {
         let sc = evaluateAIHand(hand, s);
+        // If Partner is going after Player, adjust score based on Player's support signal
+        if (p === 2 && partnerSupportTricks > 0) {
+            sc += partnerSupportTricks;
+        }
         if (sc > bestScore) {
             bestScore = sc;
             bestSuit = s;
         }
     });
 
-    // Evaluate Aces (No Trump) strength
     let acesScore = evaluateAIHand(hand, 'NT');
+    if (p === 2 && partnerSupportTricks > 0) {
+        // Player's special NT convention bid also indicates Aces/NT support!
+        let acesSupport = (state.playerBids[0] && state.playerBids[0].convention === '1NT') ? 1.0 : 1.8;
+        acesScore += acesSupport;
+    }
 
-    // Convention variables
     const hasBower = hand.some(c => c.rank === 'J');
     const hasAce = hand.some(c => c.rank === 'A');
     const hasRedBower = hand.some(c => c.rank === 'J' && (c.suit === 'H' || c.suit === 'D'));
     const hasBlackBower = hand.some(c => c.rank === 'J' && (c.suit === 'S' || c.suit === 'C'));
-    const isSecond = isSecondPartner(p);
 
-    let chosenBid = null; // Will encapsulate bid structure { bid, suit, convention, label }
+    let chosenBid = null;
 
-    // Rule 3: Evaluate Special Conventions first if NOT the second partner
-    if (!isSecond) {
-        if (hasRedBower && hasBlackBower && hasAce && state.highestBid < 2) {
-            chosenBid = { bid: 2, suit: 'NT', convention: '2NT', label: '2NT' };
-        } else if (hasBower && hasAce && state.highestBid < 1) {
-            chosenBid = { bid: 1, suit: 'NT', convention: '1NT', label: '1NT' };
-        }
+    if (hasRedBower && hasBlackBower && hasAce && state.highestBid < 2) {
+        chosenBid = { bid: 2, suit: 'NT', convention: '2NT' };
+    } else if (hasBower && hasAce && state.highestBid < 1) {
+        chosenBid = { bid: 1, suit: 'NT', convention: '1NT' };
     }
 
-    // Evaluate potential prospective values
     const suitProspective = Math.floor(bestScore);
     const acesProspective = Math.floor(acesScore);
 
-    // Rule 3: "If the AI can bid a suit with greater potential value than Aces, it should bid the suit."
-    if (suitProspective >= 2 && bestScore > acesScore) {
+    if (suitProspective >= 1 && bestScore > acesScore) {
         if (suitProspective > state.highestBid) {
-            chosenBid = { bid: suitProspective, suit: bestSuit, convention: null, label: `${suitProspective} ${bestSuit}` };
+            chosenBid = { bid: suitProspective, suit: bestSuit, convention: null };
         }
     }
 
-    // Rule 3: "If it cannot make a good suit bid (above 1), it can bid 1NT, 2NT, or 2 Aces"
     if (!chosenBid) {
-        // If we didn't qualify for 1NT/2NT, can we bid 2 Aces?
-        if (acesScore >= 1.5 && state.highestBid < 2) {
-            chosenBid = { bid: 2, suit: 'NT', convention: null, label: '2 Aces' };
+        if (acesScore >= 1.0 && state.highestBid < 1) {
+            chosenBid = { bid: 1, suit: 'NT', convention: null };
+        } else if (acesScore >= 1.5 && state.highestBid < 2) {
+            chosenBid = { bid: 2, suit: 'NT', convention: null };
         }
     }
 
-    // Rule 3: "avoid 1 suit or 1 Aces bids unless the current bidder is the last bidder and everyone else has passed"
     const isLastBidder = (state.biddingTurnsCount === 3);
     const nobodyHasBid = (state.highestBid === 0);
 
     if (!chosenBid && isLastBidder && nobodyHasBid) {
         if (bestScore >= 1.0) {
-            chosenBid = { bid: 1, suit: bestSuit, convention: null, label: `1 ${bestSuit}` };
+            chosenBid = { bid: 1, suit: bestSuit, convention: null };
         } else if (acesScore >= 1.0) {
-            chosenBid = { bid: 1, suit: 'NT', convention: null, label: '1 Aces' };
+            chosenBid = { bid: 1, suit: 'NT', convention: null };
         }
     }
 
     let bidMade = false;
 
-    // Apply the chosen bid if valid and exceeds state highest bid
     if (chosenBid && chosenBid.bid > state.highestBid) {
         state.highestBid = chosenBid.bid;
         state.trumpSuit = chosenBid.suit;
@@ -993,15 +996,14 @@ const handleAIBid = () => {
         state.playerBids[p] = { bid: chosenBid.bid, suit: chosenBid.suit, convention: chosenBid.convention, passed: false };
         
         if (chosenBid.convention) {
-            addLog(`<strong>${names[p]}</strong> signals with the <strong>${chosenBid.convention} Convention</strong> and bids <strong>${chosenBid.bid} Tricks</strong>!`);
+            addLog(`<strong>${PLAYER_NAMES[p]}</strong> signals <strong>${chosenBid.convention}</strong> and bids <strong>${chosenBid.bid} Tricks</strong>!`);
         } else {
             const suitStr = chosenBid.suit === 'NT' ? 'Aces' : chosenBid.suit;
-            addLog(`<strong>${names[p]}</strong> places a competitive bid of <strong>${chosenBid.bid}</strong> in <strong>${suitStr}</strong>.`);
+            addLog(`<strong>${PLAYER_NAMES[p]}</strong> bids <strong>${chosenBid.bid}</strong> in <strong>${suitStr}</strong>.`);
         }
         bidMade = true;
     }
 
-    // Cooperative Partner Boosting Support
     if (!bidMade && state.aiSupportPartnerTrumpToggle && state.winningBidder === partner) {
         const partnerSuit = state.trumpSuit;
         const supportTricks = evaluateAIHand(hand, partnerSuit);
@@ -1010,7 +1012,7 @@ const handleAIBid = () => {
             state.highestBid++;
             state.winningBidder = p;
             const boostLabel = partnerSuit === 'NT' ? 'Aces' : partnerSuit;
-            addLog(`<strong>${names[p]}</strong> trusts partner's <strong>${boostLabel}</strong> and raises the bid to <strong>${state.highestBid}</strong>!`);
+            addLog(`<strong>${PLAYER_NAMES[p]}</strong> trusts partner's <strong>${boostLabel}</strong> and raises the bid to <strong>${state.highestBid}</strong>!`);
             bidMade = true;
             state.bidsThisRound.push({ player: p, bid: state.highestBid, suit: partnerSuit, passed: false });
             state.playerBids[p] = { bid: state.highestBid, suit: partnerSuit, passed: false };
@@ -1019,7 +1021,7 @@ const handleAIBid = () => {
 
     if (!bidMade) {
         state.passCount++;
-        addLog(`<strong>${names[p]}</strong> passes.`);
+        addLog(`<strong>${PLAYER_NAMES[p]}</strong> passes.`);
         state.bidsThisRound.push({ player: p, passed: true });
         state.playerBids[p] = { passed: true };
     }
@@ -1029,7 +1031,6 @@ const handleAIBid = () => {
     triggerNextTurn();
 };
 
-// AI Play Helpers
 const findSingletonOffSuit = (hand, trump, pool) => {
     if (trump === 'NT') return -1;
     const counts = { 'S': 0, 'C': 0, 'H': 0, 'D': 0 };
@@ -1095,7 +1096,6 @@ const handleAIPlay = () => {
     const p = state.currentPlayer;
     const hand = state.hands[p];
     
-    // Get legal plays matching lead suit rule
     let legalIndices = [];
     hand.forEach((card, idx) => {
         if (!state.leadSuit || getEffectiveSuit(card, state.trumpSuit) === state.leadSuit) {
@@ -1103,7 +1103,6 @@ const handleAIPlay = () => {
         }
     });
 
-    // Void / Short-Suiting Fallback
     if (legalIndices.length === 0) {
         hand.forEach((_, idx) => legalIndices.push(idx));
     }
@@ -1112,7 +1111,6 @@ const handleAIPlay = () => {
     let chosenIdx = legalIndices[0];
     
     if (!state.leadSuit) {
-        // === CONTEXTUAL OPENING LEAD LOGIC ===
         const isAttacking = (state.winningBidder % 2 === p % 2);
         
         if (isAttacking) {
@@ -1142,7 +1140,6 @@ const handleAIPlay = () => {
                 }
             }
         } else {
-            // === DEFENDING LEAD LOGIC ===
             const nonTrumpIndices = state.trumpSuit === 'NT' ? legalIndices : legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) !== state.trumpSuit);
             const leadPool = nonTrumpIndices.length > 0 ? nonTrumpIndices : legalIndices;
             
@@ -1159,7 +1156,6 @@ const handleAIPlay = () => {
             }
         }
     } else {
-        // === CONTEXTUAL FOLLOW OR VOID PLAY LOGIC ===
         let currentWinner = -1;
         let currentMaxPower = -1;
         state.trickQueue.forEach(q => {
@@ -1170,8 +1166,8 @@ const handleAIPlay = () => {
             }
         });
 
-        const partner = (p + 2) % 4;
-        const partnerIsWinning = (currentWinner === partner);
+        const partnerIdx = (p + 2) % 4;
+        const partnerIsWinning = (currentWinner === partnerIdx);
         const isVoid = getEffectiveSuit(hand[legalIndices[0]], state.trumpSuit) !== state.leadSuit;
         
         if (isVoid) {
@@ -1181,7 +1177,6 @@ const handleAIPlay = () => {
                 if (state.trumpSuit === 'NT') {
                     chosenIdx = findLowestSluffCard(hand, 'NT', legalIndices);
                 } else {
-                    // Cut in (trump) if possible
                     const trumpIndices = legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit);
                     let winningTrumpIdx = -1;
                     let lowestWinningTrumpPower = Infinity;
@@ -1203,7 +1198,7 @@ const handleAIPlay = () => {
             }
         } else {
             if (partnerIsWinning) {
-                const partnerCard = state.trickQueue.find(q => q.player === partner).card;
+                const partnerCard = state.trickQueue.find(q => q.player === partnerIdx).card;
                 const partnerCardIsBoss = isBossCard(partnerCard, state.trumpSuit, state.playedCards, hand);
                 
                 if (partnerCardIsBoss) {
@@ -1247,9 +1242,8 @@ const playCard = (playerIdx, cardIdx) => {
     
     state.unplayedCounts[getEffectiveSuit(card, state.trumpSuit)]--;
     
-    const names = ["You", "Left Opponent", "AI Partner", "Right Opponent"];
     const suitsIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
-    addLog(`<strong>${names[playerIdx]}</strong> played <strong>${card.rank === '10' ? '10' : card.rank}${suitsIcons[card.suit]}</strong>.`);
+    addLog(`<strong>${PLAYER_NAMES[playerIdx]}</strong> played <strong>${card.rank === '10' ? '10' : card.rank}${suitsIcons[card.suit]}</strong>.`);
     
     state.currentPlayer = (state.currentPlayer + 1) % 4;
     triggerNextTurn();
@@ -1269,8 +1263,7 @@ const resolveTrick = () => {
 
     state.tricksWon[winner % 2]++;
     
-    const names = ["You", "Left Opponent", "AI Partner", "Right Opponent"];
-    addLog(`<strong>${names[winner]}</strong> wins the trick!`);
+    addLog(`<strong>${PLAYER_NAMES[winner]}</strong> wins the trick!`);
     
     state.trickQueue = [];
     state.leadSuit = null;
@@ -1292,19 +1285,23 @@ const resolveHand = () => {
     let points1 = 0;
     let points2 = 0;
 
+    const team1Name = "Player & Partner";
+    const team2Name = "Left & Right";
+    const activeTeamName = biddingTeam === 0 ? team1Name : team2Name;
+
     if (tricksSecured >= state.highestBid) {
         points1 = state.tricksWon[0];
         points2 = state.tricksWon[1];
-        addLog(`Contract met successfully! Both teams score their tricks: Us +${points1}, Them +${points2}.`);
+        addLog(`Contract met! Tricks won: <strong>${team1Name}</strong>: ${state.tricksWon[0]} | <strong>${team2Name}</strong>: ${state.tricksWon[1]}.`);
     } else {
         if (biddingTeam === 0) {
-            points1 = -5;
+            points1 = -state.highestBid; 
             points2 = state.tricksWon[1];
         } else {
             points1 = state.tricksWon[0];
-            points2 = -5;
+            points2 = -state.highestBid;
         }
-        addLog(`<strong>Set!</strong> Team ${biddingTeam + 1} failed their contract of ${state.highestBid} and suffers a <strong>-5 penalty</strong>. Opponents score ${state.tricksWon[1 - biddingTeam]} trick points.`);
+        addLog(`<strong>Set!</strong> Team <strong>${activeTeamName}</strong> fails their contract. Suffers a penalty of <strong>-${state.highestBid} points</strong>.`);
     }
 
     state.scores[0] += points1;
@@ -1314,7 +1311,7 @@ const resolveHand = () => {
 
     if (state.scores[0] >= 21 || state.scores[1] >= 21) {
         state.gameState = 'GAMEOVER';
-        const winnerMsg = state.scores[0] >= 21 ? "TEAM 1 (US) WINS THE GAME!" : "TEAM 2 (THEM) WINS THE GAME!";
+        const winnerMsg = state.scores[0] >= 21 ? "PLAYER & PARTNER WIN THE GAME!" : "LEFT & RIGHT WIN THE GAME!";
         addLog(`<strong>=== ${winnerMsg} ===</strong>`);
     } else {
         aiTimeout = setTimeout(startNewHand, 3000);
@@ -1329,7 +1326,6 @@ const drawCard = (card, x, y, faceUp = true, highlight = false, isHovered = fals
     const finalY = isHovered ? y - 16 : y;
     ctx.translate(x, finalY);
     
-    // Shadow
     ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
     ctx.shadowBlur = isHovered ? 14 : 5;
     ctx.shadowOffsetY = isHovered ? 10 : 2;
@@ -1350,25 +1346,21 @@ const drawCard = (card, x, y, faceUp = true, highlight = false, isHovered = fals
         ctx.fillStyle = isRed ? '#ef4444' : '#0f172a';
         const suitsIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
         
-        // Custom Rank & Suit in Top-Left (Premium Playing Card standard)
         ctx.font = 'bold 13px "Inter", sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 6, -cardH / 2 + 6);
         
-        // Large Center Asset
         ctx.font = 'bold 22px "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(suitsIcons[card.suit], 0, 8);
 
-        // Matching rotated helper in Bottom-Right
         ctx.font = 'bold 11px "Inter", sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'bottom';
         ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, cardW / 2 - 6, cardH / 2 - 6);
     } else {
-        // Draw elegant card backing pattern
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -1386,7 +1378,6 @@ const drawPlayerPlate = (p, name, pos, width, height) => {
     
     ctx.save();
     
-    // Background Plate box
     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
     ctx.strokeStyle = (state.currentPlayer === p && state.gameState !== 'SCORING' && state.gameState !== 'GAMEOVER') ? '#f59e0b' : '#334155';
     ctx.lineWidth = 1.5;
@@ -1395,14 +1386,12 @@ const drawPlayerPlate = (p, name, pos, width, height) => {
     ctx.fill();
     ctx.stroke();
     
-    // Player Name label
     ctx.fillStyle = (state.currentPlayer === p && state.gameState !== 'SCORING' && state.gameState !== 'GAMEOVER') ? '#fbbf24' : '#f8fafc';
     ctx.font = 'bold 11px "Inter", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(name, pos.x, labelY + 1);
     
-    // Dock Dealer Chip to the side safely
     if (state.dealer === p) {
         const dX = pos.x - 84;
         const dY = labelY;
@@ -1427,7 +1416,6 @@ const drawPlayerBid = (p, pos, width, height) => {
     if (!state.playerBids || !state.playerBids[p]) return;
     const bidInfo = state.playerBids[p];
     let text = "";
-    let isHighest = (state.winningBidder === p && !bidInfo.passed);
 
     if (bidInfo.passed) {
         text = "Passed";
@@ -1460,8 +1448,8 @@ const drawPlayerBid = (p, pos, width, height) => {
         by = pos.y;
     }
 
-    ctx.fillStyle = isHighest ? 'rgba(245, 158, 11, 0.95)' : 'rgba(15, 23, 42, 0.85)';
-    ctx.strokeStyle = isHighest ? '#fbbf24' : '#475569';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.strokeStyle = '#475569';
     ctx.lineWidth = 1.5;
 
     ctx.beginPath();
@@ -1469,7 +1457,7 @@ const drawPlayerBid = (p, pos, width, height) => {
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = isHighest ? '#0f172a' : '#f8fafc';
+    ctx.fillStyle = '#f8fafc';
     ctx.font = 'bold 11px "Inter", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -1482,23 +1470,23 @@ const renderLoop = () => {
     const width = rect.width || 800;
     const height = rect.height || 600;
     
-    // Safety check to update dimensions dynamically if they change
     if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
     }
     
+    updateCardScaling(width, height);
     ctx.clearRect(0, 0, width, height);
 
     if (!state.hands) return;
 
-    // Draw Hands
     for (let p = 0; p < 4; p++) {
         const pos = getPlayerCoords(p, width, height);
         const hand = state.hands[p];
         const isHuman = (p === 0);
         
-        const step = isHuman ? (cardW + 12) : (state.showAllCards ? 45 : 24); 
+        // Spacing expands when revealing debug hands
+        const step = isHuman ? (cardW + 12) : (state.revealAllCards ? 45 : 24); 
         
         hand.forEach((card, i) => {
             const spread = (hand.length - 1) * step;
@@ -1524,12 +1512,11 @@ const renderLoop = () => {
                 }
             }
             
-            drawCard(card, ox, oy, isHuman || state.showAllCards, highlight, isHovered);
+            const showFaceUp = isHuman || state.revealAllCards;
+            drawCard(card, ox, oy, showFaceUp, highlight, isHovered);
         });
         
-        const names = ["YOU", "LEFT PLAYER", "AI PARTNER", "RIGHT PLAYER"];
-        drawPlayerPlate(p, names[p], pos, width, height);
-        
+        drawPlayerPlate(p, PLAYER_NAMES[p], pos, width, height);
         drawPlayerBid(p, pos, width, height);
     }
 
@@ -1611,13 +1598,11 @@ const renderLoop = () => {
     state.trickQueue.forEach((q) => {
         const p = q.player;
         const target = getPlayerCoords(p, width, height);
-        
         const tx = (width / 2) + (target.x - (width / 2)) * 0.35;
         const ty = (height / 2) + (target.y - (height / 2)) * 0.35;
         drawCard(q.card, tx, ty, true);
     });
 
-    // Draw Game Over Banner
     if (state.gameState === 'GAMEOVER') {
         ctx.save();
         ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
@@ -1627,7 +1612,7 @@ const renderLoop = () => {
         ctx.font = 'bold 22px "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const winnerText = state.scores[0] >= 21 ? "TEAM 1 (US) WINS THE GAME!" : "TEAM 2 (THEM) WINS THE GAME!";
+        const winnerText = state.scores[0] >= 21 ? "PLAYER & PARTNER WIN THE GAME!" : "LEFT & RIGHT WIN THE GAME!";
         ctx.fillText(winnerText, width / 2, height / 2 - 15);
         
         ctx.fillStyle = '#94a3b8';
@@ -1640,32 +1625,32 @@ const renderLoop = () => {
     requestAnimationFrame(renderLoop);
 };
 
+// Toggle event handlers
 toggleCooperative.addEventListener('change', (e) => {
     state.aiSupportPartnerTrumpToggle = e.target.checked;
-    addLog(`Partner Cooperative Bidding strategy toggled <strong>${state.aiSupportPartnerTrumpToggle ? "ON" : "OFF"}</strong>.`);
+    addLog(`Partner Cooperative Bidding: <strong>${state.aiSupportPartnerTrumpToggle ? "ON" : "OFF"}</strong>.`);
 });
 
 toggleTrumpCount.addEventListener('change', (e) => {
     state.showTrumpCount = e.target.checked;
-    addLog(`Trump card counter toggled <strong>${state.showTrumpCount ? "ON" : "OFF"}</strong>.`);
+    addLog(`Trump card counter: <strong>${state.showTrumpCount ? "ON" : "OFF"}</strong>.`);
 });
 
 toggleAllSuitsCount.addEventListener('change', (e) => {
     state.showAllSuitsCount = e.target.checked;
-    addLog(`All suits card count toggled <strong>${state.showAllSuitsCount ? "ON" : "OFF"}</strong>.`);
+    addLog(`All suits card count: <strong>${state.showAllSuitsCount ? "ON" : "OFF"}</strong>.`);
 });
 
-toggleShowAllCards.addEventListener('change', (e) => {
-    state.showAllCards = e.target.checked;
-    addLog(`Show All Players' Cards toggled <strong>${state.showAllCards ? "ON" : "OFF"}</strong>.`);
+toggleRevealAll.addEventListener('change', (e) => {
+    state.revealAllCards = e.target.checked;
+    addLog(`Show All Players' Cards: <strong>${state.revealAllCards ? "ON" : "OFF"}</strong>.`);
 });
 
-// Restart button
 document.getElementById('btn-reset').onclick = () => {
     runReset();
 };
 
-// Initialize!
+// Start deal and execution
 runReset();
 renderLoop();
 </script>
