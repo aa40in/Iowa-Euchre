@@ -1847,7 +1847,7 @@ const renderLoop = () => {
                 const ox = pos.x - spread / 2 + i * step;
                 const oy = pos.y;
                 const showFaceUp = state.revealAllCards;
-                drawRotatedCard(card, ox, oy, Math.PI, showFaceUp, false, false);
+                drawRotatedCard(card, ox, oy, 0, showFaceUp, false, false);
             }
         } else if (p === 1) {
             // Left Opponent (P1): Rotated 90 degrees and spaced out vertically
@@ -1881,7 +1881,7 @@ const renderLoop = () => {
                 const ox = pos.x;
                 const oy = pos.y - spread / 2 + i * step;
                 const showFaceUp = state.revealAllCards;
-                drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, false, false);
+                drawRotatedCard(card, ox, oy, Math.PI *1.5, showFaceUp, false, false);
             }
         }
     }
