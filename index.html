@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Iowa-Style Euchre</title>
+    <title>Iowa-Style Euchre - Aces Edition</title>
     <!-- Tailwind CSS for Premium Responsive UI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -51,13 +51,13 @@
     <header class="w-full bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between shrink-0 z-20">
         <div class="flex items-center gap-1.5">
             <span class="text-emerald-400 text-base">♦</span>
-            <h1 class="text-[11px] md:text-xs font-bold tracking-wide uppercase text-white">Iowa Style Euchre</h1>
+            <h1 class="text-[11px] md:text-xs font-bold tracking-wide uppercase text-white">Iowa Euchre <span class="text-amber-400 text-[10px]">Aces Edition</span></h1>
         </div>
         
         <!-- Center: Active Contract -->
         <div class="hidden sm:flex items-center gap-1.5 bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-800">
             <span class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Contract:</span>
-            <div id="contract-display-header" class="text-[10px] font-extrabold text-emerald-400">Waiting...</div>
+            <div id="contract-display-header" class="text-[10px] font-extrabold text-emerald-400 flex items-center gap-1">Waiting...</div>
         </div>
 
         <!-- Right Side Scoreboard -->
@@ -170,16 +170,16 @@
                         <span class="text-[9px] font-semibold text-slate-400 block">2. Select Suit / Aces / NT:</span>
                         <div class="flex flex-wrap gap-1" id="suit-selector">
                             <button data-suit="S" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
-                                <span>♠</span><span class="text-[9px] font-normal text-slate-400">S</span>
+                                <span class="text-base leading-none">♠</span><span class="text-[9px] font-normal text-slate-400">S</span>
                             </button>
-                            <button data-suit="C" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
-                                <span>♣</span><span class="text-[9px] font-normal text-slate-400">C</span>
+                            <button data-suit="C" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
+                                <span class="text-base leading-none">♣</span><span class="text-[9px] font-normal text-emerald-400">C</span>
                             </button>
                             <button data-suit="H" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-rose-500 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
-                                <span>♥</span><span class="text-[9px] font-normal text-rose-400">H</span>
+                                <span class="text-base leading-none">♥</span><span class="text-[9px] font-normal text-rose-400">H</span>
                             </button>
-                            <button data-suit="D" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-rose-500 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
-                                <span>♦</span><span class="text-[9px] font-normal text-rose-400">D</span>
+                            <button data-suit="D" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sky-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
+                                <span class="text-base leading-none">♦</span><span class="text-[9px] font-normal text-sky-400">D</span>
                             </button>
                             <button data-suit="ACES" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
                                 <span>Aces</span>
@@ -252,6 +252,7 @@
                         <span id="settings-arrow" class="inline-block text-xs text-slate-400 transition-transform duration-200">►</span>
                     </button>
                     <div id="settings-content" class="p-3 pt-0 space-y-2.5 hidden">
+
                         <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
                             <div class="flex flex-col pr-2">
                                 <span class="text-[11px] font-semibold text-slate-200">Partner Cooperative Bidding</span>
@@ -269,7 +270,7 @@
                                 <span class="text-[9px] text-slate-400 mt-0.5">Displays active trump count in contract panel.</span>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer select-none">
-                                <input type="checkbox" id="toggle-trump-count" class="sr-only peer" checked>
+                                <input type="checkbox" id="toggle-trump-count" class="sr-only peer" >
                                 <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                             </label>
                         </div>
@@ -292,6 +293,17 @@
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer select-none">
                                 <input type="checkbox" id="toggle-reveal-all" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+						
+                        <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                            <div class="flex flex-col pr-2">
+                                <span class="text-[11px] font-semibold text-slate-200">Four-Color Suit Deck</span>
+                                <span class="text-[9px] text-slate-400 mt-0.5">Use distinct Colors (Green ♣, Blue ♦) to easily identify card suits.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="toggle-four-color" class="sr-only peer" >
                                 <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                             </label>
                         </div>
@@ -383,9 +395,10 @@ const state = {
     tempSelectedBid: null,   // Tracks selected human bid value before choosing suit
     tempSelectedSuit: null,  // Tracks selected human suit
     aiSupportPartnerTrumpToggle: true,
-    showTrumpCount: true,
+    showTrumpCount: false,
     showAllSuitsCount: false,
     revealAllCards: false,
+    fourColorDeck: false, // Added: Toggles high-readability 4-color suits
     biddingTurnsCount: 0,
     playerBids: [null, null, null, null], // Visual bid tags [P0, P1, P2, P3]
     bidsThisRound: [], // Array of { player, bid, suit, passed, convention }
@@ -443,6 +456,7 @@ const toggleCooperative = document.getElementById('toggle-cooperative');
 const toggleTrumpCount = document.getElementById('toggle-trump-count');
 const toggleAllSuitsCount = document.getElementById('toggle-all-suits-count');
 const toggleRevealAll = document.getElementById('toggle-reveal-all');
+const toggleFourColor = document.getElementById('toggle-four-color');
 
 // Collapsible Game Settings Accordion
 const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
@@ -464,6 +478,43 @@ btnToggleHelp.onclick = () => {
 };
 btnCloseHelp.onclick = () => {
     helpPanel.classList.add('hidden');
+};
+
+const getSuitColor = (suit) => {
+    if (state.fourColorDeck) {
+        if (suit === 'S') return '#0f172a'; // Spades: Charcoal/Black
+        if (suit === 'C') return '#16a34a'; // Clubs: Vivid Emerald Green
+        if (suit === 'H') return '#dc2626'; // Hearts: Rich Red
+        if (suit === 'D') return '#0284c7'; // Diamonds: High-Contrast Blue
+    } else {
+        return (suit === 'H' || suit === 'D') ? '#ef4444' : '#0f172a';
+    }
+    return '#0f172a';
+};
+
+const getSuitColorDark = (suit) => {
+    if (state.fourColorDeck) {
+        if (suit === 'S') return '#d3d3d3'; // Spades: Charcoal/Black
+        if (suit === 'C') return '#16a34a'; // Clubs: Vivid Emerald Green
+        if (suit === 'H') return '#dc2626'; // Hearts: Rich Red
+        if (suit === 'D') return '#0284c7'; // Diamonds: High-Contrast Blue
+    } else {
+        return (suit === 'H' || suit === 'D') ? '#ef4444' : '#d3d3d3';
+    }
+    return '#d3d3d3';
+};
+
+const getSuitColorClass = (suit) => {
+    if (state.fourColorDeck) {
+        if (suit === 'S') return 'text-slate-300';
+        if (suit === 'C') return 'text-emerald-400 font-bold';
+        if (suit === 'H') return 'text-rose-500 font-bold';
+        if (suit === 'D') return 'text-sky-400 font-bold';
+    } else {
+        if (suit === 'H' || suit === 'D') return 'text-rose-500 font-bold';
+        return 'text-slate-300';
+    }
+    return 'text-slate-300';
 };
 
 const addLog = (msg) => {
@@ -679,11 +730,9 @@ const updateContractUI = () => {
         } else {
             const suitIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
             suitText = suitIcons[suit] || suit;
-            if (suit === 'H' || suit === 'D') {
-                colorClass = "text-rose-500";
-            }
+            colorClass = getSuitColorClass(suit);
         }
-        suitHTML = `<span class="${colorClass} font-extrabold">${bid}${suitText}</span> <span class="text-slate-400 font-normal">(${team})</span>`;
+        suitHTML = `<span class="${colorClass} font-extrabold text-sm sm:text-base">${bid}${suitText}</span> <span class="text-slate-400 font-normal">(${team})</span>`;
         contractText = `${bid}${suitText} (${team})`;
     } else {
         suitHTML = `<span class="text-slate-400 font-normal">Bidding Round</span>`;
@@ -701,8 +750,8 @@ const updateContractUI = () => {
         } else {
             const count = state.unplayedCounts[state.trumpSuit];
             const trumpIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
-            const badgeColor = (state.trumpSuit === 'H' || state.trumpSuit === 'D') ? 'text-rose-400 border-rose-500/20 bg-rose-950/40' : 'text-slate-300 border-slate-700/50 bg-slate-800/40';
-            pillsList.push(`<span class="${badgeColor} px-2 py-0.5 rounded text-[10px] border font-bold">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
+            const textCol = getSuitColorClass(state.trumpSuit);
+            pillsList.push(`<span class="bg-slate-900 border-slate-700/50 px-2 py-0.5 rounded text-[10px] border font-bold ${textCol}">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
         }
     }
     
@@ -711,7 +760,7 @@ const updateContractUI = () => {
         let suitsHTML = [];
         SUITS.forEach(s => {
             const count = state.unplayedCounts[s];
-            const col = (s === 'H' || s === 'D') ? 'text-rose-400' : 'text-slate-300';
+            const col = getSuitColorClass(s);
             suitsHTML.push(`<span class="${col}">${suitIcons[s]}:${count}</span>`);
         });
         pillsList.push(`<span class="bg-slate-950/80 text-[10px] px-2 py-0.5 rounded border border-slate-800/50 flex gap-1.5 font-semibold">${suitsHTML.join(' ')}</span>`);
@@ -805,7 +854,11 @@ const triggerNextTurn = () => {
                 
                 sortPlayerHand(state.trumpSuit);
                 
-                const trumpSuitDisplay = state.trumpConvention ? state.trumpConvention : (state.trumpSuit === 'NT' ? 'Aces' : state.trumpSuit);
+                const suitIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
+                const icon = suitIcons[state.trumpSuit] || '';
+                const suitColClass = getSuitColorClass(state.trumpSuit);
+                const trumpSuitDisplay = state.trumpConvention ? state.trumpConvention : (state.trumpSuit === 'NT' ? 'Aces' : `<span class="${suitColClass}">${icon} ${state.trumpSuit}</span>`);
+                
                 addLog(`Contract won by <strong>${PLAYER_NAMES[state.winningBidder]}</strong> for <strong>${state.highestBid} tricks</strong> (${trumpSuitDisplay}). <strong>${PLAYER_NAMES[state.currentPlayer]}</strong> has the lead!`);
                 
                 if (state.trumpSuit !== 'NT') {
@@ -848,7 +901,6 @@ const openHumanBiddingUI = () => {
     historyList.innerHTML = '';
     
     const suitIcons = { 'S': '♠ Spades', 'C': '♣ Clubs', 'H': '♥ Hearts', 'D': '♦ Diamonds', 'NT': 'Aces', 'ACES': 'Aces' };
-    const suitColors = { 'S': 'text-slate-300', 'C': 'text-slate-300', 'H': 'text-rose-400', 'D': 'text-rose-400', 'NT': 'text-amber-400', 'ACES': 'text-amber-400' };
 
     if (state.bidsThisRound.length === 0) {
         const row = document.createElement('div');
@@ -870,7 +922,7 @@ const openHumanBiddingUI = () => {
                 actionSpan.innerText = "Pass";
             } else {
                 const icon = entry.convention ? entry.convention : (suitIcons[entry.suit] || '');
-                const color = entry.convention ? 'text-amber-400 font-bold' : (suitColors[entry.suit] || '');
+                const color = entry.convention ? 'text-amber-400 font-bold' : getSuitColorClass(entry.suit);
                 actionSpan.innerHTML = `Bid <strong class="text-white">${entry.bid}</strong> in <span class="${color}">${icon}</span>`;
             }
             
@@ -887,6 +939,28 @@ const openHumanBiddingUI = () => {
 
 // Interactive Bid-First, Suit-Second Redesigned Logic
 const updateBiddingButtons = () => {
+    // Update Suit Buttons in Bidding Panel to match colors dynamically
+    document.querySelectorAll('.suit-btn').forEach(btn => {
+        const suit = btn.getAttribute('data-suit');
+        const spanIcon = btn.querySelector('span:first-child');
+        const spanText = btn.querySelector('span:last-child');
+        
+        if (spanIcon && spanText) {
+            btn.className = btn.className.replace(/text-(slate|emerald|rose|sky|amber)-\d+/, '');
+            spanIcon.className = spanIcon.className.replace(/text-(slate|emerald|rose|sky|amber)-\d+/, '');
+            spanText.className = spanText.className.replace(/text-(slate|emerald|rose|sky|amber)-\d+/, '');
+            
+            const suitColorsMap = {
+                'S': state.fourColorDeck ? 'text-slate-100' : 'text-slate-100',
+                'C': state.fourColorDeck ? 'text-emerald-400' : 'text-slate-100',
+                'H': 'text-rose-500',
+                'D': state.fourColorDeck ? 'text-sky-400' : 'text-rose-500'
+            };
+            const col = suitColorsMap[suit] || 'text-amber-400';
+            btn.className += ` ${col}`;
+        }
+    });
+
     // 1. Selectable normal bid value buttons (Tricks 1 through 6)
     document.querySelectorAll('.bid-val-btn').forEach(btn => {
         const val = parseInt(btn.getAttribute('data-bid'));
@@ -928,9 +1002,18 @@ const updateBiddingButtons = () => {
             btn.className = "suit-btn px-1.5 py-0.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-bold text-[9px] flex items-center justify-center gap-1 opacity-40 cursor-not-allowed h-6";
         } else {
             const isSelected = (state.tempSelectedSuit === suit);
-            const isRed = (suit === 'H' || suit === 'D');
             const isSpecial = (suit === 'ACES' || suit === 'NT');
-            let colorClass = isRed ? 'text-rose-500' : (isSpecial ? 'text-amber-400' : 'text-slate-100');
+            
+            let colorClass = 'text-slate-100';
+            if (state.fourColorDeck) {
+                if (suit === 'S') colorClass = 'text-slate-300';
+                else if (suit === 'C') colorClass = 'text-emerald-400';
+                else if (suit === 'H') colorClass = 'text-rose-500';
+                else if (suit === 'D') colorClass = 'text-sky-400';
+                else if (isSpecial) colorClass = 'text-amber-400';
+            } else {
+                colorClass = (suit === 'H' || suit === 'D') ? 'text-rose-500' : (isSpecial ? 'text-amber-400' : 'text-slate-100');
+            }
 
             if (isSelected) {
                 btn.className = `suit-btn px-1.5 py-0.5 rounded-lg border-emerald-400 bg-emerald-900/60 ring-2 ring-emerald-400 ${colorClass} font-bold text-[9px] flex items-center justify-center gap-1 transition-all h-6`;
@@ -962,7 +1045,10 @@ const updateBiddingButtons = () => {
                     state.trumpConvention = null;
                     state.bidsThisRound.push({ player: 0, bid: state.tempSelectedBid, suit: suit, passed: false });
                     state.playerBids[0] = { bid: state.tempSelectedBid, suit: suit, passed: false };
-                    addLog(`Player placed a bid of <strong>${state.tempSelectedBid}</strong> in <strong>${suit}</strong>!`);
+                    
+                    const icons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
+                    const colCls = getSuitColorClass(suit);
+                    addLog(`Player placed a bid of <strong>${state.tempSelectedBid}</strong> in <strong class="${colCls}">${icons[suit]} ${suit}</strong>!`);
                 }
                 
                 biddingPanel.classList.add('hidden');
@@ -1081,7 +1167,10 @@ const handleAIBid = () => {
         if (chosenBid.convention) {
             addLog(`<strong>${PLAYER_NAMES[p]}</strong> signals <strong>${chosenBid.convention}</strong> and bids <strong>${chosenBid.bid} Tricks</strong>!`);
         } else {
-            const suitStr = chosenBid.suit === 'NT' ? 'Aces' : chosenBid.suit;
+            const suitIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
+            const icon = suitIcons[chosenBid.suit] || '';
+            const suitColClass = getSuitColorClass(chosenBid.suit);
+            const suitStr = chosenBid.suit === 'NT' ? 'Aces' : `<span class="${suitColClass}">${icon} ${chosenBid.suit}</span>`;
             addLog(`<strong>${PLAYER_NAMES[p]}</strong> bids <strong>${chosenBid.bid}</strong> in <strong>${suitStr}</strong>.`);
         }
         bidMade = true;
@@ -1094,7 +1183,10 @@ const handleAIBid = () => {
         if (supportTricks >= 1.0 && state.highestBid < 6) {
             state.highestBid++;
             state.winningBidder = p;
-            const boostLabel = partnerSuit === 'NT' ? 'Aces' : partnerSuit;
+            const suitIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
+            const icon = suitIcons[partnerSuit] || '';
+            const suitColClass = getSuitColorClass(partnerSuit);
+            const boostLabel = partnerSuit === 'NT' ? 'Aces' : `<span class="${suitColClass}">${icon} ${partnerSuit}</span>`;
             addLog(`<strong>${PLAYER_NAMES[p]}</strong> trusts partner's <strong>${boostLabel}</strong> and raises the bid to <strong>${state.highestBid}</strong>!`);
             bidMade = true;
             state.bidsThisRound.push({ player: p, bid: state.highestBid, suit: partnerSuit, passed: false });
@@ -1326,7 +1418,8 @@ const playCard = (playerIdx, cardIdx) => {
     state.unplayedCounts[getEffectiveSuit(card, state.trumpSuit)]--;
     
     const suitsIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
-    addLog(`<strong>${PLAYER_NAMES[playerIdx]}</strong> played <strong>${card.rank === '10' ? '10' : card.rank}${suitsIcons[card.suit]}</strong>.`);
+    const textCol = getSuitColorClass(getEffectiveSuit(card, state.trumpSuit));
+    addLog(`<strong>${PLAYER_NAMES[playerIdx]}</strong> played <strong>${card.rank === '10' ? '10' : card.rank}<span class="${textCol}">${suitsIcons[card.suit]}</span></strong>.`);
     
     state.currentPlayer = (state.currentPlayer + 1) % 4;
     triggerNextTurn();
@@ -1439,19 +1532,23 @@ const drawCard = (card, x, y, faceUp = true, highlight = false, isHovered = fals
     ctx.shadowColor = 'transparent';
 
     if (faceUp) {
-        const isRed = (card.suit === 'H' || card.suit === 'D');
-        ctx.fillStyle = isRed ? '#ef4444' : '#0f172a';
+        const suitColor = getSuitColor(card.suit);
+        ctx.fillStyle = suitColor;
         const suitsIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
+        
+        // Draw elegant high-visibility top strip matching suit color
+        <!-- ctx.fillRect(-cardW / 2 + 4, -cardH / 2 + 1, cardW - 8, 3.5); -->
         
         ctx.font = 'bold 13px "Inter", sans-serif';
         ctx.textBaseline = 'top';
         ctx.textAlign = 'left';
-        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 5);
+        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 7);
         
-        ctx.font = 'bold 22px "Inter", sans-serif';
+        // Make center suit symbol significantly larger and distinct
+        ctx.font = 'bold 28px "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(suitsIcons[card.suit], 0, 4);
+        ctx.fillText(suitsIcons[card.suit], 0, 6);
 
         ctx.font = 'bold 11px "Inter", sans-serif';
         ctx.textAlign = 'right';
@@ -1496,19 +1593,23 @@ const drawRotatedCard = (card, x, y, angle, faceUp = true, highlight = false, is
     ctx.shadowColor = 'transparent';
 
     if (faceUp) {
-        const isRed = (card.suit === 'H' || card.suit === 'D');
-        ctx.fillStyle = isRed ? '#ef4444' : '#0f172a';
+        const suitColor = getSuitColor(card.suit);
+        ctx.fillStyle = suitColor;
         const suitsIcons = { 'S': '♠', 'C': '♣', 'H': '♥', 'D': '♦' };
+        
+        // Draw elegant high-visibility top strip matching suit color
+        <!-- ctx.fillRect(-cardW / 2 + 4, -cardH / 2 + 1, cardW - 8, 3.5); -->
         
         ctx.font = 'bold 11px "Inter", sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 5);
+        ctx.fillText(`${card.rank}${suitsIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 7);
         
-        ctx.font = 'bold 20px "Inter", sans-serif';
+        // Make center suit symbol significantly larger and distinct
+        ctx.font = 'bold 26px "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(suitsIcons[card.suit], 0, 4);
+        ctx.fillText(suitsIcons[card.suit], 0, 6);
 
         ctx.font = 'bold 10px "Inter", sans-serif';
         ctx.textAlign = 'right';
@@ -1531,26 +1632,33 @@ const drawPlayerPlate = (p, name, pos, width, height, spread) => {
     let lx = pos.x;
     let ly = pos.y;
     
-    // Dynamic coordinate relocation based on player index strictly adhering to instructions
+    const plateW = isMobile ? 80 : 130;
+    const plateH = isMobile ? 18 : 26;
+    const plateR = isMobile ? 8 : 12;
+
     if (isMobile) {
         if (p === 0) { // Player: below and to the left of cards
             lx = Math.max(52, pos.x - spread / 2 - 28);
             ly = height - 18;
-        } else if (p === 1) { // Left: above its cards
+        } else if (p === 1) { // Left: 10 px below bottom card (since cards are fanned vertically, bottom card is at +spread/2)
             lx = 42;
-            ly = pos.y - spread / 2 - 18;
+            ly = pos.y + spread / 2 + cardW / 2 + 10 + plateH / 2;
         } else if (p === 2) { // Partner: above and to the right of its cards (safe bounds)
             lx = Math.min(width - 52, pos.x + spread / 2 + 28);
             ly = 18;
-        } else if (p === 3) { // Right: above its cards
+        } else if (p === 3) { // Right: 10 px below bottom card
             lx = width - 42;
-            ly = pos.y - spread / 2 - 18;
+            ly = pos.y + spread / 2 + cardW / 2 + 10 + plateH / 2;
         }
     } else {
-        // Desktop Standard relative placement
-        if (p === 0) ly = pos.y - 75;
-        else if (p === 2) ly = pos.y + 75;
-        else ly = pos.y + 130;
+        // Desktop Standard relative placement with Left/Right matched perfectly to 10px below bottom card
+        if (p === 0) {
+            ly = pos.y - 75;
+        } else if (p === 2) {
+            ly = pos.y + 75;
+        } else if (p === 1 || p === 3) { // Left & Right: Exactly 10 px below bottom card
+            ly = pos.y + spread / 2  + cardW / 2 + 10 + plateH / 2;
+        }
     }
     
     ctx.save();
@@ -1558,10 +1666,6 @@ const drawPlayerPlate = (p, name, pos, width, height, spread) => {
     ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
     ctx.strokeStyle = (state.currentPlayer === p && state.gameState !== 'SCORING' && state.gameState !== 'GAMEOVER') ? '#fbbf24' : '#334155';
     ctx.lineWidth = 1.5;
-    
-    const plateW = isMobile ? 80 : 130;
-    const plateH = isMobile ? 18 : 26;
-    const plateR = isMobile ? 8 : 12;
     
     ctx.beginPath();
     ctx.roundRect(lx - plateW / 2, ly - plateH / 2, plateW, plateH, plateR);
@@ -1664,6 +1768,12 @@ const drawPlayerBid = (p, pos, width, height, spread) => {
 
     ctx.fillStyle = '#f8fafc';
     ctx.font = isMobile ? 'bold 8px "Inter", sans-serif' : 'bold 10px "Inter", sans-serif';
+    
+    // Colorize the suit badge explicitly inside the plate
+    if (!bidInfo.passed && bidInfo.suit !== 'NT') {
+        ctx.fillStyle = getSuitColorDark(bidInfo.suit);
+    }
+    
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, bx, by);
@@ -1726,7 +1836,7 @@ const renderLoop = () => {
             });
         } else if (p === 2) {
             // Partner (Top): Spaced out and rotated 180 degrees to face the center
-            const step = isMobile ? 32 : 30;
+            const step = isMobile ? 32 : 20;
             const spread = (hand.length - 1) * step;
             playerSpreads[2] = spread;
 
@@ -1737,11 +1847,11 @@ const renderLoop = () => {
                 const ox = pos.x - spread / 2 + i * step;
                 const oy = pos.y;
                 const showFaceUp = state.revealAllCards;
-                drawRotatedCard(card, ox, oy, 0, showFaceUp, false, false);
+                drawRotatedCard(card, ox, oy, Math.PI, showFaceUp, false, false);
             }
         } else if (p === 1) {
             // Left Opponent (P1): Rotated 90 degrees and spaced out vertically
-            const step = isMobile ? 24 : 28;
+            const step = isMobile ? 24 : 20;
             const spread = (hand.length - 1) * step;
             playerSpreads[1] = spread;
             if (isMobile) {
@@ -1761,7 +1871,7 @@ const renderLoop = () => {
             }
         } else if (p === 3) {
             // Right Opponent (P3): Rotated 180 degrees from -90 degrees (which is 90 degrees/Math.PI/2)
-            const step = isMobile ? 24 : 28;
+            const step = isMobile ? 24 : 20;
             const spread = (hand.length - 1) * step;
             playerSpreads[3] = spread;
 
@@ -1771,7 +1881,7 @@ const renderLoop = () => {
                 const ox = pos.x;
                 const oy = pos.y - spread / 2 + i * step;
                 const showFaceUp = state.revealAllCards;
-                drawRotatedCard(card, ox, oy, Math.PI *1.5, showFaceUp, false, false);
+                drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, false, false);
             }
         }
     }
@@ -1839,6 +1949,13 @@ toggleRevealAll.addEventListener('change', (e) => {
     addLog(`Show All Players' Cards: <strong>${state.revealAllCards ? "ON" : "OFF"}</strong>.`);
 });
 
+toggleFourColor.addEventListener('change', (e) => {
+    state.fourColorDeck = e.target.checked;
+    addLog(`Four-Color Suit Deck: <strong>${state.fourColorDeck ? "ON" : "OFF"}</strong>.`);
+    updateHUD();
+    updateBiddingButtons();
+});
+
 document.getElementById('btn-reset').onclick = () => {
     runReset();
 };
@@ -1849,3 +1966,4 @@ renderLoop();
 </script>
 </body>
 </html>
+```
