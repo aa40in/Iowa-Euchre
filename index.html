@@ -297,16 +297,16 @@
                             </label>
                         </div>
 						
-                        <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
-                            <div class="flex flex-col pr-2">
-                                <span class="text-[11px] font-semibold text-slate-200">Four-Color Suit Deck</span>
-                                <span class="text-[9px] text-slate-400 mt-0.5">Use distinct Colors (Green ♣, Blue ♦) to easily identify card suits.</span>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer select-none">
-                                <input type="checkbox" id="toggle-four-color" class="sr-only peer" >
-                                <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                            </label>
-                        </div>
+                        <!-- <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800"> -->
+                            <!-- <div class="flex flex-col pr-2"> -->
+                                <!-- <span class="text-[11px] font-semibold text-slate-200">Four-Color Suit Deck</span> -->
+                                <!-- <span class="text-[9px] text-slate-400 mt-0.5">Use distinct Colors (Green ♣, Blue ♦) to easily identify card suits.</span> -->
+                            <!-- </div> -->
+                            <!-- <label class="relative inline-flex items-center cursor-pointer select-none"> -->
+                                <!-- <input type="checkbox" id="toggle-four-color" class="sr-only peer" > -->
+                                <!-- <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div> -->
+                            <!-- </label> -->
+                        <!-- </div> -->
                     </div>
                 </div>
 
@@ -456,7 +456,7 @@ const toggleCooperative = document.getElementById('toggle-cooperative');
 const toggleTrumpCount = document.getElementById('toggle-trump-count');
 const toggleAllSuitsCount = document.getElementById('toggle-all-suits-count');
 const toggleRevealAll = document.getElementById('toggle-reveal-all');
-const toggleFourColor = document.getElementById('toggle-four-color');
+<!-- const toggleFourColor = document.getElementById('toggle-four-color'); -->
 
 // Collapsible Game Settings Accordion
 const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
@@ -1955,12 +1955,12 @@ toggleRevealAll.addEventListener('change', (e) => {
     addLog(`Show All Players' Cards: <strong>${state.revealAllCards ? "ON" : "OFF"}</strong>.`);
 });
 
-toggleFourColor.addEventListener('change', (e) => {
-    state.fourColorDeck = e.target.checked;
-    addLog(`Four-Color Suit Deck: <strong>${state.fourColorDeck ? "ON" : "OFF"}</strong>.`);
-    updateHUD();
-    updateBiddingButtons();
-});
+<!-- toggleFourColor.addEventListener('change', (e) => { -->
+    <!-- state.fourColorDeck = e.target.checked; -->
+    <!-- addLog(`Four-Color Suit Deck: <strong>${state.fourColorDeck ? "ON" : "OFF"}</strong>.`); -->
+    <!-- updateHUD(); -->
+    <!-- updateBiddingButtons(); -->
+<!-- }); -->
 
 document.getElementById('btn-reset').onclick = () => {
     runReset();
