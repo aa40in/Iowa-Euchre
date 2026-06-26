@@ -174,9 +174,20 @@
 
 <!-- Right Side/Bottom Side: Sidebar Scoring & Parameters Panel -->
 <aside class="w-full md:w-80 h-[40%] md:h-full bg-slate-900 border-t md:border-t-0 md:border-l border-slate-800 flex flex-col p-3 md:p-4 shrink-0 overflow-y-auto z-10 space-y-4">
+
+    <!-- Current Contract Display -->
+    <div id="contract-panel" class="bg-slate-800/20 p-3 rounded-xl border border-slate-800 flex flex-col justify-center min-h-[58px]">
+        <div class="flex justify-between items-center">
+            <span class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold">Current Contract</span>
+        </div>
+        <div id="contract-display" class="text-[10px] md:text-xs font-bold mt-1 text-center">
+            &nbsp;
+        </div>
+    </div>
+	
     <!-- Scoreboard Section -->
     <div class="space-y-2">
-        <h2 class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold">Iowa Scoreboard</h2>
+        <h2 class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold">Game Score</h2>
         
         <div class="grid grid-cols-2 gap-2">
             <!-- Team 1 (Player & Partner) -->
@@ -202,16 +213,6 @@
                     <div id="progress-them" class="bg-rose-500 h-full transition-all duration-500" style="width: 0%"></div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Current Contract Display -->
-    <div id="contract-panel" class="bg-slate-800/20 p-3 rounded-xl border border-slate-800 flex flex-col justify-center min-h-[58px]">
-        <div class="flex justify-between items-center">
-            <span class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold">Current Contract</span>
-        </div>
-        <div id="contract-display" class="text-[10px] md:text-xs font-bold mt-1 text-center">
-            &nbsp;
         </div>
     </div>
 
