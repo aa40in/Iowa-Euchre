@@ -47,44 +47,6 @@
 
 <div id="main-app-container" class="h-full w-full flex flex-col overflow-hidden">
 
-    <!-- Sleek Top Bar Header containing the elements required by updateHUD and updateContractUI -->
-    <header class="w-full bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between shrink-0 z-20">
-        <div class="flex items-center gap-1.5">
-            <!-- <span class="text-emerald-400 text-base">♦\uFE0E</span> -->
-            <h1 class="text-[11px] md:text-xs font-bold tracking-wide uppercase text-white">Iowa Style Euchre</h1>
-        </div>
-        
-        <!-- Center: Active Contract -->
-        <div class="hidden sm:flex items-center gap-1.5 bg-slate-950 px-2.5 py-0.5 rounded-full border border-slate-800">
-            <span class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Contract:</span>
-            <div id="contract-display-header" class="text-[10px] font-extrabold text-emerald-400 flex items-center gap-1">Waiting...</div>
-        </div>
-
-        <!-- Right Side Scoreboard -->
-        <div class="flex items-center gap-3">
-            <!-- Us Score -->
-            <div class="flex flex-col items-end">
-                <div class="flex items-center gap-1">
-                    <span class="text-[8px] text-slate-400 font-semibold uppercase">Us</span>
-                    <span id="score-us-header" class="text-[10px] font-black text-emerald-400">0</span>
-                </div>
-                <div class="w-12 bg-slate-950 h-1 rounded-full overflow-hidden border border-slate-800 mt-0.5">
-                    <div id="progress-us-header" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-            </div>
-            <!-- Them Score -->
-            <div class="flex flex-col items-end">
-                <div class="flex items-center gap-1">
-                    <span class="text-[8px] text-slate-400 font-semibold uppercase">Them</span>
-                    <span id="score-them-header" class="text-[10px] font-black text-rose-400">0</span>
-                </div>
-                <div class="w-12 bg-slate-950 h-1 rounded-full overflow-hidden border border-slate-800 mt-0.5">
-                    <div id="progress-them-header" class="bg-rose-500 h-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-    </header>
-
     <!-- Main Container Split vertically on mobile, horizontally (reversed for left-sidebar) on desktop -->
     <div class="flex-1 flex flex-col md:flex-row-reverse overflow-hidden w-full h-full">
 
@@ -136,10 +98,50 @@
             </div>
         </div>
 
-        <!-- Sidebar Section: Occupies exactly 28% height on mobile (scrollable), and left-aligned full sidebar panel on desktop -->
-        <aside class="w-full h-[28vh] md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col overflow-y-auto shrink-0 select-none z-10">
+        <!-- Sidebar Section: Left-aligned panel on desktop, bottom-aligned on mobile -->
+        <aside class="w-full h-[28vh] md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-hidden">
 
-            <!-- Bidding Panel: Displays instantly below canvas during the Bidding phase -->
+            <!-- Relocated Top Bar Header (Now locked at the top of the sidebar/bottom panel) -->
+            <div class="w-full bg-slate-950 border-b border-slate-800 px-3.5 py-2.5 flex flex-col shrink-0 z-20">
+                <div class="flex items-center justify-between w-full">
+                    <!-- Left: Active Contract -->
+                    <div class="flex items-center gap-1.5 bg-slate-900/60 px-2 py-0.5 rounded-lg border border-slate-800">
+                        <span class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Contract:</span>
+                        <div id="contract-display-header" class="text-[10px] font-extrabold text-emerald-400 flex items-center gap-1">Waiting...</div>
+                    </div>
+
+                    <!-- Right: Scoreboard -->
+                    <div class="flex items-center gap-3 shrink-0">
+                        <!-- Us Score -->
+                        <div class="flex flex-col items-end">
+                            <div class="flex items-center gap-1">
+                                <span class="text-[8px] text-slate-400 font-semibold uppercase leading-none">Us</span>
+                                <span id="score-us-header" class="text-[10px] font-black text-emerald-400 leading-none">0</span>
+                            </div>
+                            <div class="w-10 bg-slate-900 h-1 rounded-full overflow-hidden border border-slate-800 mt-1">
+                                <div id="progress-us-header" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <!-- Them Score -->
+                        <div class="flex flex-col items-end">
+                            <div class="flex items-center gap-1">
+                                <span class="text-[8px] text-slate-400 font-semibold uppercase leading-none">Them</span>
+                                <span id="score-them-header" class="text-[10px] font-black text-rose-400 leading-none">0</span>
+                            </div>
+                            <div class="w-10 bg-slate-900 h-1 rounded-full overflow-hidden border border-slate-800 mt-1">
+                                <div id="progress-them-header" class="bg-rose-500 h-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Relocated Suit Counting Row: Active inside the top of the aside below scoreboard -->
+                <div id="header-bid-counts" class="w-full flex flex-wrap gap-1.5 items-center justify-center mt-1.5 border-t border-slate-800/40 pt-1.5 hidden">
+                    <!-- Dynamic counters drawn here when toggled -->
+                </div>
+            </div>
+
+            <!-- Bidding Panel: Displays instantly below the bar during the Bidding phase -->
             <div id="bidding-panel" class="hidden h-full md:h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 flex flex-col justify-between gap-1">
                 <div class="flex justify-between items-center border-b border-slate-800/80 pb-1.5 gap-2">
                     <div>
@@ -190,7 +192,7 @@
                         </div>
                     </div>
                 </div>
-<!-- ♤♧♡♢ -->
+
                 <!-- Auction Log list (Collapsible & Compact) -->
                 <div class="bg-slate-950 rounded-lg p-1.5 border border-slate-800/80">
                     <span class="text-[9px] uppercase font-bold text-slate-500 block mb-0.5">Round Auction Log</span>
@@ -200,8 +202,8 @@
                 </div>
             </div>
 
-            <!-- Current Bid block: Occupies 28% vertical split-screen during standard Play/Scoring phases -->
-            <div id="current-bid-block" class="h-full md:h-auto w-full flex flex-col justify-center items-center p-3 bg-slate-950 border-b border-slate-800 shrink-0 text-center gap-1.5">
+            <!-- Current Bid block: Kept in DOM but hidden to prevent breaking JavaScript references -->
+            <div id="current-bid-block" class="hidden h-full md:h-auto w-full flex flex-col justify-center items-center p-3 bg-slate-950 border-b border-slate-800 shrink-0 text-center gap-1.5">
                 <span class="text-[9px] tracking-wider uppercase font-extrabold text-slate-500">Current Contract</span>
                 <div id="current-bid-display" class="text-base md:text-lg font-black text-emerald-400 flex items-center gap-2">
                     Waiting for Bid...
@@ -212,38 +214,8 @@
                 <span class="text-[9px] text-slate-400 italic md:hidden">Scroll down for scores & settings ⬇</span>
             </div>
 
-            <!-- Scrollable Sidebar Content: Accessible by scrolling down below the primary bid/play panels -->
-            <div id="sidebar-scrollable-content" class="p-3 md:p-4 space-y-3 flex-1 flex flex-col shrink-0">
-
-                <!-- Overall Match Scoring Panel (Always fully visible below primary panels) -->
-                <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 space-y-2.5">
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="font-bold text-slate-300">Match Scores</span>
-                        <span class="text-[10px] font-mono text-emerald-400">First to 21</span>
-                    </div>
-                    <div class="space-y-2">
-                        <!-- Team Us -->
-                        <div class="space-y-1">
-                            <div class="flex justify-between items-center text-[11px]">
-                                <span class="text-slate-300">Player & Partner (Us):</span>
-                                <strong id="score-us-sidebar" class="text-emerald-400 font-bold">0</strong>
-                            </div>
-                            <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
-                                <div id="progress-us-sidebar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <!-- Team Them -->
-                        <div class="space-y-1">
-                            <div class="flex justify-between items-center text-[11px]">
-                                <span class="text-slate-300">Left & Right (Them):</span>
-                                <strong id="score-them-sidebar" class="text-rose-400 font-bold">0</strong>
-                            </div>
-                            <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
-                                <div id="progress-them-sidebar" class="bg-rose-500 h-full transition-all duration-500" style="width: 0%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- Scrollable Sidebar Content Container -->
+            <div id="sidebar-scrollable-content" class="p-3 md:p-4 space-y-3 flex-1 flex flex-col overflow-y-auto min-h-0">
 
                 <!-- Collapsible Game Settings Accordion -->
                 <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-800/20 shrink-0">
@@ -296,17 +268,6 @@
                                 <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                             </label>
                         </div>
-						
-                        <!-- <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800"> -->
-                            <!-- <div class="flex flex-col pr-2"> -->
-                                <!-- <span class="text-[11px] font-semibold text-slate-200">Four-Color Suit Deck</span> -->
-                                <!-- <span class="text-[9px] text-slate-400 mt-0.5">Use distinct Colors (Green ♣\uFE0E, Blue ♦\uFE0E) to easily identify card suits.</span> -->
-                            <!-- </div> -->
-                            <!-- <label class="relative inline-flex items-center cursor-pointer select-none"> -->
-                                <!-- <input type="checkbox" id="toggle-four-color" class="sr-only peer" > -->
-                                <!-- <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div> -->
-                            <!-- </label> -->
-                        <!-- </div> -->
                     </div>
                 </div>
 
@@ -404,7 +365,8 @@ const state = {
     bidsThisRound: [], // Array of { player, bid, suit, passed, convention }
     playedCards: [], // Tracks all played cards in this hand for AI memory
     unplayedCounts: {'S':6,'C':6,'H':6,'D':6},
-    winnerTeam: null // Tracks the final winning team index (0 for Us, 1 for Them)
+    winnerTeam: null, // Tracks the final winning team index (0 for Us, 1 for Them)
+    selectedCardIndex: -1 // Track touch selection index on mobile
 };
 
 let aiTimeout = null;
@@ -456,7 +418,6 @@ const toggleCooperative = document.getElementById('toggle-cooperative');
 const toggleTrumpCount = document.getElementById('toggle-trump-count');
 const toggleAllSuitsCount = document.getElementById('toggle-all-suits-count');
 const toggleRevealAll = document.getElementById('toggle-reveal-all');
-<!-- const toggleFourColor = document.getElementById('toggle-four-color'); -->
 
 // Collapsible Game Settings Accordion
 const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
@@ -605,7 +566,6 @@ const getPlayerCoords = (p, width, height) => {
     const isMobile = width < 600;
     
     if (isMobile) {
-        // Left, Right, Partner are fanned off-screen showing only 30% of their length
         if (p === 0) return { x: cx, y: height - 42 };       // Player (Bottom)
         if (p === 1) return { x: -cardH * 0.2, y: cy };      // Left Opponent (Left edge shifted)
         if (p === 2) return { x: cx, y: -cardH * 0.2 };      // Partner (Top edge shifted)
@@ -690,16 +650,22 @@ const updateHUD = () => {
     // Synchronize both responsive Score HUD elements (Header + Sidebar scroll panel)
     document.getElementById('score-us-header').innerText = scoreUs;
     document.getElementById('score-them-header').innerText = scoreThem;
-    document.getElementById('score-us-sidebar').innerText = scoreUs;
-    document.getElementById('score-them-sidebar').innerText = scoreThem;
+    
+    const scoreUsSidebar = document.getElementById('score-us-sidebar');
+    if (scoreUsSidebar) scoreUsSidebar.innerText = scoreUs;
+    const scoreThemSidebar = document.getElementById('score-them-sidebar');
+    if (scoreThemSidebar) scoreThemSidebar.innerText = scoreThem;
     
     const progressUs = `${Math.min(100, (state.scores[0] / 21) * 100)}%`;
     const progressThem = `${Math.min(100, (state.scores[1] / 21) * 100)}%`;
     
     document.getElementById('progress-us-header').style.width = progressUs;
     document.getElementById('progress-them-header').style.width = progressThem;
-    document.getElementById('progress-us-sidebar').style.width = progressUs;
-    document.getElementById('progress-them-sidebar').style.width = progressThem;
+    
+    const progressUsSidebar = document.getElementById('progress-us-sidebar');
+    if (progressUsSidebar) progressUsSidebar.style.width = progressUs;
+    const progressThemSidebar = document.getElementById('progress-them-sidebar');
+    if (progressThemSidebar) progressThemSidebar.style.width = progressThem;
 
     updateContractUI();
 };
@@ -707,9 +673,9 @@ const updateHUD = () => {
 const updateContractUI = () => {
     const headerDisplayEl = document.getElementById('contract-display-header');
     const displayEl = document.getElementById('current-bid-display');
-    const countsEl = document.getElementById('current-bid-counts');
+    const countsEl = document.getElementById('header-bid-counts');
     
-    if (!displayEl) return;
+    if (!headerDisplayEl) return;
     
     let contractText = "";
     let suitHTML = "";
@@ -719,40 +685,41 @@ const updateContractUI = () => {
         const bidder = state.winningBidder;
         const team = (bidder % 2 === 0) ? "Us" : "Them";
         const suit = state.trumpSuit;
-        const convention = state.trumpConvention;
+        const _convention = state.trumpConvention;
         
         let suitText = "";
         let colorClass = "text-slate-100";
         
         if (suit === 'NT') {
-            suitText = convention ? convention : "Aces";
+            suitText = state.trumpConvention ? state.trumpConvention : "Aces";
             colorClass = "text-amber-400";
         } else {
-		<!-- ♤♧♡♢ -->
             const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
             suitText = suitIcons[suit] || suit;
             colorClass = getSuitColorClass(suit);
         }
-        suitHTML = `<span class="${colorClass} font-extrabold text-sm sm:text-base">${bid}${suitText}</span> <span class="text-slate-400 font-normal">(${team})</span>`;
+        suitHTML = `<span class="${colorClass} font-extrabold text-[10px] sm:text-xs flex items-center gap-0.5">${bid}${suitText} <span class="text-slate-400 font-normal">(${team})</span></span>`;
         contractText = `${bid}${suitText} (${team})`;
     } else {
-        suitHTML = `<span class="text-slate-400 font-normal">Bidding Round</span>`;
+        suitHTML = `<span class="text-slate-400 font-normal text-[10px]">Bidding...</span>`;
         contractText = "Bidding Round";
     }
     
-    displayEl.innerHTML = suitHTML;
+    if (displayEl) {
+        displayEl.innerHTML = suitHTML;
+    }
     headerDisplayEl.innerHTML = suitHTML;
     
-    // Draw dynamically generated active trump & suit stats inside the primary Mobile Contract Block
+    // Draw dynamically generated active trump & suit stats inside the new Header Counts block
     let pillsList = [];
     if (state.showTrumpCount && state.trumpSuit && state.gameState === 'PLAYING') {
         if (state.trumpSuit === 'NT') {
-            pillsList.push(`<span class="bg-amber-950/40 text-amber-400 px-2 py-0.5 rounded text-[10px] border border-amber-500/20 font-medium">Aces Active</span>`);
+            pillsList.push(`<span class="bg-amber-950/40 text-amber-400 px-1.5 py-0.5 rounded text-[8px] border border-amber-500/20 font-medium">Aces Active</span>`);
         } else {
             const count = state.unplayedCounts[state.trumpSuit];
             const trumpIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
             const textCol = getSuitColorClass(state.trumpSuit);
-            pillsList.push(`<span class="bg-slate-900 border-slate-700/50 px-2 py-0.5 rounded text-[11px] border font-bold ${textCol}">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
+            pillsList.push(`<span class="bg-slate-900 border-slate-700/50 px-1.5 py-0.5 rounded text-[11px] border font-bold ${textCol}">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
         }
     }
     
@@ -764,10 +731,17 @@ const updateContractUI = () => {
             const col = getSuitColorClass(s);
             suitsHTML.push(`<span class="${col}">${suitIcons[s]}:${count}</span>`);
         });
-        pillsList.push(`<span class="bg-slate-950/80 text-[11px] px-2 py-0.5 rounded border border-slate-800/50 flex gap-1.5 font-semibold">${suitsHTML.join(' ')}</span>`);
+        pillsList.push(`<span class="bg-slate-950/80 text-[11px] px-1.5 py-0.5 rounded border border-slate-800/50 flex gap-1 font-semibold">${suitsHTML.join(' ')}</span>`);
     }
     
-    countsEl.innerHTML = pillsList.join('');
+    if (countsEl) {
+        countsEl.innerHTML = pillsList.join('');
+        if (pillsList.length > 0 && state.gameState === 'PLAYING') {
+            countsEl.classList.remove('hidden');
+        } else {
+            countsEl.classList.add('hidden');
+        }
+    }
 };
 
 const runReset = () => {
@@ -806,6 +780,7 @@ const startNewHand = () => {
     state.playerBids = [null, null, null, null];
     state.unplayedCounts = {'S':6,'C':6,'H':6,'D':6};
     state.winnerTeam = null;
+    state.selectedCardIndex = -1; // Reset mobile selection on redeal
     
     const deck = [];
     SUITS.forEach(s => RANKS.forEach(r => deck.push({ rank: r, suit: s })));
@@ -880,13 +855,13 @@ const triggerNextTurn = () => {
         }
     } else if (state.gameState === 'PLAYING') {
         biddingPanel.classList.add('hidden');
-        currentBidBlock.classList.remove('hidden');
+        currentBidBlock.classList.add('hidden');
         
         if (state.trickQueue.length === 4) {
             aiTimeout = setTimeout(resolveTrick, 1400);
         } else {
             if (state.currentPlayer === 0) {
-                addLog("Your turn. Tap a highlighted card to play.");
+                addLog("Your turn. Tap a card once to select, tap again to play.");
             } else {
                 aiTimeout = setTimeout(handleAIPlay, 1000);
             }
@@ -900,7 +875,6 @@ const openHumanBiddingUI = () => {
     
     const historyList = document.getElementById('bidding-history-list');
     historyList.innerHTML = '';
-    <!-- const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' }; -->
     const suitIcons = { 'S': '♤\uFE0E Spades', 'C': '♧\uFE0E Clubs', 'H': '♡\uFE0E Hearts', 'D': '♢\uFE0E Diamonds', 'NT': 'Aces', 'ACES': 'Aces' };
 
     if (state.bidsThisRound.length === 0) {
@@ -938,7 +912,6 @@ const openHumanBiddingUI = () => {
     updateBiddingButtons();
 };
 
-// Interactive Bid-First, Suit-Second Redesigned Logic
 const updateBiddingButtons = () => {
     // Update Suit Buttons in Bidding Panel to match colors dynamically
     document.querySelectorAll('.suit-btn').forEach(btn => {
@@ -1422,32 +1395,31 @@ const playCard = (playerIdx, cardIdx) => {
     const textCol = getSuitColorClass(getEffectiveSuit(card, state.trumpSuit));
     addLog(`<strong>${PLAYER_NAMES[playerIdx]}</strong> played <strong>${card.rank === '10' ? '10' : card.rank}<span class="${textCol}">${suitIcons[card.suit]}</span></strong>.`);
     
+    state.selectedCardIndex = -1; // Reset selection index
     state.currentPlayer = (state.currentPlayer + 1) % 4;
     triggerNextTurn();
 };
 
 const resolveTrick = () => {
     let winner = -1;
-    let maxP = -1;
+    let maxPower = -1;
     
     state.trickQueue.forEach(q => {
-        let pwr = getPowerValue(q.card, state.leadSuit, state.trumpSuit);
-        if (pwr > maxP) {
-            maxP = pwr;
+        const pwr = getPowerValue(q.card, state.leadSuit, state.trumpSuit);
+        if (pwr > maxPower) {
+            maxPower = pwr;
             winner = q.player;
         }
     });
 
     state.tricksWon[winner % 2]++;
-    
-    addLog(`<strong>${PLAYER_NAMES[winner]}</strong> wins the trick!`);
-    
+    addLog(`Trick won by <strong>${PLAYER_NAMES[winner]}</strong>.`);
     state.trickQueue = [];
     state.leadSuit = null;
     state.currentPlayer = winner;
 
-    const remainingCards = state.hands.reduce((acc, h) => acc + h.length, 0);
-    if (remainingCards === 0) {
+    const cardsRemaining = state.hands[0].length + state.hands[1].length + state.hands[2].length + state.hands[3].length;
+    if (cardsRemaining === 0) {
         aiTimeout = setTimeout(resolveHand, 1200);
     } else {
         triggerNextTurn();
@@ -1536,17 +1508,12 @@ const drawCard = (card, x, y, faceUp = true, showIcon = false, highlight = false
         const suitColor = getSuitColor(card.suit);
         ctx.fillStyle = suitColor;
 		const suitIcons = { 'S': '♠\uFE0E', 'C': '♣\uFE0E', 'H': '♥\uFE0E', 'D': '♦\uFE0E' };
-        <!-- const suitIcons = { 'S': '♠\uFE0E', 'C': '♣\uFE0E', 'H': '♥\uFE0E', 'D': '♦\uFE0E' }; -->
-        
-        // Draw elegant high-visibility top strip matching suit color
-        <!-- ctx.fillRect(-cardW / 2 + 4, -cardH / 2 + 1, cardW - 8, 3.5); -->
         
         ctx.font = 'bold 13px "Inter", sans-serif';
         ctx.textBaseline = 'top';
         ctx.textAlign = 'left';
         ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 7);
         
-        // Make center suit symbol significantly larger and distinct
 		if (showIcon) {
 			ctx.font = 'bold 28px "Inter", sans-serif';
 			ctx.textAlign = 'center';
@@ -1569,7 +1536,6 @@ const drawCard = (card, x, y, faceUp = true, showIcon = false, highlight = false
     ctx.restore();
 };
 
-// Specialized support drawing cards that can be rotated 90 degrees
 const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, highlight = false, isHovered = false) => {
     ctx.save();
     
@@ -1601,15 +1567,11 @@ const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, hig
         ctx.fillStyle = suitColor;
         const suitIcons = { 'S': '♠\uFE0E', 'C': '♣\uFE0E', 'H': '♥\uFE0E', 'D': '♦\uFE0E' };
         
-        // Draw elegant high-visibility top strip matching suit color
-        <!-- ctx.fillRect(-cardW / 2 + 4, -cardH / 2 + 1, cardW - 8, 3.5); -->
-        
         ctx.font = 'bold 11px "Inter", sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 7);
         
-        // Make center suit symbol significantly larger and distinct
 		if (showIcon) {
 			ctx.font = 'bold 26px "Inter", sans-serif';
 			ctx.textAlign = 'center';
@@ -1638,31 +1600,35 @@ const drawPlayerPlate = (p, name, pos, width, height, spread) => {
     let lx = pos.x;
     let ly = pos.y;
     
-    const plateW = isMobile ? 80 : 130;
-    const plateH = isMobile ? 18 : 26;
+    // Expand sizing slightly on mobile to fully support +3 font size upgrades
+    const plateW = isMobile ? 96 : 130;
+    const plateH = isMobile ? 22 : 26;
     const plateR = isMobile ? 8 : 12;
 
     if (isMobile) {
-        if (p === 0) { // Player: below and to the left of cards
-            lx = Math.max(52, pos.x - spread / 2 - 28);
-            ly = height - 18;
-        } else if (p === 1) { // Left: 10 px below bottom card (since cards are fanned vertically, bottom card is at +spread/2)
+        if (p === 0) { 
+            // Player: placed above fanned cards and centered
+            lx = pos.x; 
+            ly = pos.y - cardH / 2 - plateH / 2 - 6; 
+        } else if (p === 1) { 
+            // Left: 10 px below bottom card fanning point
             lx = 42;
             ly = pos.y + spread / 2 + cardW / 2 + 10 + plateH / 2;
-        } else if (p === 2) { // Partner: above and to the right of its cards (safe bounds)
-            lx = Math.min(width - 52, pos.x + spread / 2 + 28);
-            ly = 18;
-        } else if (p === 3) { // Right: 10 px below bottom card
+        } else if (p === 2) { 
+            // Partner: pushed fully to the right of partner's cards to eliminate overlapping
+            lx = Math.min(width - plateW / 2 - 6, pos.x + spread / 2 + cardW / 2 + plateW / 2 + 10);
+            ly = 24; 
+        } else if (p === 3) { 
+            // Right: 10 px below bottom card fanning point
             lx = width - 42;
             ly = pos.y + spread / 2 + cardW / 2 + 10 + plateH / 2;
         }
     } else {
-        // Desktop Standard relative placement with Left/Right matched perfectly to 10px below bottom card
         if (p === 0) {
             ly = pos.y - 75;
         } else if (p === 2) {
             ly = pos.y + 75;
-        } else if (p === 1 || p === 3) { // Left & Right: Exactly 10 px below bottom card
+        } else if (p === 1 || p === 3) { 
             ly = pos.y + spread / 2  + cardW / 2 + 10 + plateH / 2;
         }
     }
@@ -1679,12 +1645,14 @@ const drawPlayerPlate = (p, name, pos, width, height, spread) => {
     ctx.stroke();
     
     ctx.fillStyle = (state.currentPlayer === p && state.gameState !== 'SCORING' && state.gameState !== 'GAMEOVER') ? '#fbbf24' : '#f8fafc';
-    ctx.font = isMobile ? 'bold 9px "Inter", sans-serif' : 'bold 11px "Inter", sans-serif';
+    
+    // Applied +3 Font size upgrade for mobile player labels (9px -> 12px)
+    ctx.font = isMobile ? 'bold 12px "Inter", sans-serif' : 'bold 11px "Inter", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(name, lx, ly + 0.5);
     
-    // Draw Dealer chip aligned to follow the Plate center
+    // Draw Dealer chip aligned to follow the Plate center dynamically
     if (state.dealer === p) {
         const dX = lx - (plateW / 2 + 8);
         const dY = ly;
@@ -1699,7 +1667,7 @@ const drawPlayerPlate = (p, name, pos, width, height, spread) => {
         ctx.stroke();
         
         ctx.fillStyle = '#0f172a';
-        ctx.font = isMobile ? 'bold 7px "Inter", sans-serif' : 'bold 9px "Inter", sans-serif';
+        ctx.font = isMobile ? 'bold 10px "Inter", sans-serif' : 'bold 9px "Inter", sans-serif';
         ctx.fillText("D", dX, dY + 0.5);
     }
 
@@ -1729,20 +1697,34 @@ const drawPlayerBid = (p, pos, width, height, spread) => {
     let by = pos.y;
     const isMobile = width < 600;
 
-    // Reposition bids to stack cleanly directly relative to relocated plates
+    // Upgraded badge sizes to elegantly buffer larger font sizes
+    const badgeW = isMobile ? 76 : 85;
+    const badgeH = isMobile ? 18 : 22;
+
+    const plateW = isMobile ? 96 : 130;
+    const plateH = isMobile ? 22 : 26;
+
+    // Recalculating bid alignment to stack cleanly right next to labels/plates on mobile
     if (isMobile) {
-        if (p === 0) { // Player: stacked above Player Plate
-            bx = Math.max(52, pos.x - spread / 2 - 28);
-            by = height - 36;
-        } else if (p === 1) { // Left: stacked above Left Plate
+        if (p === 0) { 
+            // Player: aligned directly above Player Plate (centered to cards)
+            bx = pos.x; 
+            const plateY = pos.y - cardH / 2 - plateH / 2 - 6;
+            by = plateY - plateH / 2 - badgeH / 2 - 4;
+        } else if (p === 1) { 
+            // Left: stacked cleanly above Left Plate
             bx = 42;
-            by = pos.y - spread / 2 - 36;
-        } else if (p === 2) { // Partner: stacked below Partner Plate
-            bx = Math.min(width - 52, pos.x + spread / 2 + 28);
-            by = 36;
-        } else if (p === 3) { // Right: stacked above Right Plate
+            const plateY = pos.y + spread / 2 + cardW / 2 + 10 + plateH / 2;
+            by = plateY - plateH / 2 - badgeH / 2 - 4;
+        } else if (p === 2) { 
+            // Partner: positioned below relocated Partner Plate to avoid card overlaps
+            bx = Math.min(width - plateW / 2 - 6, pos.x + spread / 2 + cardW / 2 + plateW / 2 + 10);
+            by = 24 + plateH / 2 + badgeH / 2 + 4;
+        } else if (p === 3) { 
+            // Right: stacked cleanly above Right Plate
             bx = width - 42;
-            by = pos.y - spread / 2 - 36;
+            const plateY = pos.y + spread / 2 + cardW / 2 + 10 + plateH / 2;
+            by = plateY - plateH / 2 - badgeH / 2 - 4;
         }
     } else {
         if (p === 0) {
@@ -1764,16 +1746,15 @@ const drawPlayerBid = (p, pos, width, height, spread) => {
     ctx.strokeStyle = '#475569';
     ctx.lineWidth = 1.2;
 
-    const badgeW = isMobile ? 60 : 85;
-    const badgeH = isMobile ? 15 : 22;
-
     ctx.beginPath();
     ctx.roundRect(bx - badgeW / 2, by - badgeH / 2, badgeW, badgeH, 5);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = '#f8fafc';
-    ctx.font = isMobile ? 'bold 8px "Inter", sans-serif' : 'bold 10px "Inter", sans-serif';
+    
+    // Applied +3 Font size upgrade for mobile player bid cards (8px -> 11px)
+    ctx.font = isMobile ? 'bold 11px "Inter", sans-serif' : 'bold 10px "Inter", sans-serif';
     
     // Colorize the suit badge explicitly inside the plate
     if (!bidInfo.passed && bidInfo.suit !== 'NT') {
@@ -1816,6 +1797,58 @@ const renderLoop = () => {
             const step = isMobile ? 42 : (cardW + 8);
             const spread = (hand.length - 1) * step;
             playerSpreads[0] = spread;
+            let clickedAnyCard = false;
+
+            // Compute hit indices (sweep backwards from topmost drawn card index to prioritize top layer overlap clicks)
+            let clickedIndex = -1;
+            let hoveredIndex = -1;
+
+            for (let i = hand.length - 1; i >= 0; i--) {
+                const ox = pos.x - spread / 2 + i * step;
+                const oy = pos.y;
+                
+                if (pointer.x > ox - cardW / 2 && pointer.x < ox + cardW / 2 && 
+                    pointer.y > oy - cardH / 2 && pointer.y < oy + cardH / 2) {
+                    
+                    if (state.gameState === 'PLAYING' && state.currentPlayer === 0) {
+                        let hasLead = state.hands[0].some(c => getEffectiveSuit(c, state.trumpSuit) === state.leadSuit);
+                        let card = hand[i];
+                        let isLegal = !state.leadSuit || !hasLead || getEffectiveSuit(card, state.trumpSuit) === state.leadSuit;
+                        
+                        if (isLegal) {
+                            hoveredIndex = i;
+                            if (pointer.justPressed) {
+                                clickedIndex = i;
+                            }
+                            break; // Stop sweep at topmost matched card
+                        }
+                    }
+                }
+            }
+
+            // Handle selection and play actions based on desktop vs mobile targets
+            if (clickedIndex !== -1) {
+                clickedAnyCard = true;
+                if (isMobile) {
+                    // Mobile Interaction: Select on first tap, play on second tap
+                    if (state.selectedCardIndex === clickedIndex) {
+                        playCard(0, clickedIndex);
+                        state.selectedCardIndex = -1;
+                    } else {
+                        state.selectedCardIndex = clickedIndex;
+                    }
+                } else {
+                    // Desktop Interaction: Play card directly on click
+                    playCard(0, clickedIndex);
+                }
+            }
+
+            // Deselect mobile tap selection when tapping outside cards
+            if (isMobile && pointer.justPressed && !clickedAnyCard) {
+                state.selectedCardIndex = -1;
+            }
+
+            // Draw Human Cards
             hand.forEach((card, i) => {
                 const ox = pos.x - spread / 2 + i * step;
                 const oy = pos.y;
@@ -1823,32 +1856,28 @@ const renderLoop = () => {
                 let highlight = false;
                 let isHovered = false;
                 
-                if (state.gameState === 'PLAYING' && state.currentPlayer === 0) {
-                    let hasLead = state.hands[0].some(c => getEffectiveSuit(c, state.trumpSuit) === state.leadSuit);
-                    let isLegal = !state.leadSuit || !hasLead || getEffectiveSuit(card, state.trumpSuit) === state.leadSuit;
-                    
-                    if (pointer.x > ox - cardW / 2 && pointer.x < ox + cardW / 2 && 
-                        pointer.y > oy - cardH / 2 && pointer.y < oy + cardH / 2) {
-                        
-                        highlight = isLegal;
-                        isHovered = isLegal;
-                        
-                        if (pointer.justPressed && isLegal) {
-                            playCard(0, i);
-                        }
+                if (isMobile) {
+                    // Highlighting the active tap selection
+                    if (state.selectedCardIndex === i) {
+                        highlight = true;
+                        isHovered = true;
+                    }
+                } else {
+                    // Desktop Hover States
+                    if (hoveredIndex === i) {
+                        highlight = true;
+                        isHovered = true;
                     }
                 }
                 
                 drawRotatedCard(card, ox, oy, 0, true, showIcon, highlight, isHovered);
             });
         } else if (p === 2) {
-            // Partner (Top): Spaced out and rotated 180 degrees to face the center
+            // Partner (Top)
             const step = isMobile ? 32 : 26;
             const spread = (hand.length - 1) * step;
             playerSpreads[2] = spread;
 
-            // Render from rightmost (index length-1) to leftmost (index 0) so the left card overlays the right,
-            // allowing players to easily read bottom-right suit indicators when face-up.
             for (let i = hand.length - 1; i >= 0; i--) {
                 const card = hand[i];
                 const ox = pos.x - spread / 2 + i * step;
@@ -1857,43 +1886,33 @@ const renderLoop = () => {
                 drawRotatedCard(card, ox, oy, 0, showFaceUp, showIcon, false, false);
             }
         } else if (p === 1) {
-            // Left Opponent (P1): Rotated 90 degrees and spaced out vertically
+            // Left Opponent (P1)
             const step = isMobile ? 24 : 26;
             const spread = (hand.length - 1) * step;
             playerSpreads[1] = spread;
-            if (isMobile) {
-                hand.forEach((card, i) => {
-                    const ox = pos.x; 
-                    const oy = pos.y - spread / 2 + i * step;
-                    const showFaceUp = state.revealAllCards;
-                    drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, showIcon, false, false);
-                });
-            } else {
-                hand.forEach((card, i) => {
-                    const ox = pos.x;
-                    const oy = pos.y - spread / 2 + i * step;
-                    const showFaceUp = state.revealAllCards;
-                    drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, showIcon, false, false);
-                });
-            }
+            hand.forEach((card, i) => {
+                const ox = pos.x; 
+                const oy = pos.y - spread / 2 + i * step;
+                const showFaceUp = state.revealAllCards;
+                drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, showIcon, false, false);
+            });
         } else if (p === 3) {
-            // Right Opponent (P3): Rotated 180 degrees from -90 degrees (which is 90 degrees/Math.PI/2)
+            // Right Opponent (P3)
             const step = isMobile ? 24 : 26;
             const spread = (hand.length - 1) * step;
             playerSpreads[3] = spread;
 
-            // Render from bottommost (index length-1) to topmost (index 0) so top card overlays the one below it.
             for (let i = hand.length - 1; i >= 0; i--) {
                 const card = hand[i];
                 const ox = pos.x;
                 const oy = pos.y - spread / 2 + i * step;
                 const showFaceUp = state.revealAllCards;
-                drawRotatedCard(card, ox, oy, Math.PI *1.5, showFaceUp, showIcon, false, false);
+                drawRotatedCard(card, ox, oy, Math.PI * 1.5, showFaceUp, showIcon, false, false);
             }
         }
     }
 
-    // Secondary pass to render relocated plates/bids on top of cards
+    // Secondary pass to render plates/bids on top of cards cleanly
     for (let p = 0; p < 4; p++) {
         const pos = getPlayerCoords(p, width, height);
         drawPlayerPlate(p, PLAYER_NAMES[p], pos, width, height, playerSpreads[p]);
@@ -1956,13 +1975,6 @@ toggleRevealAll.addEventListener('change', (e) => {
     state.revealAllCards = e.target.checked;
     addLog(`Show All Players' Cards: <strong>${state.revealAllCards ? "ON" : "OFF"}</strong>.`);
 });
-
-<!-- toggleFourColor.addEventListener('change', (e) => { -->
-    <!-- state.fourColorDeck = e.target.checked; -->
-    <!-- addLog(`Four-Color Suit Deck: <strong>${state.fourColorDeck ? "ON" : "OFF"}</strong>.`); -->
-    <!-- updateHUD(); -->
-    <!-- updateBiddingButtons(); -->
-<!-- }); -->
 
 document.getElementById('btn-reset').onclick = () => {
     runReset();
