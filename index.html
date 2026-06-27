@@ -1800,8 +1800,9 @@ const renderLoop = () => {
             let clickedAnyCard = false;
 
             // Compute hit indices (sweep backwards from topmost drawn card index to prioritize top layer overlap clicks)
-            let clickedIndex = -1;
+            let clickedIndex = -1
             let hoveredIndex = -1;
+            let mobileWait = false;
 
             for (let i = hand.length - 1; i >= 0; i--) {
                 const ox = pos.x - spread / 2 + i * step;
@@ -1817,9 +1818,12 @@ const renderLoop = () => {
                         
                         if (isLegal) {
                             hoveredIndex = i;
-                            if (pointer.justPressed) {
+                            if (pointer.justPressed && clickedIndex == -1) {
                                 clickedIndex = i;
-                            }
+								mobileWait = true;
+                            } else if (pointer.justPressed && state.selectedCardIndex != -1) {
+								mobileWait = false;
+							}
                             break; // Stop sweep at topmost matched card
                         }
                     }
@@ -1831,7 +1835,7 @@ const renderLoop = () => {
                 clickedAnyCard = true;
                 if (isMobile) {
                     // Mobile Interaction: Select on first tap, play on second tap
-                    if (state.selectedCardIndex === clickedIndex) {
+                    if (state.selectedCardIndex === clickedIndex && mobileWait == true) {
                         playCard(0, clickedIndex);
                         state.selectedCardIndex = -1;
                     } else {
