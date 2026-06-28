@@ -98,11 +98,11 @@
             </div>
         </div>
 
-        <!-- Sidebar Section: Left-aligned panel on desktop, bottom-aligned on mobile -->
-        <aside class="w-full h-[28vh] md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-hidden">
+        <!-- Sidebar Section: Left-aligned panel on desktop, bottom-aligned and scrollable on mobile -->
+        <aside class="w-full h-[28vh] md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-y-auto md:overflow-hidden">
 
-            <!-- Relocated Top Bar Header (Now locked at the top of the sidebar/bottom panel) -->
-            <div class="w-full bg-slate-950 border-b border-slate-800 px-3.5 py-2.5 flex flex-col shrink-0 z-20">
+            <!-- Relocated Top Bar Header (Now locked/sticky at the top of the sidebar/bottom panel) -->
+            <div class="w-full bg-slate-950 border-b border-slate-800 px-3.5 py-2.5 flex flex-col shrink-0 z-20 sticky top-0">
                 <div class="flex items-center justify-between w-full">
                     <!-- Left: Active Contract -->
                     <div class="flex items-center gap-1.5 bg-slate-900/60 px-2 py-0.5 rounded-lg border border-slate-800">
@@ -142,7 +142,7 @@
             </div>
 
             <!-- Bidding Panel: Displays instantly below the bar during the Bidding phase -->
-            <div id="bidding-panel" class="hidden h-full md:h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 overflow y-auto flex flex-col justify-between gap-1">
+            <div id="bidding-panel" class="hidden h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 overflow-y-auto flex flex-col justify-between gap-1">
                 <div class="flex justify-between items-center border-b border-slate-800/80 pb-1.5 gap-2">
                     <div>
                         <span class="text-[9px] uppercase tracking-wider font-bold text-emerald-400 block leading-none">Your Turn</span>
@@ -1303,38 +1303,7 @@ const handleAIPlay = () => {
     if (!state.leadSuit) {
         const isAttacking = (state.winningBidder % 2 === p % 2);
         
-        // Perfect Memory Aggressive Lead Optimization: Find and play safe Boss cards
-        const bossCards = legalIndices.filter(idx => isBossCard(hand[idx], state.trumpSuit, state.playedCards, hand));
-        
-        if (state.aiPerfectMemory && bossCards.length > 0) {
-            const opp1 = (p + 1) % 4;
-            const opp2 = (p + 3) % 4;
-            
-            // Check if opponents are void of trump cards so we can securely play lower off-suit boss cards
-            const isOpponentTrumpVoid = state.trumpSuit === 'NT' || 
-                ((state.voids[opp1][state.trumpSuit] || state.unplayedCounts[state.trumpSuit] === 0) && 
-                 (state.voids[opp2][state.trumpSuit] || state.unplayedCounts[state.trumpSuit] === 0));
-                 
-            // Favor played boss cards that are either trump or safe from being cut
-            const safeBossIdx = bossCards.find(idx => {
-                const isTrumpCard = state.trumpSuit !== 'NT' && getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit;
-                return isTrumpCard || isOpponentTrumpVoid;
-            });
-            
-            if (safeBossIdx !== undefined) {
-                chosenIdx = safeBossIdx;
-                const card = hand[chosenIdx];
-                if (card.rank !== 'A' && card.rank !== 'J') {
-                    addLog(`🤖 <em>AI Card Counting:</em> <strong>${PLAYER_NAMES[p]}</strong> determined that <strong>${card.rank} of ${card.suit}</strong> is now the unbeatable boss card!`, true);
-                }
-            } else {
-                chosenIdx = findHighestPowerCard(hand, null, state.trumpSuit, bossCards);
-                const card = hand[chosenIdx];
-                if (card.rank !== 'A' && card.rank !== 'J') {
-                    addLog(`🤖 <em>AI Card Counting:</em> <strong>${PLAYER_NAMES[p]}</strong> plays calculated Boss card <strong>${card.rank} of ${card.suit}</strong>!`, true);
-                }
-            }
-        } else if (isAttacking) {
+        if (isAttacking) {
             if (state.trumpSuit === 'NT') {
                 const bossAce = legalBossIndices.find(idx => hand[idx].rank === 'A');
                 if (bossAce !== undefined) {
