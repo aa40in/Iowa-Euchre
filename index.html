@@ -142,7 +142,7 @@
             </div>
 
             <!-- Bidding Panel: Displays instantly below the bar during the Bidding phase -->
-            <div id="bidding-panel" class="hidden h-full md:h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 flex flex-col overflow-y-auto justify-between gap-1">
+            <div id="bidding-panel" class="hidden h-full md:h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 flex flex-col justify-between gap-1">
                 <div class="flex justify-between items-center border-b border-slate-800/80 pb-1.5 gap-2">
                     <div>
                         <span class="text-[9px] uppercase tracking-wider font-bold text-emerald-400 block leading-none">Your Turn</span>
@@ -283,7 +283,13 @@
 
                 <!-- Console Log Panel -->
                 <div class="flex-1 min-h-[120px] flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-2.5 font-mono text-[10px]">
-                    <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1">Deal Log Console</div>
+                    <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1 flex justify-between items-center">
+                        <span>Deal Log Console</span>
+                        <label class="flex items-center gap-1 cursor-pointer select-none text-[8px] text-slate-400 font-normal normal-case">
+                            <input type="checkbox" id="toggle-verbose-log" class="rounded bg-slate-900 border-slate-800 text-emerald-500 focus:ring-0 focus:ring-offset-0 h-3 w-3 accent-emerald-500" checked>
+                            Verbose
+                        </label>
+                    </div>
                     <div id="game-log" class="flex-1 overflow-y-auto space-y-1 text-slate-300 pr-1 select-none font-mono text-[10px]">
                         <!-- Dynamic logs append here -->
                     </div>
@@ -360,6 +366,8 @@ const state = {
     showAllSuitsCount: false,
     revealAllCards: false,
     fourColorDeck: false, // Added: Toggles high-readability 4-color suits
+    verboseLog: true,     // Added: Toggles verbose intermediate actions vs final results
+    logHistory: [],       // Added: Persistent logs archive
     biddingTurnsCount: 0,
     playerBids: [null, null, null, null], // Visual bid tags [P0, P1, P2, P3]
     bidsThisRound: [], // Array of { player, bid, suit, passed, convention }
@@ -478,11 +486,23 @@ const getSuitColorClass = (suit) => {
     return 'text-slate-300';
 };
 
-const addLog = (msg) => {
-    const item = document.createElement('div');
-    item.className = "leading-relaxed border-l-2 border-emerald-500 pl-1.5 py-0.5 text-slate-300";
-    item.innerHTML = `<span class="text-slate-500">[${new Date().toLocaleTimeString(undefined, {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'})}]</span> ${msg}`;
-    logConsole.appendChild(item);
+const addLog = (msg, isVerbose = true) => {
+    const timestamp = new Date().toLocaleTimeString(undefined, {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    state.logHistory.push({ msg, isVerbose, timestamp });
+    renderLogs();
+};
+
+const renderLogs = () => {
+    logConsole.innerHTML = '';
+    state.logHistory.forEach(entry => {
+        if (!state.verboseLog && entry.isVerbose) {
+            return;
+        }
+        const item = document.createElement('div');
+        item.className = "leading-relaxed border-l-2 border-emerald-500 pl-1.5 py-0.5 text-slate-300";
+        item.innerHTML = `<span class="text-slate-500">[${entry.timestamp}]</span> ${entry.msg}`;
+        logConsole.appendChild(item);
+    });
     logConsole.scrollTop = logConsole.scrollHeight;
 };
 
@@ -719,7 +739,7 @@ const updateContractUI = () => {
             const count = state.unplayedCounts[state.trumpSuit];
             const trumpIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
             const textCol = getSuitColorClass(state.trumpSuit);
-            pillsList.push(`<span class="bg-slate-900 border-slate-700/50 px-1.5 py-0.5 rounded text-[11px] border font-bold ${textCol}">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
+            pillsList.push(`<span class="bg-slate-900 border-slate-700/50 px-1.5 py-0.5 rounded text-[8px] border font-bold ${textCol}">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
         }
     }
     
@@ -731,7 +751,7 @@ const updateContractUI = () => {
             const col = getSuitColorClass(s);
             suitsHTML.push(`<span class="${col}">${suitIcons[s]}:${count}</span>`);
         });
-        pillsList.push(`<span class="bg-slate-950/80 text-[11px] px-1.5 py-0.5 rounded border border-slate-800/50 flex gap-1 font-semibold">${suitsHTML.join(' ')}</span>`);
+        pillsList.push(`<span class="bg-slate-950/80 text-[8px] px-1.5 py-0.5 rounded border border-slate-800/50 flex gap-1 font-semibold">${suitsHTML.join(' ')}</span>`);
     }
     
     if (countsEl) {
@@ -751,7 +771,8 @@ const runReset = () => {
     }
     state.scores = [0, 0];
     state.dealer = Math.floor(Math.random() * 4);
-    addLog("=== Iowa Aces Euchre Initialized! ===");
+    state.logHistory = [];
+    addLog("=== Iowa Aces Euchre Initialized! ===", false);
     startNewHand();
 };
 
@@ -835,7 +856,7 @@ const triggerNextTurn = () => {
                 const suitColClass = getSuitColorClass(state.trumpSuit);
                 const trumpSuitDisplay = state.trumpConvention ? state.trumpConvention : (state.trumpSuit === 'NT' ? 'Aces' : `<span class="${suitColClass}">${icon} ${state.trumpSuit}</span>`);
                 
-                addLog(`Contract won by <strong>${PLAYER_NAMES[state.winningBidder]}</strong> for <strong>${state.highestBid} tricks</strong> (${trumpSuitDisplay}). <strong>${PLAYER_NAMES[state.currentPlayer]}</strong> has the lead!`);
+                addLog(`Contract won by <strong>${PLAYER_NAMES[state.winningBidder]}</strong> for <strong>${state.highestBid} tricks</strong> (${trumpSuitDisplay}). <strong>${PLAYER_NAMES[state.currentPlayer]}</strong> has the lead!`, false);
                 
                 if (state.trumpSuit !== 'NT') {
                     state.unplayedCounts[state.trumpSuit]++;
@@ -1441,7 +1462,7 @@ const resolveHand = () => {
     if (tricksSecured >= state.highestBid) {
         points1 = state.tricksWon[0];
         points2 = state.tricksWon[1];
-        addLog(`Contract met! Tricks won: <strong>${team1Name}</strong>: ${state.tricksWon[0]} | <strong>${team2Name}</strong>: ${state.tricksWon[1]}.`);
+        addLog(`Contract met! Tricks won: <strong>${team1Name}</strong>: ${state.tricksWon[0]} | <strong>${team2Name}</strong>: ${state.tricksWon[1]}.`, false);
     } else {
         if (biddingTeam === 0) {
             points1 = -state.highestBid; 
@@ -1450,7 +1471,7 @@ const resolveHand = () => {
             points1 = state.tricksWon[0];
             points2 = -state.highestBid;
         }
-        addLog(`<strong>Set!</strong> Team <strong>${activeTeamName}</strong> fails their contract. Suffers a penalty of <strong>-${state.highestBid} points</strong>.`);
+        addLog(`<strong>Set!</strong> Team <strong>${activeTeamName}</strong> fails their contract. Suffers a penalty of <strong>-${state.highestBid} points</strong>.`, false);
     }
 
     state.scores[0] += points1;
@@ -1466,16 +1487,16 @@ const resolveHand = () => {
             state.winnerTeam = biddingTeam;
             if (biddingTeam === 0) {
                 winnerMsg = "PLAYER & PARTNER WIN THE GAME! (Tiebreaker)";
-                addLog(`<strong>Tiebreaker!</strong> Both teams reached 21. Bidding team (<strong>${team1Name}</strong>) wins the game!`);
+                addLog(`<strong>Tiebreaker!</strong> Both teams reached 21. Bidding team (<strong>${team1Name}</strong>) wins the game!`, false);
             } else {
                 winnerMsg = "LEFT & RIGHT WIN THE GAME! (Tiebreaker)";
-                addLog(`<strong>Tiebreaker!</strong> Both teams reached 21. Bidding team (<strong>${team2Name}</strong>) wins the game!`);
+                addLog(`<strong>Tiebreaker!</strong> Both teams reached 21. Bidding team (<strong>${team2Name}</strong>) wins the game!`, false);
             }
         } else {
             state.winnerTeam = state.scores[0] >= 21 ? 0 : 1;
             winnerMsg = state.winnerTeam === 0 ? "PLAYER & PARTNER WIN THE GAME!" : "LEFT & RIGHT WIN THE GAME!";
         }
-        addLog(`<strong>=== ${winnerMsg} ===</strong>`);
+        addLog(`<strong>=== ${winnerMsg} ===</strong>`, false);
     } else {
         aiTimeout = setTimeout(startNewHand, 3000);
     }
@@ -1800,11 +1821,11 @@ const renderLoop = () => {
             let clickedAnyCard = false;
 
             // Compute hit indices (sweep backwards from topmost drawn card index to prioritize top layer overlap clicks)
-            let clickedIndex = -1
+            let clickedIndex = -1;
             let hoveredIndex = -1;
-            let mobileWait = false;
 
             for (let i = hand.length - 1; i >= 0; i--) {
+                const card = hand[i];
                 const ox = pos.x - spread / 2 + i * step;
                 const oy = pos.y;
                 
@@ -1813,17 +1834,13 @@ const renderLoop = () => {
                     
                     if (state.gameState === 'PLAYING' && state.currentPlayer === 0) {
                         let hasLead = state.hands[0].some(c => getEffectiveSuit(c, state.trumpSuit) === state.leadSuit);
-                        let card = hand[i];
                         let isLegal = !state.leadSuit || !hasLead || getEffectiveSuit(card, state.trumpSuit) === state.leadSuit;
                         
                         if (isLegal) {
                             hoveredIndex = i;
-                            if (pointer.justPressed && clickedIndex == -1) {
+                            if (pointer.justPressed) {
                                 clickedIndex = i;
-								mobileWait = true;
-                            } else if (pointer.justPressed && state.selectedCardIndex != -1) {
-								mobileWait = false;
-							}
+                            }
                             break; // Stop sweep at topmost matched card
                         }
                     }
@@ -1835,7 +1852,7 @@ const renderLoop = () => {
                 clickedAnyCard = true;
                 if (isMobile) {
                     // Mobile Interaction: Select on first tap, play on second tap
-                    if (state.selectedCardIndex === clickedIndex && mobileWait == true) {
+                    if (state.selectedCardIndex === clickedIndex) {
                         playCard(0, clickedIndex);
                         state.selectedCardIndex = -1;
                     } else {
@@ -1978,6 +1995,12 @@ toggleAllSuitsCount.addEventListener('change', (e) => {
 toggleRevealAll.addEventListener('change', (e) => {
     state.revealAllCards = e.target.checked;
     addLog(`Show All Players' Cards: <strong>${state.revealAllCards ? "ON" : "OFF"}</strong>.`);
+});
+
+const toggleVerboseLog = document.getElementById('toggle-verbose-log');
+toggleVerboseLog.addEventListener('change', (e) => {
+    state.verboseLog = e.target.checked;
+    renderLogs();
 });
 
 document.getElementById('btn-reset').onclick = () => {
