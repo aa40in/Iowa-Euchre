@@ -258,6 +258,17 @@
                             </label>
                         </div>
 
+						<div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+							<div class="flex flex-col pr-2">
+								<span class="text-[11px] font-semibold text-slate-200">AI Card Counting Memory</span>
+								<span class="text-[9px] text-slate-400 mt-0.5">AI tracks played cards & voids to win tricks with lower cards.</span>
+							</div>
+							<label class="relative inline-flex items-center cursor-pointer select-none">
+								<input type="checkbox" id="toggle-perfect-memory" class="sr-only peer" checked>
+								<div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+							</label>
+						</div>
+
                         <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
                             <div class="flex flex-col pr-2">
                                 <span class="text-[11px] font-semibold text-slate-200">Show All Players' Cards</span>
@@ -362,6 +373,8 @@ const state = {
     tempSelectedBid: null,   // Tracks selected human bid value before choosing suit
     tempSelectedSuit: null,  // Tracks selected human suit
     aiSupportPartnerTrumpToggle: true,
+    aiPerfectMemory: true, // Added: Tracks all outstanding cards & opponent voids
+    voids: [{}, {}, {}, {}], // Added: Voids tracking database per player
     showTrumpCount: false,
     showAllSuitsCount: false,
     revealAllCards: false,
@@ -624,6 +637,12 @@ const getUnplayedOutThere = (aiHand, playedCards) => {
 
 // Determine if a card is currently the highest remaining card in its effective suit
 const isBossCard = (card, trump, playedCards, aiHand) => {
+    if (!state.aiPerfectMemory) {
+        // Simulating imperfect memory: Only knows traditional high rank values as boss cards
+        const isBower = trump && trump !== 'NT' && card.rank === 'J' && (card.suit === trump || card.suit === getSameColorSuit(trump));
+        return isBower || card.rank === 'A';
+    }
+    // Perfect Memory Strategy: Full real-time outstanding card calculation
     const cardEffSuit = getEffectiveSuit(card, trump);
     const unplayed = getUnplayedOutThere(aiHand, playedCards);
     const cardPower = getPowerValue(card, cardEffSuit, trump);
@@ -734,7 +753,7 @@ const updateContractUI = () => {
     let pillsList = [];
     if (state.showTrumpCount && state.trumpSuit && state.gameState === 'PLAYING') {
         if (state.trumpSuit === 'NT') {
-            pillsList.push(`<span class="bg-amber-950/40 text-amber-400 px-1.5 py-0.5 rounded text-[8px] border border-amber-500/20 font-medium">Aces Active</span>`);
+            pillsList.push(`<span class="bg-amber-950/40 text-amber-400 px-1.5 py-0.5 rounded text-[11px] border border-amber-500/20 font-medium">Aces</span>`);
         } else {
             const count = state.unplayedCounts[state.trumpSuit];
             const trumpIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
@@ -799,6 +818,7 @@ const startNewHand = () => {
     state.bidsThisRound = [];
     state.playedCards = [];
     state.playerBids = [null, null, null, null];
+    state.voids = [{}, {}, {}, {}]; // Added: reset player voids tracker
     state.unplayedCounts = {'S':6,'C':6,'H':6,'D':6};
     state.winnerTeam = null;
     state.selectedCardIndex = -1; // Reset mobile selection on redeal
@@ -1283,7 +1303,38 @@ const handleAIPlay = () => {
     if (!state.leadSuit) {
         const isAttacking = (state.winningBidder % 2 === p % 2);
         
-        if (isAttacking) {
+        // Perfect Memory Aggressive Lead Optimization: Find and play safe Boss cards
+        const bossCards = legalIndices.filter(idx => isBossCard(hand[idx], state.trumpSuit, state.playedCards, hand));
+        
+        if (state.aiPerfectMemory && bossCards.length > 0) {
+            const opp1 = (p + 1) % 4;
+            const opp2 = (p + 3) % 4;
+            
+            // Check if opponents are void of trump cards so we can securely play lower off-suit boss cards
+            const isOpponentTrumpVoid = state.trumpSuit === 'NT' || 
+                ((state.voids[opp1][state.trumpSuit] || state.unplayedCounts[state.trumpSuit] === 0) && 
+                 (state.voids[opp2][state.trumpSuit] || state.unplayedCounts[state.trumpSuit] === 0));
+                 
+            // Favor played boss cards that are either trump or safe from being cut
+            const safeBossIdx = bossCards.find(idx => {
+                const isTrumpCard = state.trumpSuit !== 'NT' && getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit;
+                return isTrumpCard || isOpponentTrumpVoid;
+            });
+            
+            if (safeBossIdx !== undefined) {
+                chosenIdx = safeBossIdx;
+                const card = hand[chosenIdx];
+                if (card.rank !== 'A' && card.rank !== 'J') {
+                    addLog(`🤖 <em>AI Card Counting:</em> <strong>${PLAYER_NAMES[p]}</strong> determined that <strong>${card.rank} of ${card.suit}</strong> is now the unbeatable boss card!`, true);
+                }
+            } else {
+                chosenIdx = findHighestPowerCard(hand, null, state.trumpSuit, bossCards);
+                const card = hand[chosenIdx];
+                if (card.rank !== 'A' && card.rank !== 'J') {
+                    addLog(`🤖 <em>AI Card Counting:</em> <strong>${PLAYER_NAMES[p]}</strong> plays calculated Boss card <strong>${card.rank} of ${card.suit}</strong>!`, true);
+                }
+            }
+        } else if (isAttacking) {
             if (state.trumpSuit === 'NT') {
                 const bossAce = legalBossIndices.find(idx => hand[idx].rank === 'A');
                 if (bossAce !== undefined) {
@@ -1292,10 +1343,35 @@ const handleAIPlay = () => {
                     chosenIdx = findHighestPowerCard(hand, null, 'NT', legalIndices);
                 }
             } else {
-                const bossTrumpIdx = legalBossIndices.find(idx => getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit);
-                if (bossTrumpIdx !== undefined) {
-                    chosenIdx = bossTrumpIdx;
+                // NORMAL TRUMP ATTACKING LEAD (Maker or Partner)
+                const trumpIndices = legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit);
+                const hasTrump = trumpIndices.length > 0;
+                const isFirstTrick = (state.playedCards.length < 4);
+                const isMaker = (state.winningBidder === p);
+                
+                // Makers aggressively lead trump on the first trick, or if holding multiple trumps, or holding a high trump
+                let shouldLeadTrump = false;
+                if (hasTrump) {
+                    const holdsHighTrump = trumpIndices.some(idx => {
+                        const rank = hand[idx].rank;
+                        const isBower = (rank === 'J' && (hand[idx].suit === state.trumpSuit || hand[idx].suit === getSameColorSuit(state.trumpSuit)));
+                        return isBower || rank === 'A';
+                    });
+                    
+                    if (isMaker && isFirstTrick) {
+                        shouldLeadTrump = true;
+                    } else if (trumpIndices.length >= 2) {
+                        shouldLeadTrump = true;
+                    } else if (holdsHighTrump) {
+                        shouldLeadTrump = true;
+                    }
+                }
+                
+                if (shouldLeadTrump) {
+                    // Find highest trump to aggressively pull opponent cards and draw trumps
+                    chosenIdx = findHighestPowerCard(hand, null, state.trumpSuit, trumpIndices);
                 } else {
+                    // Fall back to strategic off-suit plays
                     const offSuitAceIdx = legalIndices.find(idx => hand[idx].rank === 'A' && getEffectiveSuit(hand[idx], state.trumpSuit) !== state.trumpSuit);
                     if (offSuitAceIdx !== undefined) {
                         chosenIdx = offSuitAceIdx;
@@ -1304,24 +1380,37 @@ const handleAIPlay = () => {
                         if (singletonIdx !== -1) {
                             chosenIdx = singletonIdx;
                         } else {
-                            chosenIdx = findLowestNonTrump(hand, state.trumpSuit, legalIndices);
+                            // If we have any trump but chose not to lead it, make sure we throw a non-trump card
+                            const nonTrumpIndices = legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) !== state.trumpSuit);
+                            if (nonTrumpIndices.length > 0) {
+                                chosenIdx = findLowestPowerCard(hand, null, state.trumpSuit, nonTrumpIndices);
+                            } else {
+                                chosenIdx = findLowestPowerCard(hand, null, state.trumpSuit, legalIndices);
+                            }
                         }
                     }
                 }
             }
         } else {
-            const nonTrumpIndices = state.trumpSuit === 'NT' ? legalIndices : legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) !== state.trumpSuit);
-            const leadPool = nonTrumpIndices.length > 0 ? nonTrumpIndices : legalIndices;
-            
-            const offSuitAceIdx = leadPool.find(idx => hand[idx].rank === 'A');
-            if (offSuitAceIdx !== undefined) {
-                chosenIdx = offSuitAceIdx;
+            // NORMAL TRUMP DEFENDING LEAD (Left or Right Opponent)
+            const defenderBossTrump = legalBossIndices.find(idx => getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit);
+            if (defenderBossTrump !== undefined && state.trumpSuit !== 'NT') {
+                // If defender holds a guaranteed boss trump (like Right Bower), lead it to draw maker's trumps safely!
+                chosenIdx = defenderBossTrump;
             } else {
-                const singletonIdx = findSingletonOffSuit(hand, state.trumpSuit, leadPool);
-                if (singletonIdx !== -1) {
-                    chosenIdx = singletonIdx;
+                const nonTrumpIndices = state.trumpSuit === 'NT' ? legalIndices : legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) !== state.trumpSuit);
+                const leadPool = nonTrumpIndices.length > 0 ? nonTrumpIndices : legalIndices;
+                
+                const offSuitAceIdx = leadPool.find(idx => hand[idx].rank === 'A');
+                if (offSuitAceIdx !== undefined) {
+                    chosenIdx = offSuitAceIdx;
                 } else {
-                    chosenIdx = findHighestPowerCard(hand, state.leadSuit, state.trumpSuit, leadPool);
+                    const singletonIdx = findSingletonOffSuit(hand, state.trumpSuit, leadPool);
+                    if (singletonIdx !== -1) {
+                        chosenIdx = singletonIdx;
+                    } else {
+                        chosenIdx = findHighestPowerCard(hand, state.leadSuit, state.trumpSuit, leadPool);
+                    }
                 }
             }
         }
@@ -1342,7 +1431,38 @@ const handleAIPlay = () => {
         
         if (isVoid) {
             if (partnerIsWinning) {
-                chosenIdx = findLowestSluffCard(hand, state.trumpSuit, legalIndices);
+                const partnerCard = state.trickQueue.find(q => q.player === partnerIdx).card;
+                const partnerCardIsBoss = isBossCard(partnerCard, state.trumpSuit, state.playedCards, hand);
+                const isLastPlayer = (state.trickQueue.length === 3);
+                
+                if (partnerCardIsBoss || isLastPlayer) {
+                    // Safe to sluff if partner's card is unbeatable or we are the last player
+                    chosenIdx = findLowestSluffCard(hand, state.trumpSuit, legalIndices);
+                } else {
+                    const trumpIndices = legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit);
+                    if (trumpIndices.length > 0 && state.trumpSuit !== 'NT') {
+                        // Partner is winning but NOT with a boss card, and we are not last.
+                        // Play our lowest winning trump to secure the trick before opponents behind can play.
+                        let winningTrumpIdx = -1;
+                        let lowestWinningTrumpPower = Infinity;
+                        
+                        trumpIndices.forEach(idx => {
+                            const pwr = getPowerValue(hand[idx], state.leadSuit, state.trumpSuit);
+                            if (pwr > currentMaxPower && pwr < lowestWinningTrumpPower) {
+                                lowestWinningTrumpPower = pwr;
+                                winningTrumpIdx = idx;
+                            }
+                        });
+                        
+                        if (winningTrumpIdx !== -1) {
+                            chosenIdx = winningTrumpIdx;
+                        } else {
+                            chosenIdx = findLowestSluffCard(hand, state.trumpSuit, legalIndices);
+                        }
+                    } else {
+                        chosenIdx = findLowestSluffCard(hand, state.trumpSuit, legalIndices);
+                    }
+                }
             } else {
                 if (state.trumpSuit === 'NT') {
                     chosenIdx = findLowestSluffCard(hand, 'NT', legalIndices);
@@ -1406,7 +1526,13 @@ const playCard = (playerIdx, cardIdx) => {
     if (state.trickQueue.length === 0) {
         state.leadSuit = getEffectiveSuit(card, state.trumpSuit);
     }
-    
+
+    // Void tracking: If a player cannot follow suit, mark them as void in this lead suit
+    if (state.leadSuit && getEffectiveSuit(card, state.trumpSuit) !== state.leadSuit) {
+        if (!state.voids) state.voids = [{}, {}, {}, {}];
+        state.voids[playerIdx][state.leadSuit] = true;
+    }
+ 
     state.playedCards.push({ rank: card.rank, suit: card.suit });
     state.trickQueue.push({ card, player: playerIdx });
     
@@ -1995,6 +2121,12 @@ toggleAllSuitsCount.addEventListener('change', (e) => {
 toggleRevealAll.addEventListener('change', (e) => {
     state.revealAllCards = e.target.checked;
     addLog(`Show All Players' Cards: <strong>${state.revealAllCards ? "ON" : "OFF"}</strong>.`);
+});
+
+const togglePerfectMemory = document.getElementById('toggle-perfect-memory');
+togglePerfectMemory.addEventListener('change', (e) => {
+    state.aiPerfectMemory = e.target.checked;
+    addLog(`AI Card Counting Memory: <strong>${state.aiPerfectMemory ? "ON" : "OFF"}</strong>.`);
 });
 
 const toggleVerboseLog = document.getElementById('toggle-verbose-log');
