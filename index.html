@@ -739,7 +739,7 @@ const updateContractUI = () => {
             const count = state.unplayedCounts[state.trumpSuit];
             const trumpIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
             const textCol = getSuitColorClass(state.trumpSuit);
-            pillsList.push(`<span class="bg-slate-900 border-slate-700/50 px-1.5 py-0.5 rounded text-[8px] border font-bold ${textCol}">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
+            pillsList.push(`<span class="bg-slate-900 border-slate-700/50 px-1.5 py-0.5 rounded text-[11px] border font-bold ${textCol}">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
         }
     }
     
@@ -751,7 +751,7 @@ const updateContractUI = () => {
             const col = getSuitColorClass(s);
             suitsHTML.push(`<span class="${col}">${suitIcons[s]}:${count}</span>`);
         });
-        pillsList.push(`<span class="bg-slate-950/80 text-[8px] px-1.5 py-0.5 rounded border border-slate-800/50 flex gap-1 font-semibold">${suitsHTML.join(' ')}</span>`);
+        pillsList.push(`<span class="bg-slate-950/80 text-[11px] px-1.5 py-0.5 rounded border border-slate-800/50 flex gap-1 font-semibold">${suitsHTML.join(' ')}</span>`);
     }
     
     if (countsEl) {
