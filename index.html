@@ -558,14 +558,19 @@ canvas.addEventListener('mouseleave', () => {
     pointer.y = -1000;
 });
 canvas.addEventListener('touchstart', (e) => {
+    if (e.cancelable) e.preventDefault();
     pointer.isDown = true;
     pointer.justPressed = true;
     getPointerPos(e);
-});
+}, { passive: false });
 canvas.addEventListener('touchmove', (e) => {
+    if (e.cancelable) e.preventDefault();
     getPointerPos(e);
-});
-canvas.addEventListener('touchend', () => { pointer.isDown = false; });
+}, { passive: false });
+canvas.addEventListener('touchend', (e) => {
+    if (e.cancelable) e.preventDefault();
+    pointer.isDown = false;
+}, { passive: false });
 
 const handleResize = () => {
     const rect = container.getBoundingClientRect();
@@ -1914,6 +1919,7 @@ const renderLoop = () => {
             const spread = (hand.length - 1) * step;
             playerSpreads[0] = spread;
             let clickedAnyCard = false;
+            let touchedAnyCardAtAll = false; // Tracks if they tapped any card boundary (even illegal ones)
 
             // Compute hit indices (sweep backwards from topmost drawn card index to prioritize top layer overlap clicks)
             let clickedIndex = -1;
@@ -1927,6 +1933,8 @@ const renderLoop = () => {
                 if (pointer.x > ox - cardW / 2 && pointer.x < ox + cardW / 2 && 
                     pointer.y > oy - cardH / 2 && pointer.y < oy + cardH / 2) {
                     
+                    touchedAnyCardAtAll = true; // Registered hit on any card boundary
+
                     if (state.gameState === 'PLAYING' && state.currentPlayer === 0) {
                         let hasLead = state.hands[0].some(c => getEffectiveSuit(c, state.trumpSuit) === state.leadSuit);
                         let isLegal = !state.leadSuit || !hasLead || getEffectiveSuit(card, state.trumpSuit) === state.leadSuit;
@@ -1959,8 +1967,8 @@ const renderLoop = () => {
                 }
             }
 
-            // Deselect mobile tap selection when tapping outside cards
-            if (isMobile && pointer.justPressed && !clickedAnyCard) {
+            // Deselect mobile tap selection when tapping completely outside all card boundaries
+            if (isMobile && pointer.justPressed && !touchedAnyCardAtAll) {
                 state.selectedCardIndex = -1;
             }
 
