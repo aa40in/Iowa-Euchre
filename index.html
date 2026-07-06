@@ -87,7 +87,7 @@
                     <div>
                         <strong class="text-amber-300 block mb-0.5">NT Conventions</strong>
                         <p>To communicate with your partner without bidding high right away:
-                        <br>• <strong class="text-white">1NT Bid</strong> signals you hold at least one Jack and one Ace.
+                        <br>• <strong class="text-white">1NT Bid</strong> signals you hold at least one Black Jack and one Red Jack.
                         <br>• <strong class="text-white">2NT Bid</strong> signals you hold at least one Red Jack, one Black Jack, and an Ace.</p>
                     </div>
                     <div>
@@ -1106,9 +1106,9 @@ const handleAIBid = () => {
         const playerBid = state.playerBids[0];
         if (playerBid && !playerBid.passed) {
             if (playerBid.convention === '1NT') {
-                partnerSupportTricks = 1.5; // Player signaled holding at least one Jack and one Ace
+                partnerSupportTricks = 2; // Player signaled holding at least one Black Jack and one Red Jack
             } else if (playerBid.convention === '2NT') {
-                partnerSupportTricks = 2.5; // Player signaled holding Red Jack, Black Jack, and Ace
+                partnerSupportTricks = 3; // Player signaled holding Red Jack, Black Jack, and Ace
             }
         }
     }
@@ -1128,7 +1128,7 @@ const handleAIBid = () => {
     let acesScore = evaluateAIHand(hand, 'NT');
     if (p === 2 && partnerSupportTricks > 0) {
         // Player's special NT convention bid also indicates Aces/NT support!
-        let acesSupport = (state.playerBids[0] && state.playerBids[0].convention === '1NT') ? 1.0 : 1.8;
+        let acesSupport = (state.playerBids[0] && state.playerBids[0].convention === '1NT') ? 0 : 1;
         acesScore += acesSupport;
     }
 
@@ -1143,7 +1143,7 @@ const handleAIBid = () => {
 
     if (hasRedBower && hasBlackBower && hasAce && state.highestBid < 2) {
         chosenBid = { bid: 2, suit: 'NT', convention: '2NT' };
-    } else if (hasBower && hasAce && state.highestBid < 1) {
+    } else if (hasRedBower && hasBlackBower && state.highestBid < 1) {
         chosenBid = { bid: 1, suit: 'NT', convention: '1NT' };
     }
 
@@ -1809,7 +1809,7 @@ const drawPlayerBid = (p, pos, width, height, spread) => {
             text = `Bid ${bidInfo.bid} Aces`;
         } else {
             const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
-            text = `Bid ${bidInfo.bid} ${suitIcons[bidInfo.suit]}`;
+            text = `Bid ${bidInfo.bid} ${suitIcons[bidInfo.suit]} ${bidInfo.suit}`;
         }
     }
 
@@ -1818,8 +1818,8 @@ const drawPlayerBid = (p, pos, width, height, spread) => {
     let by = pos.y;
     const isMobile = width < 600;
 
-    // Upgraded badge sizes to elegantly buffer larger font sizes
-    const badgeW = isMobile ? 76 : 85;
+    // Upgraded badge sizes to elegantly buffer larger font sizes and the suit-letter suffix
+    const badgeW = isMobile ? 84 : 94;
     const badgeH = isMobile ? 18 : 22;
 
     const plateW = isMobile ? 96 : 130;
@@ -1874,8 +1874,8 @@ const drawPlayerBid = (p, pos, width, height, spread) => {
 
     ctx.fillStyle = '#f8fafc';
     
-    // Applied +3 Font size upgrade for mobile player bid cards (8px -> 11px)
-    ctx.font = isMobile ? 'bold 11px "Inter", sans-serif' : 'bold 10px "Inter", sans-serif';
+    // Applied +3 Font size upgrade for mobile player bid cards (8px -> 11px); +2px glyph bump for suit legibility
+    ctx.font = isMobile ? 'bold 13px "Inter", sans-serif' : 'bold 12px "Inter", sans-serif';
     
     // Colorize the suit badge explicitly inside the plate
     if (!bidInfo.passed && bidInfo.suit !== 'NT') {
