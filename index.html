@@ -111,7 +111,7 @@
                     </div>
 
                     <!-- Auto-finish (claim) button: appears only when the player is provably guaranteed all remaining tricks -->
-                    <button id="btn-auto-finish" class="hidden items-center justify-center px-2.5 h-6 rounded-lg border border-amber-400 bg-amber-500 hover:bg-amber-400 text-slate-900 font-black text-[11px] tracking-tight shadow transition-all" title="Claim all remaining tricks">▶▶▶</button>
+                    <button id="btn-auto-finish" class="hidden items-center justify-center mx-2 px-2 h-5 rounded-md border border-amber-400 bg-amber-500 hover:bg-amber-400 text-slate-900 font-black text-[9px] leading-none tracking-tight shadow-sm transition-all shrink-0" title="Claim all remaining tricks">▶▶▶</button>
 
                     <!-- Right: Scoreboard -->
                     <div class="flex items-center gap-3 shrink-0">
@@ -1231,9 +1231,9 @@ const handleAIBid = () => {
         const playerBid = state.playerBids[0];
         if (playerBid && !playerBid.passed) {
             if (playerBid.convention === '1NT') {
-                partnerSupportTricks = 1.25; // Player signaled holding at least one Black Jack and one Red Jack
+                partnerSupportTricks = 1.3; // Player signaled holding at least one Black Jack and one Red Jack
             } else if (playerBid.convention === '2NT') {
-                partnerSupportTricks = 2.25; // Player signaled holding Red Jack, Black Jack, and Ace
+                partnerSupportTricks = 2.3; // Player signaled holding Red Jack, Black Jack, and Ace
             }
         }
     }
