@@ -28,7 +28,7 @@
             background: rgba(148, 163, 184, 0.3);
             border-radius: 2px;
         }
-        
+       
         /* Dynamic landscape lock strictly for small viewports to force portrait mode */
         @media (orientation: landscape) and (max-width: 950px) {
             #main-app-container {
@@ -54,9 +54,11 @@
         <div class="w-full h-[72vh] md:h-full md:flex-1 relative bg-emerald-950 flex flex-col overflow-hidden shrink-0 border-b border-slate-800 md:border-b-0">
             <!-- Visual green felt background effect -->
             <div class="absolute inset-0 bg-radial-felt pointer-events-none opacity-45 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.3)_0%,rgba(6,78,59,0.9)_100%)]"></div>
-            
+           
             <div class="flex-1 w-full h-full relative" id="canvas-container">
                 <canvas id="table-canvas" class="block w-full h-full touch-none"></canvas>
+                <!-- Auto-finish (claim) button: appears in the canvas corner only when the player is provably guaranteed all remaining tricks -->
+                <button id="btn-auto-finish" class="hidden items-center justify-center absolute top-3 right-3 md:top-auto md:right-auto md:bottom-6 md:left-1/2 md:-translate-x-1/2 z-30 px-2.5 h-6 rounded-md border border-amber-400 bg-amber-500/95 hover:bg-amber-400 text-slate-900 font-black text-[10px] leading-none tracking-tight shadow-lg transition-all" title="Claim all remaining tricks">▶▶▶</button>
             </div>
 
             <!-- Rules panel inside Canvas Area -->
@@ -87,7 +89,7 @@
                     <div>
                         <strong class="text-amber-300 block mb-0.5">NT Conventions</strong>
                         <p>To communicate with your partner without bidding high right away:
-                        <br>• <strong class="text-white">1NT Bid</strong> signals you hold at least one Jack and one Ace.
+                        <br>• <strong class="text-white">1NT Bid</strong> signals you hold at least one Black Jack and one Red Jack.
                         <br>• <strong class="text-white">2NT Bid</strong> signals you hold at least one Red Jack, one Black Jack, and an Ace.</p>
                     </div>
                     <div>
@@ -98,11 +100,11 @@
             </div>
         </div>
 
-        <!-- Sidebar Section: Left-aligned panel on desktop, bottom-aligned on mobile -->
-        <aside class="w-full h-[28vh] md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-hidden">
+        <!-- Sidebar Section: Left-aligned panel on desktop, bottom-aligned and scrollable on mobile -->
+        <aside class="w-full h-[28vh] md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-y-auto md:overflow-hidden">
 
-            <!-- Relocated Top Bar Header (Now locked at the top of the sidebar/bottom panel) -->
-            <div class="w-full bg-slate-950 border-b border-slate-800 px-3.5 py-2.5 flex flex-col shrink-0 z-20">
+            <!-- Relocated Top Bar Header (Now locked/sticky at the top of the sidebar/bottom panel) -->
+            <div class="w-full bg-slate-950 border-b border-slate-800 px-3.5 py-2.5 flex flex-col shrink-0 z-20 sticky top-0">
                 <div class="flex items-center justify-between w-full">
                     <!-- Left: Active Contract -->
                     <div class="flex items-center gap-1.5 bg-slate-900/60 px-2 py-0.5 rounded-lg border border-slate-800">
@@ -134,7 +136,7 @@
                         </div>
                     </div>
                 </div>
-                
+               
                 <!-- Relocated Suit Counting Row: Active inside the top of the aside below scoreboard -->
                 <div id="header-bid-counts" class="w-full flex flex-wrap gap-1.5 items-center justify-center mt-1.5 border-t border-slate-800/40 pt-1.5 hidden">
                     <!-- Dynamic counters drawn here when toggled -->
@@ -142,7 +144,7 @@
             </div>
 
             <!-- Bidding Panel: Displays instantly below the bar during the Bidding phase -->
-            <div id="bidding-panel" class="hidden h-full md:h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 flex flex-col justify-between gap-1">
+            <div id="bidding-panel" class="hidden h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 overflow-y-auto flex flex-col justify-between gap-1">
                 <div class="flex justify-between items-center border-b border-slate-800/80 pb-1.5 gap-2">
                     <div>
                         <span class="text-[9px] uppercase tracking-wider font-bold text-emerald-400 block leading-none">Your Turn</span>
@@ -260,6 +262,39 @@
 
                         <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
                             <div class="flex flex-col pr-2">
+                                <span class="text-[11px] font-semibold text-slate-200">Show Boss Card Markers</span>
+                                <span class="text-[9px] text-slate-400 mt-0.5">Marks a "B" on your current strongest cards in each suit.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="toggle-boss-markers" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                            <div class="flex flex-col pr-2">
+                                <span class="text-[11px] font-semibold text-slate-200">Fast Mode</span>
+                                <span class="text-[9px] text-slate-400 mt-0.5">Speeds up all AI and card-play delays by 70%.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="toggle-fast-mode" class="sr-only peer" checked>
+                                <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
+<div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+<div class="flex flex-col pr-2">
+<span class="text-[11px] font-semibold text-slate-200">AI Card Counting Memory</span>
+<span class="text-[9px] text-slate-400 mt-0.5">AI tracks played cards & voids to win tricks with lower cards.</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer select-none">
+<input type="checkbox" id="toggle-perfect-memory" class="sr-only peer" checked>
+<div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+</label>
+</div>
+
+                        <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                            <div class="flex flex-col pr-2">
                                 <span class="text-[11px] font-semibold text-slate-200">Show All Players' Cards</span>
                                 <span class="text-[9px] text-slate-400 mt-0.5">Reveal AI hands for debugging/learning.</span>
                             </div>
@@ -286,7 +321,7 @@
                     <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1 flex justify-between items-center">
                         <span>Deal Log Console</span>
                         <label class="flex items-center gap-1 cursor-pointer select-none text-[8px] text-slate-400 font-normal normal-case">
-                            <input type="checkbox" id="toggle-verbose-log" class="rounded bg-slate-900 border-slate-800 text-emerald-500 focus:ring-0 focus:ring-offset-0 h-3 w-3 accent-emerald-500" checked>
+                            <input type="checkbox" id="toggle-verbose-log" class="rounded bg-slate-900 border-slate-800 text-emerald-500 focus:ring-0 focus:ring-offset-0 h-3 w-3 accent-emerald-500">
                             Verbose
                         </label>
                     </div>
@@ -328,18 +363,18 @@ const getPowerValue = (card, leadSuit, trump) => {
     const isTrump = trump !== 'NT' && getEffectiveSuit(card, trump) === trump;
     const isLead = getEffectiveSuit(card, trump) === leadSuit;
     let base = RANKS.indexOf(card.rank);
-    
+   
     if (trump === 'NT') {
         if (isLead) return 50 + base;
         return base;
     }
-    
+   
     if (trump && trump !== 'NT') {
         if (card.rank === 'J' && card.suit === trump) return 1000; // Right Bower
         if (card.rank === 'J' && card.suit === getSameColorSuit(trump)) return 900; // Left Bower
         if (isTrump) return 100 + base;
     }
-    
+   
     if (isLead) return 50 + base;
     return base;
 };
@@ -354,7 +389,7 @@ const state = {
     highestBid: 0,
     winningBidder: -1,
     trumpSuit: null, // Suit or 'NT' for Aces
-    trumpConvention: null, 
+    trumpConvention: null,
     dealer: 3,
     currentPlayer: 1,
     passCount: 0,
@@ -362,11 +397,15 @@ const state = {
     tempSelectedBid: null,   // Tracks selected human bid value before choosing suit
     tempSelectedSuit: null,  // Tracks selected human suit
     aiSupportPartnerTrumpToggle: true,
+    aiPerfectMemory: true, // Added: Tracks all outstanding cards & opponent voids
+    voids: [{}, {}, {}, {}], // Added: Voids tracking database per player
     showTrumpCount: false,
     showAllSuitsCount: false,
+    showBossMarkers: false, // Added: Show B markers on player's current boss cards
+    fastMode: true,         // Added: Reduce all AI/play delays by 70% (default on)
     revealAllCards: false,
     fourColorDeck: false, // Added: Toggles high-readability 4-color suits
-    verboseLog: true,     // Added: Toggles verbose intermediate actions vs final results
+    verboseLog: false,    // Added: Toggles verbose intermediate actions vs final results (default off)
     logHistory: [],       // Added: Persistent logs archive
     biddingTurnsCount: 0,
     playerBids: [null, null, null, null], // Visual bid tags [P0, P1, P2, P3]
@@ -378,6 +417,9 @@ const state = {
 };
 
 let aiTimeout = null;
+
+// Scales all AI/play timing. Fast mode cuts every delay by 70% (multiplier 0.3).
+const scaledDelay = (ms) => Math.round(ms * (state.fastMode ? 0.3 : 1));
 
 // Dynamic Sorter function for human player hand grouping and hierarchy sorting
 const sortPlayerHand = (trump) => {
@@ -513,9 +555,9 @@ const getPointerPos = (e) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
-    
+   
     const isLandscapeMobile = window.innerWidth > window.innerHeight && window.innerWidth <= 950;
-    
+   
     if (isLandscapeMobile) {
         // Clockwise coordinate rotation to map raw landscape inputs to the locked portrait canvas
         const cx = window.innerWidth / 2;
@@ -524,11 +566,13 @@ const getPointerPos = (e) => {
         const dy = clientY - cy;
         const rx = -dy + cy;
         const ry = dx + cx;
-        pointer.x = (rx - rect.left) * (canvas.width / rect.width);
-        pointer.y = (ry - rect.top) * (canvas.height / rect.height);
+        // Drawing space is CSS pixels (context is dpr-scaled), and rect is in CSS pixels,
+        // so map straight across without a backing-store ratio.
+        pointer.x = rx - rect.left;
+        pointer.y = ry - rect.top;
     } else {
-        pointer.x = (clientX - rect.left) * (canvas.width / rect.width);
-        pointer.y = (clientY - rect.top) * (canvas.height / rect.height);
+        pointer.x = clientX - rect.left;
+        pointer.y = clientY - rect.top;
     }
 };
 
@@ -545,19 +589,40 @@ canvas.addEventListener('mouseleave', () => {
     pointer.y = -1000;
 });
 canvas.addEventListener('touchstart', (e) => {
+    if (e.cancelable) e.preventDefault();
     pointer.isDown = true;
     pointer.justPressed = true;
     getPointerPos(e);
-});
+}, { passive: false });
 canvas.addEventListener('touchmove', (e) => {
+    if (e.cancelable) e.preventDefault();
     getPointerPos(e);
-});
-canvas.addEventListener('touchend', () => { pointer.isDown = false; });
+}, { passive: false });
+canvas.addEventListener('touchend', (e) => {
+    if (e.cancelable) e.preventDefault();
+    pointer.isDown = false;
+}, { passive: false });
+
+// Size the canvas for crisp rendering on high-DPI screens: the backing store is
+// (CSS size x devicePixelRatio) while the element still displays at CSS size, and
+// the context is scaled by dpr so all drawing math stays in CSS pixels.
+const resizeCanvasTo = (cssW, cssH) => {
+    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1)); // cap at 3x to bound cost
+    const bw = Math.round(cssW * dpr);
+    const bh = Math.round(cssH * dpr);
+    if (canvas.width !== bw || canvas.height !== bh) {
+        canvas.width = bw;
+        canvas.height = bh;
+    }
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    // Setting canvas.width/height resets the transform, so (re)apply the dpr scale.
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+};
 
 const handleResize = () => {
     const rect = container.getBoundingClientRect();
-    canvas.width = rect.width || 800;
-    canvas.height = rect.height || 600;
+    resizeCanvasTo(rect.width || 800, rect.height || 600);
 };
 window.addEventListener('resize', handleResize);
 handleResize();
@@ -566,11 +631,21 @@ handleResize();
 let cardW = 72;
 let cardH = 104;
 
+// Single source of truth for choosing the layout family.
+// Portrait (phones of ANY size, incl. large/foldable) uses the mobile seating &
+// edge-anchored labels; wide/landscape uses the desktop layout. Deciding by aspect
+// ratio (not raw width) prevents large portrait screens from wrongly rendering with
+// desktop geometry.
+const isPortraitLayout = (width, height) => (width < 600) || (height / width > 1.1);
+
 const updateCardScaling = (width, height) => {
-    const isMobile = width < 600;
+    const isMobile = isPortraitLayout(width, height);
     if (isMobile) {
-        cardW = 44;
-        cardH = 64;
+        // Scale mobile cards with canvas width (baseline 380px phone => 44x64),
+        // clamped so small phones stay compact and large phones don't get huge cards.
+        const mFactor = Math.max(1, Math.min(1.55, width / 380));
+        cardW = Math.round(44 * mFactor);
+        cardH = Math.round(64 * mFactor);
     } else {
         // Dynamic scale based on canvas viewport dimensions
         const factor = Math.min(width / 800, height / 600);
@@ -583,8 +658,8 @@ const updateCardScaling = (width, height) => {
 const getPlayerCoords = (p, width, height) => {
     const cx = width / 2;
     const cy = height / 2;
-    const isMobile = width < 600;
-    
+    const isMobile = isPortraitLayout(width, height);
+   
     if (isMobile) {
         if (p === 0) return { x: cx, y: height - 42 };       // Player (Bottom)
         if (p === 1) return { x: -cardH * 0.2, y: cy };      // Left Opponent (Left edge shifted)
@@ -594,7 +669,7 @@ const getPlayerCoords = (p, width, height) => {
         const factor = Math.min(width / 800, height / 600);
         const vertPadding = Math.max(80, Math.min(140, 120 * factor));
         const horizPadding = Math.max(60, Math.min(120, 110 * factor));
-        
+       
         if (p === 0) return { x: cx, y: height - vertPadding }; // P0 (Player)
         if (p === 1) return { x: horizPadding, y: cy - 10 };     // P1 (Left Opponent)
         if (p === 2) return { x: cx, y: vertPadding };          // P2 (Partner)
@@ -606,7 +681,7 @@ const getPlayerCoords = (p, width, height) => {
 const isSecondPartner = (playerIdx) => {
     const partnerIdx = (playerIdx + 2) % 4;
     const startIdx = (state.dealer + 1) % 4;
-    
+   
     if (playerIdx === startIdx || playerIdx === (startIdx + 1) % 4) return false;
     return true;
 };
@@ -624,16 +699,104 @@ const getUnplayedOutThere = (aiHand, playedCards) => {
 
 // Determine if a card is currently the highest remaining card in its effective suit
 const isBossCard = (card, trump, playedCards, aiHand) => {
+    if (!state.aiPerfectMemory) {
+        // Simulating imperfect memory: Only knows traditional high rank values as boss cards
+        const isBower = trump && trump !== 'NT' && card.rank === 'J' && (card.suit === trump || card.suit === getSameColorSuit(trump));
+        return isBower || card.rank === 'A';
+    }
+    // Perfect Memory Strategy: Full real-time outstanding card calculation
     const cardEffSuit = getEffectiveSuit(card, trump);
     const unplayed = getUnplayedOutThere(aiHand, playedCards);
     const cardPower = getPowerValue(card, cardEffSuit, trump);
-    
+   
     const hasHigher = unplayed.some(up => {
         if (getEffectiveSuit(up, trump) !== cardEffSuit) return false;
         return getPowerValue(up, cardEffSuit, trump) > cardPower;
     });
-    
+   
     return !hasHigher;
+};
+
+// Always-accurate "boss" test for the PLAYER's aid (ignores the AI-memory setting).
+// A card is boss iff, from what the player can see (own hand + all played cards),
+// no unseen card outranks it in its effective suit.
+const isBossCardForPlayer = (card, trump, playerHand, playedCards) => {
+    const cardEffSuit = getEffectiveSuit(card, trump);
+    const unseen = getUnplayedOutThere(playerHand, playedCards); // 24 - player hand - played
+    const cardPower = getPowerValue(card, cardEffSuit, trump);
+    const hasHigher = unseen.some(up => {
+        if (getEffectiveSuit(up, trump) !== cardEffSuit) return false;
+        return getPowerValue(up, cardEffSuit, trump) > cardPower;
+    });
+    return !hasHigher;
+};
+
+// ---- Auto-finish (provable claim) ----------------------------------------
+// From P0's knowledge only (own hand + all played cards; unseen = 24 - both),
+// determine whether P0, on lead, can guarantee EVERY remaining trick no matter
+// how the unseen cards are distributed/played. Worst-case sound: never fires
+// unless a claim is genuinely unbeatable.
+const canAutoFinish = () => {
+    if (state.gameState !== 'PLAYING') return false;
+    if (state.currentPlayer !== 0) return false;      // P0 must be on lead
+    if (state.trickQueue.length !== 0) return false;  // start of a trick only
+    const hand = state.hands[0];
+    if (!hand || hand.length === 0) return false;
+
+    const trump = state.trumpSuit;
+    // Remaining unseen pool (could be in any opponent/partner hand).
+    const unseen = getUnplayedOutThere(hand, state.playedCards);
+
+    // Work on a copy of P0's cards; greedily lead an "unbeatable" card each trick.
+    let remaining = hand.slice();
+
+    const hasUnseenTrump = () => {
+        if (trump === 'NT') return false;
+        return unseen.some(c => getEffectiveSuit(c, trump) === trump);
+    };
+
+    // A led card is unbeatable iff no unseen card outranks it in its own suit
+    // AND no unseen card can trump it (either it's trump, or no trumps are outstanding).
+    const isUnbeatableLead = (card) => {
+        const effSuit = getEffectiveSuit(card, trump);
+        const power = getPowerValue(card, effSuit, trump);
+        const isCardTrump = (trump !== 'NT' && effSuit === trump);
+        // Ruff risk: a non-trump lead can be trumped if any trump is still unseen.
+        if (!isCardTrump && hasUnseenTrump()) return false;
+        // Rank risk: any unseen card of the same effective suit that outranks it.
+        const beatenBySuit = unseen.some(u => {
+            if (getEffectiveSuit(u, trump) !== effSuit) return false;
+            return getPowerValue(u, effSuit, trump) > power;
+        });
+        return !beatenBySuit;
+    };
+
+    while (remaining.length > 0) {
+        // Find any unbeatable lead in P0's remaining cards.
+        let leadIdx = -1;
+        for (let i = 0; i < remaining.length; i++) {
+            if (isUnbeatableLead(remaining[i])) { leadIdx = i; break; }
+        }
+        if (leadIdx === -1) return false; // no guaranteed lead -> claim not safe
+        // Play it. Worst case: opponents keep their strongest cards, so we do NOT
+        // remove any unseen cards from the pool (strictly conservative).
+        remaining.splice(leadIdx, 1);
+    }
+    return true;
+};
+
+// Execute the proven claim: award all remaining tricks to P0's team, clear hands,
+// and run scoring. No log narration (per design).
+const runAutoFinish = () => {
+    if (!canAutoFinish()) return;
+    if (aiTimeout) { clearTimeout(aiTimeout); aiTimeout = null; }
+    const remainingTricks = state.hands[0].length;
+    state.tricksWon[0] += remainingTricks; // P0 is team 0
+    state.hands = [[], [], [], []];
+    state.trickQueue = [];
+    state.leadSuit = null;
+    updateHUD();
+    resolveHand();
 };
 
 // Evaluate hand strength for AI bidding calculations (including NT Aces)
@@ -647,7 +810,7 @@ const evaluateAIHand = (hand, suit) => {
         });
         return score;
     }
-    
+   
     hand.forEach(c => {
         const eff = getEffectiveSuit(c, suit);
         if (eff === suit) {
@@ -670,18 +833,18 @@ const updateHUD = () => {
     // Synchronize both responsive Score HUD elements (Header + Sidebar scroll panel)
     document.getElementById('score-us-header').innerText = scoreUs;
     document.getElementById('score-them-header').innerText = scoreThem;
-    
+   
     const scoreUsSidebar = document.getElementById('score-us-sidebar');
     if (scoreUsSidebar) scoreUsSidebar.innerText = scoreUs;
     const scoreThemSidebar = document.getElementById('score-them-sidebar');
     if (scoreThemSidebar) scoreThemSidebar.innerText = scoreThem;
-    
+   
     const progressUs = `${Math.min(100, (state.scores[0] / 21) * 100)}%`;
     const progressThem = `${Math.min(100, (state.scores[1] / 21) * 100)}%`;
-    
+   
     document.getElementById('progress-us-header').style.width = progressUs;
     document.getElementById('progress-them-header').style.width = progressThem;
-    
+   
     const progressUsSidebar = document.getElementById('progress-us-sidebar');
     if (progressUsSidebar) progressUsSidebar.style.width = progressUs;
     const progressThemSidebar = document.getElementById('progress-them-sidebar');
@@ -694,22 +857,22 @@ const updateContractUI = () => {
     const headerDisplayEl = document.getElementById('contract-display-header');
     const displayEl = document.getElementById('current-bid-display');
     const countsEl = document.getElementById('header-bid-counts');
-    
+   
     if (!headerDisplayEl) return;
-    
+   
     let contractText = "";
     let suitHTML = "";
-    
+   
     if (state.gameState === 'PLAYING' || state.gameState === 'SCORING') {
         const bid = state.highestBid;
         const bidder = state.winningBidder;
         const team = (bidder % 2 === 0) ? "Us" : "Them";
         const suit = state.trumpSuit;
         const _convention = state.trumpConvention;
-        
+       
         let suitText = "";
         let colorClass = "text-slate-100";
-        
+       
         if (suit === 'NT') {
             suitText = state.trumpConvention ? state.trumpConvention : "Aces";
             colorClass = "text-amber-400";
@@ -724,17 +887,17 @@ const updateContractUI = () => {
         suitHTML = `<span class="text-slate-400 font-normal text-[10px]">Bidding...</span>`;
         contractText = "Bidding Round";
     }
-    
+   
     if (displayEl) {
         displayEl.innerHTML = suitHTML;
     }
     headerDisplayEl.innerHTML = suitHTML;
-    
+   
     // Draw dynamically generated active trump & suit stats inside the new Header Counts block
     let pillsList = [];
     if (state.showTrumpCount && state.trumpSuit && state.gameState === 'PLAYING') {
         if (state.trumpSuit === 'NT') {
-            pillsList.push(`<span class="bg-amber-950/40 text-amber-400 px-1.5 py-0.5 rounded text-[8px] border border-amber-500/20 font-medium">Aces Active</span>`);
+            pillsList.push(`<span class="bg-amber-950/40 text-amber-400 px-1.5 py-0.5 rounded text-[11px] border border-amber-500/20 font-medium">Aces</span>`);
         } else {
             const count = state.unplayedCounts[state.trumpSuit];
             const trumpIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
@@ -742,7 +905,7 @@ const updateContractUI = () => {
             pillsList.push(`<span class="bg-slate-900 border-slate-700/50 px-1.5 py-0.5 rounded text-[11px] border font-bold ${textCol}">Trump: ${count} ${trumpIcons[state.trumpSuit]}</span>`);
         }
     }
-    
+   
     if (state.showAllSuitsCount && state.gameState === 'PLAYING') {
         const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
         let suitsHTML = [];
@@ -753,13 +916,26 @@ const updateContractUI = () => {
         });
         pillsList.push(`<span class="bg-slate-950/80 text-[11px] px-1.5 py-0.5 rounded border border-slate-800/50 flex gap-1 font-semibold">${suitsHTML.join(' ')}</span>`);
     }
-    
+   
     if (countsEl) {
         countsEl.innerHTML = pillsList.join('');
         if (pillsList.length > 0 && state.gameState === 'PLAYING') {
             countsEl.classList.remove('hidden');
         } else {
             countsEl.classList.add('hidden');
+        }
+    }
+
+    // Show the auto-finish button only when the player is provably guaranteed
+    // every remaining trick (checked from the player's knowledge).
+    const autoBtn = document.getElementById('btn-auto-finish');
+    if (autoBtn) {
+        if (canAutoFinish()) {
+            autoBtn.classList.remove('hidden');
+            autoBtn.classList.add('flex');
+        } else {
+            autoBtn.classList.add('hidden');
+            autoBtn.classList.remove('flex');
         }
     }
 };
@@ -799,32 +975,33 @@ const startNewHand = () => {
     state.bidsThisRound = [];
     state.playedCards = [];
     state.playerBids = [null, null, null, null];
+    state.voids = [{}, {}, {}, {}]; // Added: reset player voids tracker
     state.unplayedCounts = {'S':6,'C':6,'H':6,'D':6};
     state.winnerTeam = null;
     state.selectedCardIndex = -1; // Reset mobile selection on redeal
-    
+   
     const deck = [];
     SUITS.forEach(s => RANKS.forEach(r => deck.push({ rank: r, suit: s })));
-    
+   
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
     }
-    
+   
     for (let p = 0; p < 4; p++) {
         state.hands[p] = deck.splice(0, 6);
     }
-    
+   
     sortPlayerHand(null);
-    
+   
     addLog(`6 cards dealt to each player. Dealer: <strong>${PLAYER_NAMES[state.dealer]}</strong>.`);
-    
+   
     updateHUD();
 
     aiTimeout = setTimeout(() => {
         state.gameState = 'BIDDING';
         triggerNextTurn();
-    }, 1200);
+    }, scaledDelay(1200));
 };
 
 const triggerNextTurn = () => {
@@ -832,39 +1009,39 @@ const triggerNextTurn = () => {
         clearTimeout(aiTimeout);
         aiTimeout = null;
     }
-    
+   
     updateHUD();
-    
+   
     if (state.gameState === 'BIDDING') {
         biddingPanel.classList.add('hidden');
         currentBidBlock.classList.add('hidden');
-        
+       
         if (state.biddingTurnsCount >= 4) {
             if (state.winningBidder === -1) {
                 addLog("Everyone passed the bidding round. Redealing.");
-                aiTimeout = setTimeout(startNewHand, 1500);
+                aiTimeout = setTimeout(startNewHand, scaledDelay(1500));
             } else {
                 state.gameState = 'PLAYING';
                 state.currentPlayer = (state.winningBidder + 1) % 4; // First lead left of bidding winner
                 state.trickQueue = [];
                 state.leadSuit = null;
-                
+               
                 sortPlayerHand(state.trumpSuit);
-                
+               
                 const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
                 const icon = suitIcons[state.trumpSuit] || '';
                 const suitColClass = getSuitColorClass(state.trumpSuit);
                 const trumpSuitDisplay = state.trumpConvention ? state.trumpConvention : (state.trumpSuit === 'NT' ? 'Aces' : `<span class="${suitColClass}">${icon} ${state.trumpSuit}</span>`);
-                
+               
                 addLog(`Contract won by <strong>${PLAYER_NAMES[state.winningBidder]}</strong> for <strong>${state.highestBid} tricks</strong> (${trumpSuitDisplay}). <strong>${PLAYER_NAMES[state.currentPlayer]}</strong> has the lead!`, false);
-                
+               
                 if (state.trumpSuit !== 'NT') {
                     state.unplayedCounts[state.trumpSuit]++;
                     state.unplayedCounts[getSameColorSuit(state.trumpSuit)]--;
                 }
-                
+               
                 updateHUD();
-                aiTimeout = setTimeout(triggerNextTurn, 1200);
+                aiTimeout = setTimeout(triggerNextTurn, scaledDelay(1200));
             }
             return;
         }
@@ -872,19 +1049,19 @@ const triggerNextTurn = () => {
         if (state.currentPlayer === 0) {
             openHumanBiddingUI();
         } else {
-            aiTimeout = setTimeout(handleAIBid, 1000);
+            aiTimeout = setTimeout(handleAIBid, scaledDelay(1000));
         }
     } else if (state.gameState === 'PLAYING') {
         biddingPanel.classList.add('hidden');
         currentBidBlock.classList.add('hidden');
-        
+       
         if (state.trickQueue.length === 4) {
-            aiTimeout = setTimeout(resolveTrick, 1400);
+            aiTimeout = setTimeout(resolveTrick, scaledDelay(1400));
         } else {
             if (state.currentPlayer === 0) {
                 addLog("Your turn. Tap a card once to select, tap again to play.");
             } else {
-                aiTimeout = setTimeout(handleAIPlay, 1000);
+                aiTimeout = setTimeout(handleAIPlay, scaledDelay(1000));
             }
         }
     }
@@ -893,7 +1070,7 @@ const triggerNextTurn = () => {
 const openHumanBiddingUI = () => {
     biddingPanel.classList.remove('hidden');
     currentBidBlock.classList.add('hidden');
-    
+   
     const historyList = document.getElementById('bidding-history-list');
     historyList.innerHTML = '';
     const suitIcons = { 'S': '♤\uFE0E Spades', 'C': '♧\uFE0E Clubs', 'H': '♡\uFE0E Hearts', 'D': '♢\uFE0E Diamonds', 'NT': 'Aces', 'ACES': 'Aces' };
@@ -907,11 +1084,11 @@ const openHumanBiddingUI = () => {
         state.bidsThisRound.forEach(entry => {
             const row = document.createElement('div');
             row.className = "flex justify-between items-center py-0.5 border-b border-slate-800/40 last:border-b text-[10px]";
-            
+           
             const nameSpan = document.createElement('span');
             nameSpan.className = "font-semibold " + (entry.player === 0 ? "text-emerald-400" : "text-slate-300");
             nameSpan.innerText = PLAYER_NAMES[entry.player];
-            
+           
             const actionSpan = document.createElement('span');
             if (entry.passed) {
                 actionSpan.className = "text-slate-500 italic";
@@ -921,13 +1098,13 @@ const openHumanBiddingUI = () => {
                 const color = entry.convention ? 'text-amber-400 font-bold' : getSuitColorClass(entry.suit);
                 actionSpan.innerHTML = `Bid <strong class="text-white">${entry.bid}</strong> in <span class="${color}">${icon}</span>`;
             }
-            
+           
             row.appendChild(nameSpan);
             row.appendChild(actionSpan);
             historyList.appendChild(row);
         });
     }
-    
+   
     state.tempSelectedBid = null;
     state.tempSelectedSuit = null;
     updateBiddingButtons();
@@ -939,12 +1116,12 @@ const updateBiddingButtons = () => {
         const suit = btn.getAttribute('data-suit');
         const spanIcon = btn.querySelector('span:first-child');
         const spanText = btn.querySelector('span:last-child');
-        
+       
         if (spanIcon && spanText) {
             btn.className = btn.className.replace(/text-(slate|emerald|rose|sky|amber)-\d+/, '');
             spanIcon.className = spanIcon.className.replace(/text-(slate|emerald|rose|sky|amber)-\d+/, '');
             spanText.className = spanText.className.replace(/text-(slate|emerald|rose|sky|amber)-\d+/, '');
-            
+           
             const suitColorsMap = {
                 'S': state.fourColorDeck ? 'text-slate-100' : 'text-slate-100',
                 'C': state.fourColorDeck ? 'text-emerald-400' : 'text-slate-100',
@@ -961,7 +1138,7 @@ const updateBiddingButtons = () => {
         const val = parseInt(btn.getAttribute('data-bid'));
         const disabled = val <= state.highestBid;
         btn.disabled = disabled;
-        
+       
         if (disabled) {
             btn.className = "bid-val-btn px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-950 text-slate-600 font-semibold cursor-not-allowed text-[10px] transition-all h-6";
         } else {
@@ -989,7 +1166,7 @@ const updateBiddingButtons = () => {
         const isNT = (suit === 'NT');
         // NT is unavailable when the minimum bid is above 3, or if the selected bid is above 3
         const isNTDisabled = isNT && (state.highestBid >= 3 || state.tempSelectedBid >= 3);
-        
+       
         const disabled = !bidChosen || isNTDisabled;
         btn.disabled = disabled;
 
@@ -998,7 +1175,7 @@ const updateBiddingButtons = () => {
         } else {
             const isSelected = (state.tempSelectedSuit === suit);
             const isSpecial = (suit === 'ACES' || suit === 'NT');
-            
+           
             let colorClass = 'text-slate-100';
             if (state.fourColorDeck) {
                 if (suit === 'S') colorClass = 'text-slate-300';
@@ -1018,11 +1195,11 @@ const updateBiddingButtons = () => {
 
             btn.onclick = () => {
                 state.tempSelectedSuit = suit;
-                
+               
                 // Clicking suit completes and submits the bid contract immediately!
                 state.highestBid = state.tempSelectedBid;
                 state.winningBidder = 0; // Set winning bidder to player (0)
-                
+               
                 if (suit === 'ACES') {
                     state.trumpSuit = 'NT';
                     state.trumpConvention = null;
@@ -1040,12 +1217,12 @@ const updateBiddingButtons = () => {
                     state.trumpConvention = null;
                     state.bidsThisRound.push({ player: 0, bid: state.tempSelectedBid, suit: suit, passed: false });
                     state.playerBids[0] = { bid: state.tempSelectedBid, suit: suit, passed: false };
-                    
+                   
                     const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
                     const colCls = getSuitColorClass(suit);
                     addLog(`Player placed a bid of <strong>${state.tempSelectedBid}</strong> in <strong class="${colCls}">${suitIcons[suit]} ${suit}</strong>!`);
                 }
-                
+               
                 biddingPanel.classList.add('hidden');
                 state.biddingTurnsCount++;
                 state.currentPlayer = (state.currentPlayer + 1) % 4;
@@ -1071,19 +1248,19 @@ const handleAIBid = () => {
     const p = state.currentPlayer;
     const hand = state.hands[p];
     const partner = (p + 2) % 4;
-    
+   
     let bestSuit = null;
     let bestScore = 0;
-    
+   
     // Evaluate if the partner (Player 2) is cooperative and Player (0) bid special NT conventions
     let partnerSupportTricks = 0;
     if (p === 2) {
         const playerBid = state.playerBids[0];
         if (playerBid && !playerBid.passed) {
             if (playerBid.convention === '1NT') {
-                partnerSupportTricks = 1.5; // Player signaled holding at least one Jack and one Ace
+                partnerSupportTricks = 1.3; // Player signaled holding at least one Black Jack and one Red Jack
             } else if (playerBid.convention === '2NT') {
-                partnerSupportTricks = 2.5; // Player signaled holding Red Jack, Black Jack, and Ace
+                partnerSupportTricks = 2.3; // Player signaled holding Red Jack, Black Jack, and Ace
             }
         }
     }
@@ -1103,7 +1280,7 @@ const handleAIBid = () => {
     let acesScore = evaluateAIHand(hand, 'NT');
     if (p === 2 && partnerSupportTricks > 0) {
         // Player's special NT convention bid also indicates Aces/NT support!
-        let acesSupport = (state.playerBids[0] && state.playerBids[0].convention === '1NT') ? 1.0 : 1.8;
+        let acesSupport = (state.playerBids[0] && state.playerBids[0].convention === '1NT') ? 0 : 1;
         acesScore += acesSupport;
     }
 
@@ -1111,14 +1288,14 @@ const handleAIBid = () => {
     const hasAce = hand.some(c => c.rank === 'A');
     const hasRedBower = hand.some(c => c.rank === 'J' && (c.suit === 'H' || c.suit === 'D'));
     const hasBlackBower = hand.some(c => c.rank === 'J' && (c.suit === 'S' || c.suit === 'C'));
-	
-	const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
+
+const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
 
     let chosenBid = null;
 
     if (hasRedBower && hasBlackBower && hasAce && state.highestBid < 2) {
         chosenBid = { bid: 2, suit: 'NT', convention: '2NT' };
-    } else if (hasBower && hasAce && state.highestBid < 1) {
+    } else if (hasRedBower && hasBlackBower && state.highestBid < 1) {
         chosenBid = { bid: 1, suit: 'NT', convention: '1NT' };
     }
 
@@ -1157,10 +1334,10 @@ const handleAIBid = () => {
         state.trumpSuit = chosenBid.suit;
         state.trumpConvention = chosenBid.convention;
         state.winningBidder = p;
-        
+       
         state.bidsThisRound.push({ player: p, bid: chosenBid.bid, suit: chosenBid.suit, convention: chosenBid.convention, passed: false });
         state.playerBids[p] = { bid: chosenBid.bid, suit: chosenBid.suit, convention: chosenBid.convention, passed: false };
-        
+       
         if (chosenBid.convention) {
             addLog(`<strong>${PLAYER_NAMES[p]}</strong> signals <strong>${chosenBid.convention}</strong> and bids <strong>${chosenBid.bid} Tricks</strong>!`);
         } else {
@@ -1175,7 +1352,7 @@ const handleAIBid = () => {
     if (!bidMade && state.aiSupportPartnerTrumpToggle && state.winningBidder === partner) {
         const partnerSuit = state.trumpSuit;
         const supportTricks = evaluateAIHand(hand, partnerSuit);
-        
+       
         if (supportTricks >= 1.0 && state.highestBid < 6) {
             state.highestBid++;
             state.winningBidder = p;
@@ -1265,7 +1442,7 @@ const findHighestPowerCard = (hand, leadSuit, trump, pool) => {
 const handleAIPlay = () => {
     const p = state.currentPlayer;
     const hand = state.hands[p];
-    
+   
     let legalIndices = [];
     hand.forEach((card, idx) => {
         if (!state.leadSuit || getEffectiveSuit(card, state.trumpSuit) === state.leadSuit) {
@@ -1279,10 +1456,10 @@ const handleAIPlay = () => {
 
     const legalBossIndices = legalIndices.filter(idx => isBossCard(hand[idx], state.trumpSuit, state.playedCards, hand));
     let chosenIdx = legalIndices[0];
-    
+   
     if (!state.leadSuit) {
         const isAttacking = (state.winningBidder % 2 === p % 2);
-        
+       
         if (isAttacking) {
             if (state.trumpSuit === 'NT') {
                 const bossAce = legalBossIndices.find(idx => hand[idx].rank === 'A');
@@ -1292,10 +1469,35 @@ const handleAIPlay = () => {
                     chosenIdx = findHighestPowerCard(hand, null, 'NT', legalIndices);
                 }
             } else {
-                const bossTrumpIdx = legalBossIndices.find(idx => getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit);
-                if (bossTrumpIdx !== undefined) {
-                    chosenIdx = bossTrumpIdx;
+                // NORMAL TRUMP ATTACKING LEAD (Maker or Partner)
+                const trumpIndices = legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit);
+                const hasTrump = trumpIndices.length > 0;
+                const isFirstTrick = (state.playedCards.length < 4);
+                const isMaker = (state.winningBidder === p);
+               
+                // Makers aggressively lead trump on the first trick, or if holding multiple trumps, or holding a high trump
+                let shouldLeadTrump = false;
+                if (hasTrump) {
+                    const holdsHighTrump = trumpIndices.some(idx => {
+                        const rank = hand[idx].rank;
+                        const isBower = (rank === 'J' && (hand[idx].suit === state.trumpSuit || hand[idx].suit === getSameColorSuit(state.trumpSuit)));
+                        return isBower || rank === 'A';
+                    });
+                   
+                    if (isMaker && isFirstTrick) {
+                        shouldLeadTrump = true;
+                    } else if (trumpIndices.length >= 2) {
+                        shouldLeadTrump = true;
+                    } else if (holdsHighTrump) {
+                        shouldLeadTrump = true;
+                    }
+                }
+               
+                if (shouldLeadTrump) {
+                    // Find highest trump to aggressively pull opponent cards and draw trumps
+                    chosenIdx = findHighestPowerCard(hand, null, state.trumpSuit, trumpIndices);
                 } else {
+                    // Fall back to strategic off-suit plays
                     const offSuitAceIdx = legalIndices.find(idx => hand[idx].rank === 'A' && getEffectiveSuit(hand[idx], state.trumpSuit) !== state.trumpSuit);
                     if (offSuitAceIdx !== undefined) {
                         chosenIdx = offSuitAceIdx;
@@ -1304,24 +1506,37 @@ const handleAIPlay = () => {
                         if (singletonIdx !== -1) {
                             chosenIdx = singletonIdx;
                         } else {
-                            chosenIdx = findLowestNonTrump(hand, state.trumpSuit, legalIndices);
+                            // If we have any trump but chose not to lead it, make sure we throw a non-trump card
+                            const nonTrumpIndices = legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) !== state.trumpSuit);
+                            if (nonTrumpIndices.length > 0) {
+                                chosenIdx = findLowestPowerCard(hand, null, state.trumpSuit, nonTrumpIndices);
+                            } else {
+                                chosenIdx = findLowestPowerCard(hand, null, state.trumpSuit, legalIndices);
+                            }
                         }
                     }
                 }
             }
         } else {
-            const nonTrumpIndices = state.trumpSuit === 'NT' ? legalIndices : legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) !== state.trumpSuit);
-            const leadPool = nonTrumpIndices.length > 0 ? nonTrumpIndices : legalIndices;
-            
-            const offSuitAceIdx = leadPool.find(idx => hand[idx].rank === 'A');
-            if (offSuitAceIdx !== undefined) {
-                chosenIdx = offSuitAceIdx;
+            // NORMAL TRUMP DEFENDING LEAD (Left or Right Opponent)
+            const defenderBossTrump = legalBossIndices.find(idx => getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit);
+            if (defenderBossTrump !== undefined && state.trumpSuit !== 'NT') {
+                // If defender holds a guaranteed boss trump (like Right Bower), lead it to draw maker's trumps safely!
+                chosenIdx = defenderBossTrump;
             } else {
-                const singletonIdx = findSingletonOffSuit(hand, state.trumpSuit, leadPool);
-                if (singletonIdx !== -1) {
-                    chosenIdx = singletonIdx;
+                const nonTrumpIndices = state.trumpSuit === 'NT' ? legalIndices : legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) !== state.trumpSuit);
+                const leadPool = nonTrumpIndices.length > 0 ? nonTrumpIndices : legalIndices;
+               
+                const offSuitAceIdx = leadPool.find(idx => hand[idx].rank === 'A');
+                if (offSuitAceIdx !== undefined) {
+                    chosenIdx = offSuitAceIdx;
                 } else {
-                    chosenIdx = findHighestPowerCard(hand, state.leadSuit, state.trumpSuit, leadPool);
+                    const singletonIdx = findSingletonOffSuit(hand, state.trumpSuit, leadPool);
+                    if (singletonIdx !== -1) {
+                        chosenIdx = singletonIdx;
+                    } else {
+                        chosenIdx = findHighestPowerCard(hand, state.leadSuit, state.trumpSuit, leadPool);
+                    }
                 }
             }
         }
@@ -1339,10 +1554,41 @@ const handleAIPlay = () => {
         const partnerIdx = (p + 2) % 4;
         const partnerIsWinning = (currentWinner === partnerIdx);
         const isVoid = getEffectiveSuit(hand[legalIndices[0]], state.trumpSuit) !== state.leadSuit;
-        
+       
         if (isVoid) {
             if (partnerIsWinning) {
-                chosenIdx = findLowestSluffCard(hand, state.trumpSuit, legalIndices);
+                const partnerCard = state.trickQueue.find(q => q.player === partnerIdx).card;
+                const partnerCardIsBoss = isBossCard(partnerCard, state.trumpSuit, state.playedCards, hand);
+                const isLastPlayer = (state.trickQueue.length === 3);
+               
+                if (partnerCardIsBoss || isLastPlayer) {
+                    // Safe to sluff if partner's card is unbeatable or we are the last player
+                    chosenIdx = findLowestSluffCard(hand, state.trumpSuit, legalIndices);
+                } else {
+                    const trumpIndices = legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit);
+                    if (trumpIndices.length > 0 && state.trumpSuit !== 'NT') {
+                        // Partner is winning but NOT with a boss card, and we are not last.
+                        // Play our lowest winning trump to secure the trick before opponents behind can play.
+                        let winningTrumpIdx = -1;
+                        let lowestWinningTrumpPower = Infinity;
+                       
+                        trumpIndices.forEach(idx => {
+                            const pwr = getPowerValue(hand[idx], state.leadSuit, state.trumpSuit);
+                            if (pwr > currentMaxPower && pwr < lowestWinningTrumpPower) {
+                                lowestWinningTrumpPower = pwr;
+                                winningTrumpIdx = idx;
+                            }
+                        });
+                       
+                        if (winningTrumpIdx !== -1) {
+                            chosenIdx = winningTrumpIdx;
+                        } else {
+                            chosenIdx = findLowestSluffCard(hand, state.trumpSuit, legalIndices);
+                        }
+                    } else {
+                        chosenIdx = findLowestSluffCard(hand, state.trumpSuit, legalIndices);
+                    }
+                }
             } else {
                 if (state.trumpSuit === 'NT') {
                     chosenIdx = findLowestSluffCard(hand, 'NT', legalIndices);
@@ -1350,7 +1596,7 @@ const handleAIPlay = () => {
                     const trumpIndices = legalIndices.filter(idx => getEffectiveSuit(hand[idx], state.trumpSuit) === state.trumpSuit);
                     let winningTrumpIdx = -1;
                     let lowestWinningTrumpPower = Infinity;
-                    
+                   
                     trumpIndices.forEach(idx => {
                         const pwr = getPowerValue(hand[idx], state.leadSuit, state.trumpSuit);
                         if (pwr > currentMaxPower && pwr < lowestWinningTrumpPower) {
@@ -1358,7 +1604,7 @@ const handleAIPlay = () => {
                             winningTrumpIdx = idx;
                         }
                     });
-                    
+                   
                     if (winningTrumpIdx !== -1) {
                         chosenIdx = winningTrumpIdx;
                     } else {
@@ -1370,7 +1616,7 @@ const handleAIPlay = () => {
             if (partnerIsWinning) {
                 const partnerCard = state.trickQueue.find(q => q.player === partnerIdx).card;
                 const partnerCardIsBoss = isBossCard(partnerCard, state.trumpSuit, state.playedCards, hand);
-                
+               
                 if (partnerCardIsBoss) {
                     chosenIdx = findLowestPowerCard(hand, state.leadSuit, state.trumpSuit, legalIndices);
                 } else {
@@ -1379,7 +1625,7 @@ const handleAIPlay = () => {
             } else {
                 let winningIdx = -1;
                 let lowestWinningPower = Infinity;
-                
+               
                 legalIndices.forEach(idx => {
                     const pwr = getPowerValue(hand[idx], state.leadSuit, state.trumpSuit);
                     if (pwr > currentMaxPower && pwr < lowestWinningPower) {
@@ -1387,7 +1633,7 @@ const handleAIPlay = () => {
                         winningIdx = idx;
                     }
                 });
-                
+               
                 if (winningIdx !== -1) {
                     chosenIdx = winningIdx;
                 } else {
@@ -1406,16 +1652,22 @@ const playCard = (playerIdx, cardIdx) => {
     if (state.trickQueue.length === 0) {
         state.leadSuit = getEffectiveSuit(card, state.trumpSuit);
     }
-    
+
+    // Void tracking: If a player cannot follow suit, mark them as void in this lead suit
+    if (state.leadSuit && getEffectiveSuit(card, state.trumpSuit) !== state.leadSuit) {
+        if (!state.voids) state.voids = [{}, {}, {}, {}];
+        state.voids[playerIdx][state.leadSuit] = true;
+    }
+ 
     state.playedCards.push({ rank: card.rank, suit: card.suit });
     state.trickQueue.push({ card, player: playerIdx });
-    
+   
     state.unplayedCounts[getEffectiveSuit(card, state.trumpSuit)]--;
-    
+   
     const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
     const textCol = getSuitColorClass(getEffectiveSuit(card, state.trumpSuit));
     addLog(`<strong>${PLAYER_NAMES[playerIdx]}</strong> played <strong>${card.rank === '10' ? '10' : card.rank}<span class="${textCol}">${suitIcons[card.suit]}</span></strong>.`);
-    
+   
     state.selectedCardIndex = -1; // Reset selection index
     state.currentPlayer = (state.currentPlayer + 1) % 4;
     triggerNextTurn();
@@ -1424,7 +1676,7 @@ const playCard = (playerIdx, cardIdx) => {
 const resolveTrick = () => {
     let winner = -1;
     let maxPower = -1;
-    
+   
     state.trickQueue.forEach(q => {
         const pwr = getPowerValue(q.card, state.leadSuit, state.trumpSuit);
         if (pwr > maxPower) {
@@ -1441,7 +1693,7 @@ const resolveTrick = () => {
 
     const cardsRemaining = state.hands[0].length + state.hands[1].length + state.hands[2].length + state.hands[3].length;
     if (cardsRemaining === 0) {
-        aiTimeout = setTimeout(resolveHand, 1200);
+        aiTimeout = setTimeout(resolveHand, scaledDelay(1200));
     } else {
         triggerNextTurn();
     }
@@ -1451,7 +1703,7 @@ const resolveHand = () => {
     state.gameState = 'SCORING';
     const biddingTeam = state.winningBidder % 2;
     const tricksSecured = state.tricksWon[biddingTeam];
-    
+   
     let points1 = 0;
     let points2 = 0;
 
@@ -1465,7 +1717,7 @@ const resolveHand = () => {
         addLog(`Contract met! Tricks won: <strong>${team1Name}</strong>: ${state.tricksWon[0]} | <strong>${team2Name}</strong>: ${state.tricksWon[1]}.`, false);
     } else {
         if (biddingTeam === 0) {
-            points1 = -state.highestBid; 
+            points1 = -state.highestBid;
             points2 = state.tricksWon[1];
         } else {
             points1 = state.tricksWon[0];
@@ -1498,18 +1750,18 @@ const resolveHand = () => {
         }
         addLog(`<strong>=== ${winnerMsg} ===</strong>`, false);
     } else {
-        aiTimeout = setTimeout(startNewHand, 3000);
+        aiTimeout = setTimeout(startNewHand, scaledDelay(3000));
     }
 };
 
 const drawCard = (card, x, y, faceUp = true, showIcon = false, highlight = false, isHovered = false) => {
     ctx.save();
-    
+   
     if (state.trickQueue.length >= 4) isHovered = false;
-    
+   
     const finalY = isHovered ? y - 16 : y;
     ctx.translate(x, finalY);
-    
+   
     ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
     ctx.shadowBlur = isHovered ? 14 : 5;
     ctx.shadowOffsetY = isHovered ? 10 : 2;
@@ -1517,7 +1769,7 @@ const drawCard = (card, x, y, faceUp = true, showIcon = false, highlight = false
     ctx.fillStyle = faceUp ? '#ffffff' : '#1e3a8a';
     ctx.strokeStyle = highlight ? '#10b981' : '#475569';
     ctx.lineWidth = highlight ? 3.5 : 1.2;
-    
+   
     ctx.beginPath();
     ctx.roundRect(-cardW / 2, -cardH / 2, cardW, cardH, 8);
     ctx.fill();
@@ -1528,24 +1780,29 @@ const drawCard = (card, x, y, faceUp = true, showIcon = false, highlight = false
     if (faceUp) {
         const suitColor = getSuitColor(card.suit);
         ctx.fillStyle = suitColor;
-		const suitIcons = { 'S': '♠\uFE0E', 'C': '♣\uFE0E', 'H': '♥\uFE0E', 'D': '♦\uFE0E' };
-        
-        ctx.font = 'bold 13px "Inter", sans-serif';
+const suitIcons = { 'S': '♠\uFE0E', 'C': '♣\uFE0E', 'H': '♥\uFE0E', 'D': '♦\uFE0E' };
+        // Scale glyphs & insets with card size so they stay proportional at any resolution.
+        const cornerFont = Math.max(10, Math.round(cardH * 0.17));
+        const centerFont = Math.max(22, Math.round(cardH * 0.42));
+        const inX = Math.max(4, Math.round(cardW * 0.10));
+        const inY = Math.max(6, Math.round(cardH * 0.10));
+
+        ctx.font = `bold ${cornerFont}px "Inter", sans-serif`;
         ctx.textBaseline = 'top';
         ctx.textAlign = 'left';
-        ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 7);
-        
-		if (showIcon) {
-			ctx.font = 'bold 28px "Inter", sans-serif';
-			ctx.textAlign = 'center';
-			ctx.textBaseline = 'middle';
-			ctx.fillText(suitIcons[card.suit], 0, 6);
-		}
+        ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, -cardW / 2 + inX, -cardH / 2 + inY);
+       
+if (showIcon) {
+ctx.font = `bold ${centerFont}px "Inter", sans-serif`;
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText(suitIcons[card.suit], 0, 6);
+}
 
-        ctx.font = 'bold 11px "Inter", sans-serif';
+        ctx.font = `bold ${cornerFont}px "Inter", sans-serif`;
         ctx.textAlign = 'right';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, cardW / 2 - 5, cardH / 2 - 5);
+        ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, cardW / 2 - inX, cardH / 2 - inY);
     } else {
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1.5;
@@ -1559,15 +1816,15 @@ const drawCard = (card, x, y, faceUp = true, showIcon = false, highlight = false
 
 const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, highlight = false, isHovered = false) => {
     ctx.save();
-    
+   
     if (state.trickQueue.length >= 4) isHovered = false;
-    
+   
     ctx.translate(x, y);
     ctx.rotate(angle);
-    
+   
     const finalY = isHovered ? -16 : 0;
     ctx.translate(0, finalY);
-    
+   
     ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
     ctx.shadowBlur = isHovered ? 14 : 5;
     ctx.shadowOffsetY = isHovered ? 10 : 2;
@@ -1575,7 +1832,7 @@ const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, hig
     ctx.fillStyle = faceUp ? '#ffffff' : '#1e3a8a';
     ctx.strokeStyle = highlight ? '#10b981' : '#475569';
     ctx.lineWidth = highlight ? 3.5 : 1.2;
-    
+   
     ctx.beginPath();
     ctx.roundRect(-cardW / 2, -cardH / 2, cardW, cardH, 8);
     ctx.fill();
@@ -1587,23 +1844,28 @@ const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, hig
         const suitColor = getSuitColor(card.suit);
         ctx.fillStyle = suitColor;
         const suitIcons = { 'S': '♠\uFE0E', 'C': '♣\uFE0E', 'H': '♥\uFE0E', 'D': '♦\uFE0E' };
-        
-        ctx.font = 'bold 11px "Inter", sans-serif';
+        // Scale glyphs & insets with card size so they stay proportional at any resolution.
+        const cornerFont = Math.max(10, Math.round(cardH * 0.17));
+        const centerFont = Math.max(22, Math.round(cardH * 0.40));
+        const inX = Math.max(4, Math.round(cardW * 0.10));
+        const inY = Math.max(6, Math.round(cardH * 0.10));
+
+        ctx.font = `bold ${cornerFont}px "Inter", sans-serif`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, -cardW / 2 + 5, -cardH / 2 + 7);
-        
-		if (showIcon) {
-			ctx.font = 'bold 26px "Inter", sans-serif';
-			ctx.textAlign = 'center';
-			ctx.textBaseline = 'middle';
-			ctx.fillText(suitIcons[card.suit], 0, 6);
-		}
+        ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, -cardW / 2 + inX, -cardH / 2 + inY);
+       
+if (showIcon) {
+ctx.font = `bold ${centerFont}px "Inter", sans-serif`;
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText(suitIcons[card.suit], 0, 6);
+}
 
-        ctx.font = 'bold 10px "Inter", sans-serif';
+        ctx.font = `bold ${cornerFont}px "Inter", sans-serif`;
         ctx.textAlign = 'right';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, cardW / 2 - 5, cardH / 2 - 5);
+        ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, cardW / 2 - inX, cardH / 2 - inY);
     } else {
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1.5;
@@ -1615,33 +1877,56 @@ const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, hig
     ctx.restore();
 };
 
+// Returns the spread of a FULL 6-card hand for a seat, so plate/bid positions
+// anchor to the widest the fan ever gets and don't drift as cards are played.
+// Per-seat horizontal/vertical step between fanned cards. Mobile steps scale with
+// the (now dynamic) card width so fans and their anchored labels grow together.
+const getFanStep = (p, isMobile) => {
+    const mScale = cardW / 44; // baseline mobile card width is 44
+    if (p === 0) return isMobile ? 42 * mScale : (cardW + 8);
+    if (p === 2) return isMobile ? 32 * mScale : 26;
+    return isMobile ? 24 * mScale : 26; // P1 (Left) and P3 (Right)
+};
+
+// Returns the spread of a FULL 6-card hand for a seat, so plate/bid positions
+// anchor to the widest the fan ever gets and don't drift as cards are played.
+const getMaxSpread = (p, width, height) => {
+    const isMobile = isPortraitLayout(width, height);
+    const MAX_CARDS = 6;
+    return (MAX_CARDS - 1) * getFanStep(p, isMobile);
+};
+
 const drawPlayerPlate = (p, name, pos, width, height, spread) => {
-    const isMobile = width < 600;
-    
+    const isMobile = isPortraitLayout(width, height);
+    // Anchor to the full-hand spread so labels stay fixed and clear of the cards.
+    spread = getMaxSpread(p, width, height);
+   
     let lx = pos.x;
     let ly = pos.y;
-    
-    // Expand sizing slightly on mobile to fully support +3 font size upgrades
-    const plateW = isMobile ? 96 : 130;
-    const plateH = isMobile ? 22 : 26;
+   
+    // Expand sizing slightly on mobile; scale with the (dynamic) mobile card size.
+    const mScale = isMobile ? Math.max(1, cardW / 44) : 1;
+    const plateW = isMobile ? Math.round(96 * mScale) : 130;
+    const plateH = isMobile ? Math.round(22 * mScale) : 26;
     const plateR = isMobile ? 8 : 12;
+    const edgeX = cardW; // horizontal inset for side seats, scales with card width
 
     if (isMobile) {
-        if (p === 0) { 
+        if (p === 0) {
             // Player: placed above fanned cards and centered
-            lx = pos.x; 
-            ly = pos.y - cardH / 2 - plateH / 2 - 6; 
-        } else if (p === 1) { 
-            // Left: 10 px below bottom card fanning point
-            lx = 42;
+            lx = pos.x;
+            ly = pos.y - cardH / 2 - plateH / 2 - 6;
+        } else if (p === 1) {
+            // Left: below bottom card fanning point
+            lx = edgeX;
             ly = pos.y + spread / 2 + cardW / 2 + 10 + plateH / 2;
-        } else if (p === 2) { 
-            // Partner: pushed fully to the right of partner's cards to eliminate overlapping
-            lx = Math.min(width - plateW / 2 - 6, pos.x + spread / 2 + cardW / 2 + plateW / 2 + 10);
-            ly = 24; 
-        } else if (p === 3) { 
-            // Right: 10 px below bottom card fanning point
-            lx = width - 42;
+        } else if (p === 2) {
+            // Partner: centered below the fan (mirrors Player at bottom), clear of cards
+            lx = pos.x;
+            ly = pos.y + cardH / 2 + 6 + plateH / 2;
+        } else if (p === 3) {
+            // Right: below bottom card fanning point
+            lx = width - edgeX;
             ly = pos.y + spread / 2 + cardW / 2 + 10 + plateH / 2;
         }
     } else {
@@ -1649,47 +1934,53 @@ const drawPlayerPlate = (p, name, pos, width, height, spread) => {
             ly = pos.y - 75;
         } else if (p === 2) {
             ly = pos.y + 75;
-        } else if (p === 1 || p === 3) { 
+        } else if (p === 1 || p === 3) {
             ly = pos.y + spread / 2  + cardW / 2 + 10 + plateH / 2;
         }
     }
-    
+   
     ctx.save();
-    
+   
     ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
     ctx.strokeStyle = (state.currentPlayer === p && state.gameState !== 'SCORING' && state.gameState !== 'GAMEOVER') ? '#fbbf24' : '#334155';
     ctx.lineWidth = 1.5;
-    
+   
     ctx.beginPath();
     ctx.roundRect(lx - plateW / 2, ly - plateH / 2, plateW, plateH, plateR);
     ctx.fill();
     ctx.stroke();
-    
+   
     ctx.fillStyle = (state.currentPlayer === p && state.gameState !== 'SCORING' && state.gameState !== 'GAMEOVER') ? '#fbbf24' : '#f8fafc';
-    
+   
     // Applied +3 Font size upgrade for mobile player labels (9px -> 12px)
     ctx.font = isMobile ? 'bold 12px "Inter", sans-serif' : 'bold 11px "Inter", sans-serif';
-    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(name, lx, ly + 0.5);
-    
-    // Draw Dealer chip aligned to follow the Plate center dynamically
-    if (state.dealer === p) {
-        const dX = lx - (plateW / 2 + 8);
-        const dY = ly;
-        const radius = isMobile ? 6 : 9;
-        
+
+    const isDealer = (state.dealer === p);
+    if (isDealer) {
+        // Fold the dealer marker INTO the plate label: gold "D" prefix + name, centered as one unit.
+        // Kept inside the plate so it can never be clipped off-canvas on any seat/layout.
+        const nameW = ctx.measureText(name).width;
+        const dLabel = "D";
+        const dGap = 5; // space between the D marker and the name
+        const dFont = isMobile ? 'bold 12px "Inter", sans-serif' : 'bold 11px "Inter", sans-serif';
+        ctx.font = dFont;
+        const dW = ctx.measureText(dLabel).width;
+        const totalW = dW + dGap + nameW;
+        const startX = lx - totalW / 2;
+
+        // Gold "D" marker
+        ctx.textAlign = 'left';
         ctx.fillStyle = '#eab308';
-        ctx.beginPath();
-        ctx.arc(dX, dY, radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        
-        ctx.fillStyle = '#0f172a';
-        ctx.font = isMobile ? 'bold 10px "Inter", sans-serif' : 'bold 9px "Inter", sans-serif';
-        ctx.fillText("D", dX, dY + 0.5);
+        ctx.fillText(dLabel, startX, ly + 0.5);
+
+        // Player name in normal/active color
+        ctx.font = isMobile ? 'bold 12px "Inter", sans-serif' : 'bold 11px "Inter", sans-serif';
+        ctx.fillStyle = (state.currentPlayer === p && state.gameState !== 'SCORING' && state.gameState !== 'GAMEOVER') ? '#fbbf24' : '#f8fafc';
+        ctx.fillText(name, startX + dW + dGap, ly + 0.5);
+    } else {
+        ctx.textAlign = 'center';
+        ctx.fillText(name, lx, ly + 0.5);
     }
 
     ctx.restore();
@@ -1709,56 +2000,61 @@ const drawPlayerBid = (p, pos, width, height, spread) => {
             text = `Bid ${bidInfo.bid} Aces`;
         } else {
             const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
-            text = `Bid ${bidInfo.bid} ${suitIcons[bidInfo.suit]}`;
+            text = `Bid ${bidInfo.bid} ${suitIcons[bidInfo.suit]} ${bidInfo.suit}`;
         }
     }
 
     ctx.save();
     let bx = pos.x;
     let by = pos.y;
-    const isMobile = width < 600;
+    const isMobile = isPortraitLayout(width, height);
+    // Anchor to the full-hand spread so bid badges stay fixed and clear of the cards.
+    spread = getMaxSpread(p, width, height);
 
-    // Upgraded badge sizes to elegantly buffer larger font sizes
-    const badgeW = isMobile ? 76 : 85;
-    const badgeH = isMobile ? 18 : 22;
+    // Upgraded badge sizes; scale with the (dynamic) mobile card size to match the plate.
+    const mScale = isMobile ? Math.max(1, cardW / 44) : 1;
+    const badgeW = isMobile ? Math.round(84 * mScale) : 94;
+    const badgeH = isMobile ? Math.round(18 * mScale) : 22;
 
-    const plateW = isMobile ? 96 : 130;
-    const plateH = isMobile ? 22 : 26;
+    const plateW = isMobile ? Math.round(96 * mScale) : 130;
+    const plateH = isMobile ? Math.round(22 * mScale) : 26;
+    const edgeX = cardW; // matches drawPlayerPlate side-seat inset
 
     // Recalculating bid alignment to stack cleanly right next to labels/plates on mobile
     if (isMobile) {
-        if (p === 0) { 
+        if (p === 0) {
             // Player: aligned directly above Player Plate (centered to cards)
-            bx = pos.x; 
+            bx = pos.x;
             const plateY = pos.y - cardH / 2 - plateH / 2 - 6;
             by = plateY - plateH / 2 - badgeH / 2 - 4;
-        } else if (p === 1) { 
+        } else if (p === 1) {
             // Left: stacked cleanly above Left Plate
-            bx = 42;
+            bx = edgeX;
             const plateY = pos.y + spread / 2 + cardW / 2 + 10 + plateH / 2;
             by = plateY - plateH / 2 - badgeH / 2 - 4;
-        } else if (p === 2) { 
-            // Partner: positioned below relocated Partner Plate to avoid card overlaps
-            bx = Math.min(width - plateW / 2 - 6, pos.x + spread / 2 + cardW / 2 + plateW / 2 + 10);
-            by = 24 + plateH / 2 + badgeH / 2 + 4;
-        } else if (p === 3) { 
+        } else if (p === 2) {
+            // Partner: centered, stacked below the Partner plate (which sits below the fan)
+            bx = pos.x;
+            const plateY = pos.y + cardH / 2 + 6 + plateH / 2;
+            by = plateY + plateH / 2 + 4 + badgeH / 2;
+        } else if (p === 3) {
             // Right: stacked cleanly above Right Plate
-            bx = width - 42;
+            bx = width - edgeX;
             const plateY = pos.y + spread / 2 + cardW / 2 + 10 + plateH / 2;
             by = plateY - plateH / 2 - badgeH / 2 - 4;
         }
     } else {
         if (p === 0) {
-            by = pos.y - 75; 
-            bx = pos.x - 130; 
+            by = pos.y - 75;
+            bx = pos.x - 130;
         } else if (p === 1) {
-            bx = pos.x + 95; 
+            bx = pos.x + 95;
             by = pos.y;
         } else if (p === 2) {
-            by = pos.y + 75; 
-            bx = pos.x - 130; 
+            by = pos.y + 75;
+            bx = pos.x - 130;
         } else if (p === 3) {
-            bx = pos.x - 95; 
+            bx = pos.x - 95;
             by = pos.y;
         }
     }
@@ -1773,15 +2069,15 @@ const drawPlayerBid = (p, pos, width, height, spread) => {
     ctx.stroke();
 
     ctx.fillStyle = '#f8fafc';
-    
-    // Applied +3 Font size upgrade for mobile player bid cards (8px -> 11px)
-    ctx.font = isMobile ? 'bold 11px "Inter", sans-serif' : 'bold 10px "Inter", sans-serif';
-    
+   
+    // Applied +3 Font size upgrade for mobile player bid cards (8px -> 11px); +2px glyph bump for suit legibility
+    ctx.font = isMobile ? 'bold 13px "Inter", sans-serif' : 'bold 12px "Inter", sans-serif';
+   
     // Colorize the suit badge explicitly inside the plate
     if (!bidInfo.passed && bidInfo.suit !== 'NT') {
         ctx.fillStyle = getSuitColorDark(bidInfo.suit);
     }
-    
+   
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, bx, by);
@@ -1792,14 +2088,11 @@ const renderLoop = () => {
     const rect = container.getBoundingClientRect();
     const width = rect.width || 800;
     const height = rect.height || 600;
-    const isMobile = width < 600;
-	const showIcon = !isMobile;
-    
-    if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-    }
-    
+    const isMobile = isPortraitLayout(width, height);
+const showIcon = !isMobile;
+   
+    resizeCanvasTo(width, height);
+
     updateCardScaling(width, height);
     ctx.clearRect(0, 0, width, height);
 
@@ -1812,13 +2105,14 @@ const renderLoop = () => {
         const pos = getPlayerCoords(p, width, height);
         const hand = state.hands[p];
         const isHuman = (p === 0);
-        
+       
         if (isHuman) {
             // Human Hand: Wide fanning for clear interactive visibility
-            const step = isMobile ? 42 : (cardW + 8);
+            const step = getFanStep(0, isMobile);
             const spread = (hand.length - 1) * step;
             playerSpreads[0] = spread;
             let clickedAnyCard = false;
+            let touchedAnyCardAtAll = false; // Tracks if they tapped any card boundary (even illegal ones)
 
             // Compute hit indices (sweep backwards from topmost drawn card index to prioritize top layer overlap clicks)
             let clickedIndex = -1;
@@ -1828,14 +2122,16 @@ const renderLoop = () => {
                 const card = hand[i];
                 const ox = pos.x - spread / 2 + i * step;
                 const oy = pos.y;
-                
-                if (pointer.x > ox - cardW / 2 && pointer.x < ox + cardW / 2 && 
+               
+                if (pointer.x > ox - cardW / 2 && pointer.x < ox + cardW / 2 &&
                     pointer.y > oy - cardH / 2 && pointer.y < oy + cardH / 2) {
-                    
+                   
+                    touchedAnyCardAtAll = true; // Registered hit on any card boundary
+
                     if (state.gameState === 'PLAYING' && state.currentPlayer === 0) {
                         let hasLead = state.hands[0].some(c => getEffectiveSuit(c, state.trumpSuit) === state.leadSuit);
                         let isLegal = !state.leadSuit || !hasLead || getEffectiveSuit(card, state.trumpSuit) === state.leadSuit;
-                        
+                       
                         if (isLegal) {
                             hoveredIndex = i;
                             if (pointer.justPressed) {
@@ -1864,19 +2160,20 @@ const renderLoop = () => {
                 }
             }
 
-            // Deselect mobile tap selection when tapping outside cards
-            if (isMobile && pointer.justPressed && !clickedAnyCard) {
+            // Deselect mobile tap selection when tapping completely outside all card boundaries
+            if (isMobile && pointer.justPressed && !touchedAnyCardAtAll) {
                 state.selectedCardIndex = -1;
             }
 
             // Draw Human Cards
+            const bossBadges = []; // collect boss markers to draw AFTER all cards, so no card paints over a badge
             hand.forEach((card, i) => {
                 const ox = pos.x - spread / 2 + i * step;
                 const oy = pos.y;
-                
+               
                 let highlight = false;
                 let isHovered = false;
-                
+               
                 if (isMobile) {
                     // Highlighting the active tap selection
                     if (state.selectedCardIndex === i) {
@@ -1890,12 +2187,49 @@ const renderLoop = () => {
                         isHovered = true;
                     }
                 }
-                
+               
                 drawRotatedCard(card, ox, oy, 0, true, showIcon, highlight, isHovered);
+
+                // Boss marker: amber pill with dark "B" in the card's top-right corner.
+                // Placed ON the card (top-right is empty; rank glyphs are top-left & bottom-right)
+                // so it never overlaps the Player plate/bid that float above the cards, and never
+                // clips off-canvas. Recomputed every frame so it reassigns as tricks are played.
+                // Collected here and drawn in a later pass so a neighboring card can't paint over it.
+                if (state.showBossMarkers && state.gameState === 'PLAYING' &&
+                    isBossCardForPlayer(card, state.trumpSuit, state.hands[0], state.playedCards)) {
+                    const liftY = isHovered ? oy - 16 : oy;
+                    const bw = isMobile ? 15 : 17;
+                    const bh = isMobile ? 13 : 15;
+                    const bx = ox + cardW / 2 - bw / 2 - 3; // top-right corner, inset
+                    const by = liftY - cardH / 2 + bh / 2 + 3;
+                    bossBadges.push({ bx, by, bw, bh });
+                }
+            });
+
+            // Draw boss badges on top of all player cards.
+            bossBadges.forEach(({ bx, by, bw, bh }) => {
+                ctx.save();
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetY = 1;
+                ctx.fillStyle = '#f59e0b';        // amber pill
+                ctx.strokeStyle = '#78350f';       // dark amber outline for contrast on white card
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.roundRect(bx - bw / 2, by - bh / 2, bw, bh, 4);
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowColor = 'transparent';
+                ctx.fillStyle = '#1c1917';         // near-black text
+                ctx.font = (bw < 16) ? 'bold 10px "Inter", sans-serif' : 'bold 11px "Inter", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('B', bx, by + 0.5);
+                ctx.restore();
             });
         } else if (p === 2) {
             // Partner (Top)
-            const step = isMobile ? 32 : 26;
+            const step = getFanStep(2, isMobile);
             const spread = (hand.length - 1) * step;
             playerSpreads[2] = spread;
 
@@ -1908,18 +2242,18 @@ const renderLoop = () => {
             }
         } else if (p === 1) {
             // Left Opponent (P1)
-            const step = isMobile ? 24 : 26;
+            const step = getFanStep(1, isMobile);
             const spread = (hand.length - 1) * step;
             playerSpreads[1] = spread;
             hand.forEach((card, i) => {
-                const ox = pos.x; 
+                const ox = pos.x;
                 const oy = pos.y - spread / 2 + i * step;
                 const showFaceUp = state.revealAllCards;
                 drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, showIcon, false, false);
             });
         } else if (p === 3) {
             // Right Opponent (P3)
-            const step = isMobile ? 24 : 26;
+            const step = getFanStep(3, isMobile);
             const spread = (hand.length - 1) * step;
             playerSpreads[3] = spread;
 
@@ -1948,7 +2282,7 @@ const renderLoop = () => {
         const radiusFactor = isMobile ? 0.22 : 0.35;
         const tx = (width / 2) + (target.x - (width / 2)) * radiusFactor;
         const ty = (height / 2) + (target.y - (height / 2)) * radiusFactor;
-		const showIcon = !isMobile;
+const showIcon = !isMobile;
         drawCard(q.card, tx, ty, true, showIcon);
     });
 
@@ -1956,14 +2290,14 @@ const renderLoop = () => {
         ctx.save();
         ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
         ctx.fillRect(0, height / 2 - 50, width, 100);
-        
+       
         ctx.fillStyle = '#f59e0b';
         ctx.font = 'bold 18px "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const winnerText = state.winnerTeam === 0 ? "PLAYER & PARTNER WIN!" : "LEFT & RIGHT WIN!";
         ctx.fillText(winnerText, width / 2, height / 2 - 15);
-        
+       
         ctx.fillStyle = '#94a3b8';
         ctx.font = '11px "Inter", sans-serif';
         ctx.fillText("Click 'Restart Game' in the sidebar to play again", width / 2, height / 2 + 20);
@@ -1997,6 +2331,24 @@ toggleRevealAll.addEventListener('change', (e) => {
     addLog(`Show All Players' Cards: <strong>${state.revealAllCards ? "ON" : "OFF"}</strong>.`);
 });
 
+const togglePerfectMemory = document.getElementById('toggle-perfect-memory');
+togglePerfectMemory.addEventListener('change', (e) => {
+    state.aiPerfectMemory = e.target.checked;
+    addLog(`AI Card Counting Memory: <strong>${state.aiPerfectMemory ? "ON" : "OFF"}</strong>.`);
+});
+
+const toggleBossMarkers = document.getElementById('toggle-boss-markers');
+toggleBossMarkers.addEventListener('change', (e) => {
+    state.showBossMarkers = e.target.checked;
+    addLog(`Boss Card Markers: <strong>${state.showBossMarkers ? "ON" : "OFF"}</strong>.`);
+});
+
+const toggleFastMode = document.getElementById('toggle-fast-mode');
+toggleFastMode.addEventListener('change', (e) => {
+    state.fastMode = e.target.checked;
+    addLog(`Fast Mode: <strong>${state.fastMode ? "ON" : "OFF"}</strong>.`);
+});
+
 const toggleVerboseLog = document.getElementById('toggle-verbose-log');
 toggleVerboseLog.addEventListener('change', (e) => {
     state.verboseLog = e.target.checked;
@@ -2005,6 +2357,10 @@ toggleVerboseLog.addEventListener('change', (e) => {
 
 document.getElementById('btn-reset').onclick = () => {
     runReset();
+};
+
+document.getElementById('btn-auto-finish').onclick = () => {
+    runAutoFinish();
 };
 
 // Start deal and execution
