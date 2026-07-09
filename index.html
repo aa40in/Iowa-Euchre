@@ -274,7 +274,7 @@
                         <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
                             <div class="flex flex-col pr-2">
                                 <span class="text-[11px] font-semibold text-slate-200">Fast Mode</span>
-                                <span class="text-[9px] text-slate-400 mt-0.5">Speeds up all AI and card-play delays by 70%.</span>
+                                <span class="text-[9px] text-slate-400 mt-0.5">Speeds up all AI and card-play delays by 50%.</span>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer select-none">
                                 <input type="checkbox" id="toggle-fast-mode" class="sr-only peer" checked>
@@ -402,7 +402,7 @@ const state = {
     showTrumpCount: false,
     showAllSuitsCount: false,
     showBossMarkers: false, // Added: Show B markers on player's current boss cards
-    fastMode: true,         // Added: Reduce all AI/play delays by 70% (default on)
+    fastMode: true,         // Added: Reduce all AI/play delays by 50% (default on)
     revealAllCards: false,
     fourColorDeck: false, // Added: Toggles high-readability 4-color suits
     verboseLog: false,    // Added: Toggles verbose intermediate actions vs final results (default off)
@@ -418,8 +418,8 @@ const state = {
 
 let aiTimeout = null;
 
-// Scales all AI/play timing. Fast mode cuts every delay by 70% (multiplier 0.3).
-const scaledDelay = (ms) => Math.round(ms * (state.fastMode ? 0.3 : 1));
+// Scales all AI/play timing. Fast mode cuts every delay by 50% (multiplier 0.5).
+const scaledDelay = (ms) => Math.round(ms * (state.fastMode ? 0.5 : 1));
 
 // Dynamic Sorter function for human player hand grouping and hierarchy sorting
 const sortPlayerHand = (trump) => {
