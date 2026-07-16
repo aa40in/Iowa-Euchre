@@ -41,6 +41,15 @@
                 transform-origin: center;
             }
         }
+        @keyframes trickFloatUp {
+            0%   { opacity: 0; transform: translate(-50%, 6px); }
+            12%  { opacity: 1; }
+            75%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -30px); }
+        }
+        .trick-float-anim {
+            animation: trickFloatUp 3s ease-out forwards;
+        }
     </style>
 </head>
 <body class="h-screen w-screen overflow-hidden text-slate-100 flex flex-col select-none bg-slate-950">
@@ -69,68 +78,96 @@
                     </span>
                     <button id="btn-close-help" class="text-slate-400 hover:text-white text-xs p-1 h-8 w-8 flex items-center justify-center text-[11px]">✕</button>
                 </div>
-                <div class="text-[11px] text-slate-300 space-y-2.5 overflow-y-auto max-h-[180px] md:max-h-80 pr-1 leading-relaxed">
+                <div class="text-[11px] md:text-sm text-slate-300 space-y-2.5 overflow-y-auto max-h-[180px] md:max-h-80 pr-1 leading-relaxed">
                     <div>
-                        <strong class="text-amber-300 block mb-0.5">The Deal & Goal</strong>
-                        <p>Iowa Euchre is played with 24 cards (9 through Ace). Each player is dealt exactly <strong class="text-white">6 cards</strong>. The goal is to win tricks, playing to a maximum of 6 tricks per hand.</p>
+                        <strong class="text-amber-300 block mb-0.5">Goal</strong>
+                        <p>You and the player across from you are a team against the other two. Each hand you score <strong class="text-white">one point per trick you win</strong>; the <strong class="text-white">first team to 21 points wins</strong>.</p>
+                    </div>
+                    <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
+                        <strong class="text-amber-300 block mb-0.5">Key point for newcomers</strong>
+                        <p>Once a suit is named as trump, <strong class="text-white">its two Jacks become the highest cards in the game</strong> — above even the Aces. It's the one rule that trips people up, so keep an eye on your Jacks (details below).</p>
                     </div>
                     <div>
-                        <strong class="text-amber-300 block mb-0.5">Bidding Process</strong>
-                        <p>Players take turns bidding the number of tricks they think they can win (1 to 6) along with their selected Trump suit or Aces (No Trump). The Jacks are bowers under standard suit trumps.</p>
+                        <strong class="text-amber-300 block mb-0.5">Cards & deal</strong>
+                        <p>A 24-card deck (9, 10, J, Q, K, A in each suit ♠ ♥ ♦ ♣). Everyone gets <strong class="text-white">6 cards</strong>, using the whole deck — no draw pile.</p>
                     </div>
                     <div>
-                        <strong class="text-amber-300 block mb-0.5">Aces (No Trump) Mode</strong>
-                        <p>If "Aces" is chosen as the contract, Jacks behave as normal cards (9, 10, Jack, Queen, King, Ace). There are no bower swaps, suits remain natural, and Aces are high.</p>
+                        <strong class="text-amber-300 block mb-0.5">Tricks</strong>
+                        <p>Play goes clockwise, one card each. That's a <strong class="text-white">trick</strong>, and the highest card played wins it and leads the next one. There are <strong class="text-white">6 tricks</strong> per hand — each one your team wins is a point.</p>
                     </div>
                     <div>
-                        <strong class="text-amber-300 block mb-0.5">First Lead Rule</strong>
-                        <p>Play always starts with the player situated immediately to the <strong class="text-white">left of the winning bidder</strong>, regardless of who dealt.</p>
+                        <strong class="text-amber-300 block mb-0.5">Following suit</strong>
+                        <p>You must play the <strong class="text-white">led suit</strong> (the first card's suit) if you have it. If you don't, you may play anything — including a trump.</p>
                     </div>
                     <div>
-                        <strong class="text-amber-300 block mb-0.5">NT Conventions</strong>
-                        <p>To communicate with your partner without bidding high right away:
-                        <br>• <strong class="text-white">1NT Bid</strong> signals you hold at least one Black Jack and one Red Jack.
-                        <br>• <strong class="text-white">2NT Bid</strong> signals you hold at least one Red Jack, one Black Jack, and an Ace.</p>
+                        <strong class="text-amber-300 block mb-0.5">Trump</strong>
+                        <p>The bidder names one suit as <strong class="text-white">trump</strong>. Any trump beats any non-trump — even the 9 of trump beats a non-trump Ace — and a higher trump beats a lower one. This matters most when a player is out of the led suit and plays a trump to steal the trick.</p>
                     </div>
                     <div>
-                        <strong class="text-amber-300 block mb-0.5">Scoring & Penalties</strong>
-                        <p>If your team meets the contract, you score trick points. If your team is "Set" (fails to meet the contract), you suffer a penalty equal to your contract bid (<strong class="text-rose-400">-bid points</strong>). First to 21 points wins! <strong class="text-amber-400">Tiebreaker:</strong> If both teams reach 21 on the same hand, the team whose bid is played wins.</p>
+                        <strong class="text-amber-300 block mb-0.5">Card ranking <span class="text-amber-400">(important)</span></strong>
+                        <p>In a normal suit: A, K, Q, J, 10, 9 (high to low).
+                        <br>In the <strong class="text-white">trump</strong> suit, the two Jacks jump to the top:
+                        <br>• <strong class="text-white">Highest:</strong> the Jack of the trump suit ("right bower").
+                        <br>• <strong class="text-white">2nd:</strong> the other same-color Jack, which also acts as trump ("left bower"). If ♥ is trump, the J♦ becomes a Heart.
+                        <br>• Then A, K, Q, 10, 9 of trump.
+                        <br>Example (♥ trump): J♥, J♦, A♥, K♥, Q♥, 10♥, 9♥.</p>
+                    </div>
+                    <div>
+                        <strong class="text-amber-300 block mb-0.5">Bidding</strong>
+                        <p>Each player, once, either <strong class="text-white">passes</strong> or <strong class="text-white">bids</strong> — a promise to win a number of tricks (1–6) in a trump suit of their choice. Each bid must beat the previous one. The highest bidder names trump, and their team must win at least that many tricks. The player to the winning bidder's left leads the first trick.</p>
+                    </div>
+                    <div>
+                        <strong class="text-amber-300 block mb-0.5">"Aces" (No Trump)</strong>
+                        <p>A bidder can choose <strong class="text-white">Aces</strong> instead of a trump suit: no suit is trump, Jacks are ordinary, and the highest card of the led suit wins each trick.</p>
+                    </div>
+                    <div>
+                        <strong class="text-amber-300 block mb-0.5">Partner signals (1NT / 2NT)</strong>
+                        <p>Optional bids that describe your hand to your partner:
+                        <br>• <strong class="text-white">1NT</strong> — you hold one black Jack (♠/♣) and one red Jack (♥/♦).
+                        <br>• <strong class="text-white">2NT</strong> — a red Jack, a black Jack, <em>and</em> an Ace.
+                        <br>If your partner signals and nobody outbids it, you're expected to answer with a real bid.</p>
+                    </div>
+                    <div>
+                        <strong class="text-amber-300 block mb-0.5">Scoring</strong>
+                        <p>If the bidding team makes its promise, <strong class="text-white">both</strong> teams score a point per trick won (e.g. a 4–2 hand scores +4 / +2). If the bidding team comes up short ("set"), it <strong class="text-rose-400">loses points equal to its bid</strong> while the other team scores its tricks as usual. If both teams hit 21 the same hand, the bidding team wins the tie.</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Sidebar Section: Left-aligned panel on desktop, bottom-aligned and scrollable on mobile -->
-        <aside class="w-full h-[28vh] md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-y-auto md:overflow-hidden">
+        <aside class="w-full h-[28vh] md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-y-auto md:overflow-hidden md:relative">
 
-            <!-- Relocated Top Bar Header (Now locked/sticky at the top of the sidebar/bottom panel) -->
-            <div class="w-full bg-slate-950 border-b border-slate-800 px-3.5 py-2.5 flex flex-col shrink-0 z-20 sticky top-0">
-                <div class="flex items-center justify-between w-full">
-                    <!-- Left: Active Contract -->
-                    <div class="flex items-center gap-1.5 bg-slate-900/60 px-2 py-0.5 rounded-lg border border-slate-800">
-                        <span class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Contract:</span>
-                        <div id="contract-display-header" class="text-[10px] font-extrabold text-emerald-400 flex items-center gap-1">Waiting...</div>
+            <!-- Top Bar Header: sticky top on mobile; part of the bottom-left cluster on desktop -->
+            <div id="sidebar-header" class="w-full bg-slate-950 border-b border-slate-800 px-3.5 py-2.5 md:py-3.5 flex flex-col shrink-0 z-20 sticky top-0 md:static md:order-2 md:mt-auto md:border-b-0 md:border-t md:border-slate-800">
+                <div class="flex items-center justify-between w-full md:flex-col md:items-stretch md:gap-2">
+                    <!-- Left (mobile) / Bottom line (desktop): Active Contract -->
+                    <div class="flex items-center gap-1.5 bg-slate-900/60 px-2 py-0.5 md:py-1.5 rounded-lg border border-slate-800 whitespace-nowrap min-w-0 md:order-2 md:justify-center md:w-full md:min-h-[2.5rem]">
+                        <span class="text-xs md:text-sm uppercase tracking-wider text-slate-400 font-bold shrink-0">Contract:</span>
+                        <div id="contract-display-header" class="text-xs md:text-base font-extrabold text-emerald-400 flex items-center gap-1 whitespace-nowrap">Waiting...</div>
                     </div>
 
-                    <!-- Right: Scoreboard -->
-                    <div class="flex items-center gap-3 shrink-0">
+                    <!-- Right (mobile) / Top line (desktop): Scoreboard -->
+                    <div class="flex items-center gap-3 shrink-0 md:order-1 md:justify-center md:w-full md:gap-6">
                         <!-- Us Score -->
-                        <div class="flex flex-col items-end">
+                        <div class="flex flex-col items-end relative">
+                            <span id="trick-float-us" class="hidden absolute left-1/2 -top-7 z-50 text-2xl font-black text-emerald-400 pointer-events-none whitespace-nowrap drop-shadow-lg" style="transform: translate(-50%, 0)"></span>
                             <div class="flex items-center gap-1">
-                                <span class="text-[8px] text-slate-400 font-semibold uppercase leading-none">Us</span>
-                                <span id="score-us-header" class="text-[10px] font-black text-emerald-400 leading-none">0</span>
+                                <span class="text-[10px] text-slate-400 font-semibold uppercase leading-none">Us</span>
+                                <span id="score-us-header" class="text-sm md:text-lg font-black text-emerald-400 leading-none">0</span>
                             </div>
-                            <div class="w-10 bg-slate-900 h-1 rounded-full overflow-hidden border border-slate-800 mt-1">
+                            <div class="w-10 md:w-14 bg-slate-900 h-1 rounded-full overflow-hidden border border-slate-800 mt-1">
                                 <div id="progress-us-header" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
                             </div>
                         </div>
                         <!-- Them Score -->
-                        <div class="flex flex-col items-end">
+                        <div class="flex flex-col items-end relative">
+                            <span id="trick-float-them" class="hidden absolute left-1/2 -top-7 z-50 text-2xl font-black text-rose-400 pointer-events-none whitespace-nowrap drop-shadow-lg" style="transform: translate(-50%, 0)"></span>
                             <div class="flex items-center gap-1">
-                                <span class="text-[8px] text-slate-400 font-semibold uppercase leading-none">Them</span>
-                                <span id="score-them-header" class="text-[10px] font-black text-rose-400 leading-none">0</span>
+                                <span class="text-[10px] text-slate-400 font-semibold uppercase leading-none">Them</span>
+                                <span id="score-them-header" class="text-sm md:text-lg font-black text-rose-400 leading-none">0</span>
                             </div>
-                            <div class="w-10 bg-slate-900 h-1 rounded-full overflow-hidden border border-slate-800 mt-1">
+                            <div class="w-10 md:w-14 bg-slate-900 h-1 rounded-full overflow-hidden border border-slate-800 mt-1">
                                 <div id="progress-them-header" class="bg-rose-500 h-full transition-all duration-300" style="width: 0%"></div>
                             </div>
                         </div>
@@ -143,8 +180,8 @@
                 </div>
             </div>
 
-            <!-- Bidding Panel: Displays instantly below the bar during the Bidding phase -->
-            <div id="bidding-panel" class="hidden h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 overflow-y-auto flex flex-col justify-between gap-1">
+            <!-- Bidding Panel: in-flow on mobile; on desktop, a pop-up overlaying the contract/scores cluster at bottom-left -->
+            <div id="bidding-panel" class="hidden h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 overflow-y-auto flex flex-col justify-between gap-1 md:absolute md:bottom-0 md:left-0 md:right-0 md:z-30 md:border md:border-emerald-500/30 md:rounded-t-xl md:shadow-[0_-15px_40px_-12px_rgba(0,0,0,0.7)] md:bg-slate-950 md:justify-start">
                 <div class="flex justify-between items-center border-b border-slate-800/80 pb-1.5 gap-2">
                     <div>
                         <span class="text-[9px] uppercase tracking-wider font-bold text-emerald-400 block leading-none">Your Turn</span>
@@ -217,12 +254,12 @@
             </div>
 
             <!-- Scrollable Sidebar Content Container -->
-            <div id="sidebar-scrollable-content" class="p-3 md:p-4 space-y-3 flex-1 flex flex-col overflow-y-auto min-h-0">
+            <div id="sidebar-scrollable-content" class="p-3 md:p-4 space-y-3 flex-1 flex flex-col overflow-y-auto min-h-0 md:order-3 md:flex-none md:overflow-y-auto md:max-h-[calc(100%-7rem)]">
 
                 <!-- Collapsible Game Settings Accordion -->
                 <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-800/20 shrink-0">
                     <button id="toggle-settings-btn" class="w-full flex justify-between items-center p-3 text-left focus:outline-none hover:bg-slate-800/40 transition-all">
-                        <span class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold">Game Settings</span>
+                        <span class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold flex items-center gap-1.5"><span class="text-sm">⚙️</span> Game Settings</span>
                         <span id="settings-arrow" class="inline-block text-xs text-slate-400 transition-transform duration-200">►</span>
                     </button>
                     <div id="settings-content" class="p-3 pt-0 space-y-2.5 hidden">
@@ -282,6 +319,17 @@
                             </label>
                         </div>
 
+                        <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
+                            <div class="flex flex-col pr-2">
+                                <span class="text-[11px] font-semibold text-slate-200">Card Rotation</span>
+                                <span class="text-[9px] text-slate-400 mt-0.5">Gives played cards a slight random tilt, like a real table.</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="toggle-card-rotation" class="sr-only peer" checked>
+                                <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
 <div class="flex items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-800">
 <div class="flex flex-col pr-2">
 <span class="text-[11px] font-semibold text-slate-200">AI Card Counting Memory</span>
@@ -316,17 +364,25 @@
                     </button>
                 </div>
 
-                <!-- Console Log Panel -->
-                <div class="flex-1 min-h-[120px] flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-2.5 font-mono text-[10px]">
-                    <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1 flex justify-between items-center">
-                        <span>Deal Log Console</span>
-                        <label class="flex items-center gap-1 cursor-pointer select-none text-[8px] text-slate-400 font-normal normal-case">
-                            <input type="checkbox" id="toggle-verbose-log" class="rounded bg-slate-900 border-slate-800 text-emerald-500 focus:ring-0 focus:ring-offset-0 h-3 w-3 accent-emerald-500">
-                            Verbose
-                        </label>
-                    </div>
-                    <div id="game-log" class="flex-1 overflow-y-auto space-y-1 text-slate-300 pr-1 select-none font-mono text-[10px]">
-                        <!-- Dynamic logs append here -->
+                <!-- Collapsible Deal Log Accordion (same pattern as Game Settings) -->
+                <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-800/20 shrink-0">
+                    <button id="toggle-log-btn" class="w-full flex justify-between items-center p-3 text-left focus:outline-none hover:bg-slate-800/40 transition-all">
+                        <span class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-bold flex items-center gap-1.5"><span class="text-sm">🗒️</span> Deal Log</span>
+                        <span id="log-arrow" class="inline-block text-xs text-slate-400 transition-transform duration-200">►</span>
+                    </button>
+                    <div id="log-content" class="p-3 pt-0 hidden">
+                        <div class="h-48 flex flex-col bg-slate-950 rounded-lg border border-slate-800 p-2.5 font-mono text-[10px] overflow-hidden">
+                            <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-1 border-b border-slate-800 pb-1 flex justify-between items-center shrink-0">
+                                <span>Deal Log Console</span>
+                                <label class="flex items-center gap-1 cursor-pointer select-none text-[8px] text-slate-400 font-normal normal-case">
+                                    <input type="checkbox" id="toggle-verbose-log" class="rounded bg-slate-900 border-slate-800 text-emerald-500 focus:ring-0 focus:ring-offset-0 h-3 w-3 accent-emerald-500">
+                                    Verbose
+                                </label>
+                            </div>
+                            <div id="game-log" class="flex-1 min-h-0 overflow-y-auto space-y-1 text-slate-300 pr-1 select-none font-mono text-[10px]">
+                                <!-- Dynamic logs append here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -403,7 +459,10 @@ const state = {
     showAllSuitsCount: false,
     showBossMarkers: false, // Added: Show B markers on player's current boss cards
     fastMode: true,         // Added: Reduce all AI/play delays by 50% (default on)
+    cardRotation: true,     // Slight random tilt on played cards (default on)
+    lastThrowAngle: null,   // Angle of the most recently played card (for min-difference spacing)
     revealAllCards: false,
+    fastForwarding: false,  // During the pre-claim reveal: cards shown, input blocked
     fourColorDeck: false, // Added: Toggles high-readability 4-color suits
     verboseLog: false,    // Added: Toggles verbose intermediate actions vs final results (default off)
     logHistory: [],       // Added: Persistent logs archive
@@ -432,6 +491,19 @@ const floatingScoreDuration = () => (state.fastMode ? 1000 : 1400);
 // Spawn a "+N" indicator at a seat when it wins trick(s).
 const spawnFloatingScore = (seat, amount) => {
     state.floatingScores.push({ seat, amount, start: performance.now() });
+};
+
+// Float a "+N tricks" label above a team's score at hand end (HTML, in the header).
+const showHandTrickFloat = (elId, tricks) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = '+' + tricks;
+    el.classList.remove('hidden', 'trick-float-anim');
+    // Force reflow so re-adding the animation class restarts it.
+    void el.offsetWidth;
+    el.classList.add('trick-float-anim');
+    // Hide after the animation completes.
+    setTimeout(() => { el.classList.add('hidden'); }, 3100);
 };
 
 // Dynamic Sorter function for human player hand grouping and hierarchy sorting
@@ -870,8 +942,8 @@ const evaluateAIHand = (hand, suit) => {
 };
 
 const updateHUD = () => {
-    const scoreUs = state.scores[0].toString() + (state.gameState === 'PLAYING' || state.gameState === 'SCORING' ? ` (+${state.tricksWon[0]})` : '');
-    const scoreThem = state.scores[1].toString() + (state.gameState === 'PLAYING' || state.gameState === 'SCORING' ? ` (+${state.tricksWon[1]})` : '');
+    const scoreUs = state.scores[0].toString() + ` (+${state.tricksWon[0]})`;
+    const scoreThem = state.scores[1].toString() + ` (+${state.tricksWon[1]})`;
 
     // Synchronize both responsive Score HUD elements (Header + Sidebar scroll panel)
     document.getElementById('score-us-header').innerText = scoreUs;
@@ -927,10 +999,10 @@ const updateContractUI = () => {
             suitText = suitIcons[suit] || suit;
             colorClass = getSuitColorClass(suit);
         }
-        suitHTML = `<span class="${colorClass} font-extrabold text-[10px] sm:text-xs flex items-center gap-0.5">${bid}${suitText} <span class="text-slate-400 font-normal">(${team})</span></span>`;
+        suitHTML = `<span class="${colorClass} font-extrabold text-xs sm:text-sm md:text-base flex items-center gap-0.5 whitespace-nowrap">${bid}${suitText} <span class="text-slate-400 font-normal">(${team})</span></span>`;
         contractText = `${bid}${suitText} (${team})`;
     } else {
-        suitHTML = `<span class="text-slate-400 font-normal text-[10px]">Bidding...</span>`;
+        suitHTML = `<span class="text-slate-400 font-normal text-xs sm:text-sm md:text-base flex items-center whitespace-nowrap">Bidding...</span>`;
         contractText = "Bidding Round";
     }
     
@@ -976,7 +1048,7 @@ const updateContractUI = () => {
     // remaining trick (independent of who is on lead).
     const autoBtn = document.getElementById('btn-auto-finish');
     if (autoBtn) {
-        if (canAutoFinish()) {
+        if (canAutoFinish() && !state.fastForwarding) {
             autoBtn.classList.remove('hidden');
             autoBtn.classList.add('flex');
         } else {
@@ -1007,6 +1079,7 @@ const startNewHand = () => {
     state.hands = [[], [], [], []];
     state.trickQueue = [];
     state.tricksWon = [0, 0];
+    state.fastForwarding = false;
     state.highestBid = 0;
     state.winningBidder = -1;
     state.trumpSuit = null;
@@ -1117,6 +1190,21 @@ const triggerNextTurn = () => {
 const openHumanBiddingUI = () => {
     biddingPanel.classList.remove('hidden');
     currentBidBlock.classList.add('hidden');
+
+    // On desktop, the panel is an absolute overlay. Align its TOP to the top of the
+    // contract/scores header so it fully covers that cluster (and everything below it)
+    // down to the sidebar bottom, regardless of the cluster's height.
+    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+    if (isDesktop) {
+        const header = document.getElementById('sidebar-header');
+        if (header) {
+            biddingPanel.style.top = header.offsetTop + 'px';
+            biddingPanel.style.bottom = '0px';
+        }
+    } else {
+        biddingPanel.style.top = '';
+        biddingPanel.style.bottom = '';
+    }
     
     const historyList = document.getElementById('bidding-history-list');
     historyList.innerHTML = '';
@@ -1738,7 +1826,33 @@ const playCard = (playerIdx, cardIdx) => {
     }
  
     state.playedCards.push({ rank: card.rank, suit: card.suit });
-    state.trickQueue.push({ card, player: playerIdx });
+    // Slight random tilt so the center pile looks hand-thrown; stored so it stays fixed
+    // for this card rather than jittering every frame. Skipped when the Card Rotation
+    // setting is off. When on, each card's tilt differs from the previous card's by at
+    // least a minimum so consecutive cards never look near-parallel.
+    let throwAngle = 0;
+    if (state.cardRotation) {
+        const maxAngle = Math.PI / 28;   // +/- ~6.4 degrees (reduced 50% from ~12.9)
+        const minDiff = Math.PI / 36;    // >= 5 degrees apart from the previous card
+        const last = (state.trickQueue.length === 0) ? null : state.lastThrowAngle;
+        let candidate = (Math.random() - 0.5) * 2 * maxAngle;
+        if (last !== null && Math.abs(candidate - last) < minDiff) {
+            // Nudge to satisfy the min difference, staying within [-maxAngle, maxAngle].
+            const up = last + minDiff;
+            const down = last - minDiff;
+            if (up <= maxAngle && down >= -maxAngle) {
+                // Both directions valid: pick the one farther from 'last' side randomly.
+                candidate = (Math.random() < 0.5) ? up : down;
+            } else if (up <= maxAngle) {
+                candidate = up;
+            } else {
+                candidate = down;
+            }
+        }
+        throwAngle = candidate;
+    }
+    state.lastThrowAngle = state.cardRotation ? throwAngle : null;
+    state.trickQueue.push({ card, player: playerIdx, angle: throwAngle });
     
     state.unplayedCounts[getEffectiveSuit(card, state.trumpSuit)]--;
     
@@ -1780,6 +1894,11 @@ const resolveTrick = () => {
 
 const resolveHand = () => {
     state.gameState = 'SCORING';
+
+    // Floating "+tricks" above each score showing tricks collected this hand.
+    showHandTrickFloat('trick-float-us', state.tricksWon[0]);
+    showHandTrickFloat('trick-float-them', state.tricksWon[1]);
+
     const biddingTeam = state.winningBidder % 2;
     const tricksSecured = state.tricksWon[biddingTeam];
     
@@ -1963,8 +2082,32 @@ ctx.fillText(suitIcons[card.suit], 0, 6);
 const getFanStep = (p, isMobile) => {
     const mScale = cardW / 44; // baseline mobile card width is 44
     if (p === 0) return isMobile ? 42 * mScale : (cardW + 8);
-    if (p === 2) return isMobile ? 32 * mScale : 26;
-    return isMobile ? 24 * mScale : 26; // P1 (Left) and P3 (Right)
+
+    // For the AI seats, the fan overlaps, so each card's top-left corner label
+    // (rank + suit) must stay uncovered by the next card. Derive the minimum step
+    // from the label's size so both the number and suit are always readable.
+    const cornerFont = Math.max(10, Math.round(cardH * 0.17));
+    const inX = Math.max(4, Math.round(cardW * 0.10));
+    const inY = Math.max(6, Math.round(cardH * 0.10));
+
+    if (p === 2) {
+        // Top seat: cards fan horizontally, so clear the label's WIDTH. Measure the
+        // actual widest label ("10" + widest suit glyph) rather than estimating, since
+        // "10" is two characters and wider than single-rank labels.
+        ctx.save();
+        ctx.font = `bold ${cornerFont}px "Inter", sans-serif`;
+        const suitGlyphs = ['\u2660\uFE0E', '\u2663\uFE0E', '\u2665\uFE0E', '\u2666\uFE0E'];
+        let widest = 0;
+        for (const g of suitGlyphs) {
+            widest = Math.max(widest, ctx.measureText('10' + g).width);
+        }
+        ctx.restore();
+        const minStep = Math.ceil(inX + widest + 4);
+        return Math.max(isMobile ? 32 * mScale : 26, minStep);
+    }
+    // Side seats (P1 Left, P3 Right): cards fan vertically, so clear the label's HEIGHT.
+    const minStep = Math.ceil(inY + cornerFont + 3);
+    return Math.max(isMobile ? 24 * mScale : 26, minStep);
 };
 
 // Returns the spread of a FULL 6-card hand for a seat, so plate/bid positions
@@ -2211,7 +2354,7 @@ const showIcon = !isMobile;
                     
                     touchedAnyCardAtAll = true; // Registered hit on any card boundary
 
-                    if (state.gameState === 'PLAYING' && state.currentPlayer === 0) {
+                    if (state.gameState === 'PLAYING' && state.currentPlayer === 0 && !state.fastForwarding) {
                         let hasLead = state.hands[0].some(c => getEffectiveSuit(c, state.trumpSuit) === state.leadSuit);
                         let isLegal = !state.leadSuit || !hasLead || getEffectiveSuit(card, state.trumpSuit) === state.leadSuit;
                         
@@ -2320,7 +2463,7 @@ const showIcon = !isMobile;
                 const card = hand[i];
                 const ox = pos.x - spread / 2 + i * step;
                 const oy = pos.y;
-                const showFaceUp = state.revealAllCards;
+                const showFaceUp = state.revealAllCards || state.fastForwarding;
                 drawRotatedCard(card, ox, oy, 0, showFaceUp, showIcon, false, false);
             }
         } else if (p === 1) {
@@ -2331,7 +2474,7 @@ const showIcon = !isMobile;
             hand.forEach((card, i) => {
                 const ox = pos.x; 
                 const oy = pos.y - spread / 2 + i * step;
-                const showFaceUp = state.revealAllCards;
+                const showFaceUp = state.revealAllCards || state.fastForwarding;
                 drawRotatedCard(card, ox, oy, Math.PI / 2, showFaceUp, showIcon, false, false);
             });
         } else if (p === 3) {
@@ -2344,7 +2487,7 @@ const showIcon = !isMobile;
                 const card = hand[i];
                 const ox = pos.x;
                 const oy = pos.y - spread / 2 + i * step;
-                const showFaceUp = state.revealAllCards;
+                const showFaceUp = state.revealAllCards || state.fastForwarding;
                 drawRotatedCard(card, ox, oy, Math.PI * 1.5, showFaceUp, showIcon, false, false);
             }
         }
@@ -2357,16 +2500,23 @@ const showIcon = !isMobile;
         drawPlayerBid(p, pos, width, height, playerSpreads[p]);
     }
 
-    // Draw Center Table Trick queue
+    // Draw Center Table Trick queue — cluster tightly at the center like a real trick
+    // pile. Each card sits at the center, nudged a small FIXED distance toward its
+    // player's seat (scaled to card size, not canvas size) so they stay close together
+    // regardless of window size while still showing who played what.
     state.trickQueue.forEach((q) => {
         const p = q.player;
         const target = getPlayerCoords(p, width, height);
-        // Normalized center trick fanning bounds
-        const radiusFactor = isMobile ? 0.22 : 0.35;
-        const tx = (width / 2) + (target.x - (width / 2)) * radiusFactor;
-        const ty = (height / 2) + (target.y - (height / 2)) * radiusFactor;
-const showIcon = !isMobile;
-        drawCard(q.card, tx, ty, true, showIcon);
+        const cx = width / 2, cy = height / 2;
+        // Unit direction from center toward the player's seat.
+        let dx = target.x - cx, dy = target.y - cy;
+        const len = Math.hypot(dx, dy) || 1;
+        dx /= len; dy /= len;
+        const offset = cardW * 0.935; // card-relative nudge -> ~a card's gap in the middle (+10% room)
+        const tx = cx + dx * offset;
+        const ty = cy + dy * offset;
+        const showIcon = !isMobile;
+        drawRotatedCard(q.card, tx, ty, q.angle || 0, true, showIcon);
     });
 
     // Floating "+N" trick-win indicators: fade in, drift up, fade out.
@@ -2490,6 +2640,12 @@ toggleFastMode.addEventListener('change', (e) => {
     addLog(`Fast Mode: <strong>${state.fastMode ? "ON" : "OFF"}</strong>.`);
 });
 
+const toggleCardRotation = document.getElementById('toggle-card-rotation');
+toggleCardRotation.addEventListener('change', (e) => {
+    state.cardRotation = e.target.checked;
+    addLog(`Card Rotation: <strong>${state.cardRotation ? "ON" : "OFF"}</strong>.`);
+});
+
 const toggleVerboseLog = document.getElementById('toggle-verbose-log');
 toggleVerboseLog.addEventListener('change', (e) => {
     state.verboseLog = e.target.checked;
@@ -2500,8 +2656,30 @@ document.getElementById('btn-reset').onclick = () => {
     runReset();
 };
 
+// Show/hide the deal log (hidden by default).
+// Collapsible Deal Log accordion (same pattern as Game Settings)
+const toggleLogBtn = document.getElementById('toggle-log-btn');
+const logContent = document.getElementById('log-content');
+const logArrow = document.getElementById('log-arrow');
+
+toggleLogBtn.onclick = () => {
+    const isCollapsed = logContent.classList.toggle('hidden');
+    logArrow.innerText = isCollapsed ? '►' : '▼';
+    if (!isCollapsed) renderLogs();
+};
+
 document.getElementById('btn-auto-finish').onclick = () => {
-    runAutoFinish();
+    if (state.fastForwarding) return;              // ignore repeat clicks
+    if (getClaimingSeat() === -1) return;          // nothing to claim
+    // Enter the fast-forward "state": reveal everyone's cards and block play for 2s,
+    // then run the claim. Input is gated on state.fastForwarding elsewhere.
+    state.fastForwarding = true;
+    if (aiTimeout) { clearTimeout(aiTimeout); aiTimeout = null; }
+    updateContractUI();                            // hide the button while fast-forwarding
+    setTimeout(() => {
+        state.fastForwarding = false;
+        runAutoFinish();
+    }, 2000);
 };
 
 // Start deal and execution
