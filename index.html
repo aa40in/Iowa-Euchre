@@ -50,14 +50,14 @@
         .trick-pop-anim {
             animation: trickPop 0.28s ease-out;
         }
-        /* Float-away: applied only AFTER the count-up completes. */
-        @keyframes trickFloatUp {
+        /* After the count-up completes: fade out in place (no drift). */
+        @keyframes trickFadeOut {
             0%   { opacity: 1; transform: translate(-50%, 0); }
-            70%  { opacity: 1; }
-            100% { opacity: 0; transform: translate(-50%, -34px); }
+            40%  { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, 0); }
         }
         .trick-float-anim {
-            animation: trickFloatUp 1.4s ease-in forwards;
+            animation: trickFadeOut 1.0s ease-in forwards;
         }
         /* End screens slide in from the left, out to the right. */
         @keyframes screenSlideIn {
@@ -76,8 +76,30 @@
 
 <div id="main-app-container" class="h-full w-full flex flex-col overflow-hidden">
 
+    <!-- Mobile top ad banner. Reserved max 50px tall (standard 320x50 mobile unit).
+         Content-sized + overflow-hidden: a real ad can't exceed the cap, and if the
+         slot is empty (no ad served) the bar collapses to 0 so it's harmless in testing.
+         To serve a real ad: replace the .ad-placeholder inside #ad-slot-mobile with the
+         network's slot markup (or leave #ad-slot-mobile empty and let their script fill it). -->
+    <div id="ad-banner-mobile" class="md:hidden w-full flex items-center justify-center overflow-hidden bg-slate-950/70 shrink-0" style="max-height:50px;">
+        <div id="ad-slot-mobile" class="flex items-center justify-center">
+            <div class="ad-placeholder flex items-center justify-center border border-dashed border-slate-600 text-slate-500 text-[10px] uppercase tracking-widest font-semibold" style="width:320px;height:50px;">Your ad here</div>
+        </div>
+    </div>
+
     <!-- Main Container Split vertically on mobile, horizontally (reversed for left-sidebar) on desktop -->
-    <div class="flex-1 flex flex-col md:flex-row-reverse overflow-hidden w-full h-full">
+    <div class="flex-1 flex flex-col md:flex-row-reverse overflow-hidden w-full h-full min-h-0">
+
+        <!-- Desktop right-rail ad (160x600 wide skyscraper). First in DOM so flex-row-reverse
+             places it at the far RIGHT edge, opposite the left sidebar. Reserved max 160px
+             wide; content-sized + overflow-hidden so it collapses to 0 when no ad is served
+             (harmless in testing) and can't exceed the cap when one is. Hidden on mobile.
+             To serve a real ad: replace the .ad-placeholder inside #ad-slot-desktop. -->
+        <div id="ad-rail-desktop" class="hidden md:flex md:h-full items-center justify-center overflow-hidden bg-slate-950/70 border-l border-slate-800 shrink-0" style="max-width:160px;">
+            <div id="ad-slot-desktop" class="flex items-center justify-center">
+                <div class="ad-placeholder flex items-center justify-center border border-dashed border-slate-600 text-slate-500 text-[10px] uppercase tracking-widest font-semibold text-center" style="width:160px;height:600px;max-height:100%;">Your ad<br>here</div>
+            </div>
+        </div>
 
         <!-- Play Section: Card Canvas Felt (Fixed at 72% height on mobile, full height on desktop) -->
         <div class="w-full h-[72vh] md:h-full md:flex-1 relative bg-emerald-950 flex flex-col overflow-hidden shrink-0 border-b border-slate-800 md:border-b-0">
@@ -184,7 +206,7 @@
                     <div class="flex items-center gap-3 shrink-0 md:order-1 md:justify-center md:w-full md:gap-6">
                         <!-- Us Score -->
                         <div class="flex flex-col items-end relative">
-                            <span id="trick-float-us" class="hidden absolute left-1/2 -top-7 z-50 text-2xl font-black text-emerald-400 pointer-events-none whitespace-nowrap drop-shadow-lg" style="transform: translate(-50%, 0)"></span>
+                            <span id="trick-float-us" class="hidden fixed z-[100] text-2xl font-black text-emerald-400 pointer-events-none whitespace-nowrap drop-shadow-lg" style="transform: translate(-50%, 0)"></span>
                             <div class="flex items-center gap-1">
                                 <span class="text-[10px] text-slate-400 font-semibold uppercase leading-none">Us</span>
                                 <span id="score-us-header" class="text-sm md:text-lg font-black text-emerald-400 leading-none">0</span>
@@ -195,7 +217,7 @@
                         </div>
                         <!-- Them Score -->
                         <div class="flex flex-col items-end relative">
-                            <span id="trick-float-them" class="hidden absolute left-1/2 -top-7 z-50 text-2xl font-black text-rose-400 pointer-events-none whitespace-nowrap drop-shadow-lg" style="transform: translate(-50%, 0)"></span>
+                            <span id="trick-float-them" class="hidden fixed z-[100] text-2xl font-black text-rose-400 pointer-events-none whitespace-nowrap drop-shadow-lg" style="transform: translate(-50%, 0)"></span>
                             <div class="flex items-center gap-1">
                                 <span class="text-[10px] text-slate-400 font-semibold uppercase leading-none">Them</span>
                                 <span id="score-them-header" class="text-sm md:text-lg font-black text-rose-400 leading-none">0</span>
@@ -623,6 +645,20 @@ const showEndgameSummary = () => {
 const showHandTrickFloat = (elId, tricks) => {
     const el = document.getElementById(elId);
     if (!el) return;
+
+    // Position the fixed-position float just above its score number, in viewport
+    // coordinates. Using position:fixed lets it render on top of the canvas instead of
+    // being clipped by the sidebar's overflow (which was hiding it on mobile).
+    const anchorId = (elId === 'trick-float-us') ? 'score-us-header' : 'score-them-header';
+    const anchor = document.getElementById(anchorId);
+    if (anchor) {
+        const r = anchor.getBoundingClientRect();
+        el.style.left = (r.left + r.width / 2) + 'px';
+        // Sit clearly ABOVE the stationary score/(+X) numbers so the pop (which scales
+        // up ~1.45x from its center) never overlaps them. No drift now — it fades in place.
+        el.style.top = (r.top - 30) + 'px';
+    }
+
     // Reset any prior animation state.
     if (el._tickTimer) { clearInterval(el._tickTimer); el._tickTimer = null; }
     el.classList.remove('hidden', 'trick-float-anim', 'trick-pop-anim');
@@ -640,11 +676,11 @@ const showHandTrickFloat = (elId, tricks) => {
     };
 
     const startFloat = () => {
-        // Count-up finished: NOW float up and away.
+        // Count-up finished: NOW fade out in place (no drift).
         el.classList.remove('trick-pop-anim');
         void el.offsetWidth;
         el.classList.add('trick-float-anim');
-        setTimeout(() => { el.classList.add('hidden'); }, 1450);
+        setTimeout(() => { el.classList.add('hidden'); }, 1050);
     };
 
     if (target <= 0) {
@@ -1378,7 +1414,12 @@ const triggerNextTurn = () => {
     } else if (state.gameState === 'PLAYING') {
         biddingPanel.classList.add('hidden');
         currentBidBlock.classList.add('hidden');
-        
+
+        // If we're in the fast-forward reveal, don't schedule any more AI plays or
+        // trick resolution — the deferred finish() will run the claim once the
+        // in-flight card (if any) has landed.
+        if (state.fastForwarding) return;
+
         if (state.trickQueue.length === 4) {
             aiTimeout = setTimeout(resolveTrick, scaledDelay(1400));
         } else {
@@ -3063,17 +3104,35 @@ toggleLogBtn.onclick = () => {
 
 document.getElementById('btn-auto-finish').onclick = () => {
     if (state.fastForwarding) return;              // ignore repeat clicks
-    if (getClaimingSeat() === -1) return;          // nothing to claim
-    // Enter the fast-forward "state": reveal everyone's cards and block play for 2s,
-    // then run the claim. Input is gated on state.fastForwarding elsewhere.
+    // Note: a card may be mid-flight (state.playAnim) — that's allowed. We enter the
+    // fast-forward state now, let the reveal play, and defer the actual claim until any
+    // in-flight card has landed (committed to the trick), so the claim is evaluated
+    // against a complete, sound game state rather than one with a card "missing".
+    if (!state.playAnim && getClaimingSeat() === -1) return; // nothing to claim (and none pending)
+
     state.fastForwarding = true;
     if (aiTimeout) { clearTimeout(aiTimeout); aiTimeout = null; }
     state.floatingScores = [];   // clear any lingering per-trick "+1" so only the claim's "+N" shows
-    updateContractUI();                            // hide the button while fast-forwarding
-    setTimeout(() => {
+    updateContractUI();          // hide the button while fast-forwarding
+
+    // After the reveal, wait for any in-flight card to finish, THEN claim.
+    const finish = () => {
+        // If a card is still flying to the center, wait for it to land first. The
+        // render loop calls commitPlayedCard() when it lands, clearing state.playAnim.
+        if (state.playAnim) {
+            setTimeout(finish, 50);
+            return;
+        }
         state.fastForwarding = false;
-        runAutoFinish();
-    }, 1500);
+        if (getClaimingSeat() !== -1) {
+            runAutoFinish();
+        } else {
+            // Claim no longer valid (rare, e.g. state changed) — just resume play.
+            updateContractUI();
+            triggerNextTurn();
+        }
+    };
+    setTimeout(finish, 1500);
 };
 
 // Start deal and execution
