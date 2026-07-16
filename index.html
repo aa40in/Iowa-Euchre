@@ -201,7 +201,7 @@
         </div>
 
         <!-- Sidebar Section: Left-aligned panel on desktop, bottom-aligned and scrollable on mobile -->
-        <aside class="w-full h-[28vh] min-h-[240px] md:min-h-0 md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-y-auto md:overflow-hidden md:relative">
+        <aside class="w-full h-[28vh] min-h-[196px] md:min-h-0 md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-y-auto md:overflow-hidden md:relative">
 
             <!-- Top Bar Header: sticky top on mobile; part of the bottom-left cluster on desktop -->
             <div id="sidebar-header" class="w-full bg-slate-950 border-b border-slate-800 px-3.5 py-2.5 md:py-3.5 flex flex-col shrink-0 z-20 sticky top-0 md:static md:order-2 md:mt-auto md:border-b-0 md:border-t md:border-slate-800">
@@ -449,7 +449,7 @@
                     </div>
                 </div>
                 <!-- Version -->
-                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.50</div>
+                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.51</div>
             </div>
         </aside>
 
@@ -961,9 +961,20 @@ const getPlayerCoords = (p, width, height) => {
     
     if (isMobile) {
         if (p === 0) return { x: cx, y: height - 42 };       // Player (Bottom)
-        if (p === 1) return { x: -cardH * 0.2, y: cy };      // Left Opponent (Left edge shifted)
-        if (p === 2) return { x: cx, y: -cardH * 0.2 };      // Partner (Top edge shifted)
-        if (p === 3) return { x: width + cardH * 0.2, y: cy }; // Right Opponent (Right edge shifted)
+        // Left/Right sit a bit ABOVE vertical center so their cards, labels and bids
+        // clear the player's fan at the bottom. On short screens (iPhone SE) this keeps
+        // them from overlapping the player. A minimum clearance above the player's fan
+        // top is enforced so they never crowd it.
+        const playerFanTop = (height - 42) - cardH;           // approx top of player's cards
+        const minGapAbovePlayer = cardH * 0.9 + 16;           // side cards + padding
+        let sideY = cy * 0.86;                                 // bias upward from center
+        const maxSideY = playerFanTop - minGapAbovePlayer;    // don't get closer than this
+        if (sideY > maxSideY) sideY = maxSideY;
+        const minSideY = cardH * 0.9;                          // don't run off the top edge
+        if (sideY < minSideY) sideY = minSideY;
+        if (p === 1) return { x: -cardH * 0.2, y: sideY };     // Left Opponent
+        if (p === 2) return { x: cx, y: -cardH * 0.2 };        // Partner (Top edge shifted)
+        if (p === 3) return { x: width + cardH * 0.2, y: sideY }; // Right Opponent
     } else {
         const factor = Math.min(width / 800, height / 600);
         const vertPadding = Math.max(80, Math.min(140, 120 * factor));
@@ -2893,11 +2904,12 @@ const showIcon = !isMobile;
         } else {
             const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
             const src = getPlayerCoords(a.player, width, height);
-            const cx = width / 2, cy = height / 2;
-            let dx = src.x - cx, dy = src.y - cy;
+            const cx = width / 2;
+            const pcy = isMobile ? height * 0.42 : height / 2; // match resting pile center
+            let dx = src.x - cx, dy = src.y - pcy;
             const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
-            const offset = cardW * 0.935;
-            const destX = cx + dx * offset, destY = cy + dy * offset;
+            const offset = (isMobile ? cardW * 0.72 : cardW * 0.935);
+            const destX = cx + dx * offset, destY = pcy + dy * offset;
             const fx = src.x + (destX - src.x) * ease;
             const fy = src.y + (destY - src.y) * ease;
             drawRotatedCard(a.card, fx, fy, (a.angle || 0) * ease, true, !isMobile);
@@ -2911,12 +2923,16 @@ const showIcon = !isMobile;
     state.trickQueue.forEach((q) => {
         const p = q.player;
         const target = getPlayerCoords(p, width, height);
-        const cx = width / 2, cy = height / 2;
-        // Unit direction from center toward the player's seat.
+        const cx = width / 2;
+        // On mobile the canvas is short and the player's plate/bid sit at the bottom, so
+        // anchor the trick pile a bit ABOVE the canvas middle to keep played cards clear
+        // of the player's (and raised Left/Right) labels. Desktop keeps the true center.
+        const cy = isMobile ? height * 0.42 : height / 2;
+        // Unit direction from the pile center toward the player's seat.
         let dx = target.x - cx, dy = target.y - cy;
         const len = Math.hypot(dx, dy) || 1;
         dx /= len; dy /= len;
-        const offset = cardW * 0.935; // card-relative nudge -> ~a card's gap in the middle (+10% room)
+        const offset = (isMobile ? cardW * 0.72 : cardW * 0.935); // tighter on mobile to clear labels
         const tx = cx + dx * offset;
         const ty = cy + dy * offset;
         const showIcon = !isMobile;
