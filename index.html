@@ -109,8 +109,10 @@
             </div>
         </div>
 
-        <!-- Play Section: Card Canvas Felt (Fixed at 72% height on mobile, full height on desktop) -->
-        <div class="w-full h-[72vh] md:h-full md:flex-1 relative bg-emerald-950 flex flex-col overflow-hidden shrink-0 border-b border-slate-800 md:border-b-0">
+        <!-- Play Section: Card Canvas Felt. On mobile it FLEXES (flex-1 min-h-0) so it
+             absorbs the ad banner's height and the sidebar can keep a minimum height on
+             short screens (e.g. iPhone SE). On desktop it fills remaining width. -->
+        <div class="w-full flex-1 min-h-0 md:h-full md:flex-1 relative bg-emerald-950 flex flex-col overflow-hidden border-b border-slate-800 md:border-b-0">
             <!-- Visual green felt background effect -->
             <div class="absolute inset-0 bg-radial-felt pointer-events-none opacity-45 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.3)_0%,rgba(6,78,59,0.9)_100%)]"></div>
             
@@ -199,7 +201,7 @@
         </div>
 
         <!-- Sidebar Section: Left-aligned panel on desktop, bottom-aligned and scrollable on mobile -->
-        <aside class="w-full h-[28vh] md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-y-auto md:overflow-hidden md:relative">
+        <aside class="w-full h-[28vh] min-h-[240px] md:min-h-0 md:h-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-800 flex flex-col shrink-0 select-none z-10 overflow-y-auto md:overflow-hidden md:relative">
 
             <!-- Top Bar Header: sticky top on mobile; part of the bottom-left cluster on desktop -->
             <div id="sidebar-header" class="w-full bg-slate-950 border-b border-slate-800 px-3.5 py-2.5 md:py-3.5 flex flex-col shrink-0 z-20 sticky top-0 md:static md:order-2 md:mt-auto md:border-b-0 md:border-t md:border-slate-800">
@@ -447,7 +449,7 @@
                     </div>
                 </div>
                 <!-- Version -->
-                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.49</div>
+                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.50</div>
             </div>
         </aside>
 
