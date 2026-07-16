@@ -41,15 +41,35 @@
                 transform-origin: center;
             }
         }
+        /* Per-tick "pop": number briefly scales up then settles. */
+        @keyframes trickPop {
+            0%   { transform: translate(-50%, 0) scale(1); }
+            35%  { transform: translate(-50%, 0) scale(1.45); }
+            100% { transform: translate(-50%, 0) scale(1); }
+        }
+        .trick-pop-anim {
+            animation: trickPop 0.28s ease-out;
+        }
+        /* Float-away: applied only AFTER the count-up completes. */
         @keyframes trickFloatUp {
-            0%   { opacity: 0; transform: translate(-50%, 6px); }
-            12%  { opacity: 1; }
-            75%  { opacity: 1; }
-            100% { opacity: 0; transform: translate(-50%, -30px); }
+            0%   { opacity: 1; transform: translate(-50%, 0); }
+            70%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -34px); }
         }
         .trick-float-anim {
-            animation: trickFloatUp 3s ease-out forwards;
+            animation: trickFloatUp 1.4s ease-in forwards;
         }
+        /* End screens slide in from the left, out to the right. */
+        @keyframes screenSlideIn {
+            0%   { opacity: 0; transform: translateX(-60px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes screenSlideOut {
+            0%   { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(60px); }
+        }
+        .screen-slide-in  { animation: screenSlideIn 0.35s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .screen-slide-out { animation: screenSlideOut 0.30s ease-in forwards; }
     </style>
 </head>
 <body class="h-screen w-screen overflow-hidden text-slate-100 flex flex-col select-none bg-slate-950">
@@ -68,6 +88,19 @@
                 <canvas id="table-canvas" class="block w-full h-full touch-none"></canvas>
                 <!-- Auto-finish (claim) button: appears in the canvas corner only when the player is provably guaranteed all remaining tricks -->
                 <button id="btn-auto-finish" class="hidden items-center justify-center absolute bottom-3 right-3 md:top-auto md:right-auto md:bottom-6 md:left-1/2 md:-translate-x-1/2 z-30 px-2.5 h-6 rounded-md border border-amber-400 bg-amber-500/95 hover:bg-amber-400 text-slate-900 font-black text-[10px] leading-none tracking-tight shadow-lg transition-all" title="Claim all remaining tricks">▶&#xFE0E;▶&#xFE0E;▶&#xFE0E;</button>
+
+                <!-- End-game summary overlay (hand-by-hand + streaks). Shown on GAMEOVER. -->
+                <div id="endgame-overlay" class="hidden absolute inset-0 z-40 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+                    <div id="endgame-panel" class="w-full max-w-md max-h-full overflow-y-auto bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 md:p-5">
+                        <div id="endgame-title" class="text-center text-lg md:text-xl font-black mb-1">Game Over</div>
+                        <div id="endgame-subtitle" class="text-center text-[11px] md:text-xs text-slate-400 mb-3"></div>
+                        <div class="text-[10px] md:text-xs uppercase tracking-widest text-slate-500 font-bold mb-1.5">Hand-by-hand</div>
+                        <div id="endgame-hands" class="space-y-1 mb-4"></div>
+                        <div class="text-[10px] md:text-xs uppercase tracking-widest text-slate-500 font-bold mb-1.5">Streaks</div>
+                        <div id="endgame-streaks" class="space-y-1 mb-4 text-[11px] md:text-xs text-slate-300"></div>
+                        <button id="btn-endgame-restart" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all text-xs md:text-sm">Play Again</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Rules panel inside Canvas Area -->
@@ -184,10 +217,10 @@
             <div id="bidding-panel" class="hidden h-auto shrink-0 border-b border-emerald-500/20 p-3 bg-slate-950/90 overflow-y-auto flex flex-col justify-between gap-1 md:absolute md:bottom-0 md:left-0 md:right-0 md:z-30 md:border md:border-emerald-500/30 md:rounded-t-xl md:shadow-[0_-15px_40px_-12px_rgba(0,0,0,0.7)] md:bg-slate-950 md:justify-start">
                 <div class="flex justify-between items-center border-b border-slate-800/80 pb-1.5 gap-2">
                     <div>
-                        <span class="text-[9px] uppercase tracking-wider font-bold text-emerald-400 block leading-none">Your Turn</span>
-                        <h2 class="text-[10px] md:text-xs font-bold text-white mt-0.5">Iowa Euchre Bidding</h2>
+                        <span class="text-[9px] md:text-[11px] uppercase tracking-wider font-bold text-emerald-400 block leading-none">Your Turn</span>
+                        <h2 class="text-[10px] md:text-sm font-bold text-white mt-0.5">Iowa Euchre Bidding</h2>
                     </div>
-                    <button id="btn-pass" class="py-0.5 px-2.5 rounded-lg border border-rose-500/30 hover:border-rose-500 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 font-semibold text-[10px] h-6 transition-all">
+                    <button id="btn-pass" class="py-0.5 px-2.5 rounded-lg border border-rose-500/30 hover:border-rose-500 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 font-semibold text-[10px] md:text-sm h-6 md:h-8 transition-all">
                         Pass
                     </button>
                 </div>
@@ -195,37 +228,37 @@
                 <div class="flex flex-col gap-2">
                     <!-- Select Bid Number -->
                     <div class="flex flex-col gap-0.5">
-                        <span class="text-[9px] font-semibold text-slate-400 block">1. Select Tricks:</span>
+                        <span class="text-[9px] md:text-xs font-semibold text-slate-400 block">1. Select Tricks:</span>
                         <div class="flex flex-wrap items-center gap-1" id="bid-num-selector">
-                            <button data-bid="1" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">1</button>
-                            <button data-bid="2" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">2</button>
-                            <button data-bid="3" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">3</button>
-                            <button data-bid="4" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">4</button>
-                            <button data-bid="5" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">5</button>
-                            <button data-bid="6" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold h-6 transition-all">6</button>
+                            <button data-bid="1" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] md:text-sm font-semibold h-6 md:h-8 transition-all">1</button>
+                            <button data-bid="2" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] md:text-sm font-semibold h-6 md:h-8 transition-all">2</button>
+                            <button data-bid="3" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] md:text-sm font-semibold h-6 md:h-8 transition-all">3</button>
+                            <button data-bid="4" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] md:text-sm font-semibold h-6 md:h-8 transition-all">4</button>
+                            <button data-bid="5" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] md:text-sm font-semibold h-6 md:h-8 transition-all">5</button>
+                            <button data-bid="6" class="bid-val-btn px-2.5 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-[10px] md:text-sm font-semibold h-6 md:h-8 transition-all">6</button>
                         </div>
                     </div>
 
                     <!-- Select Suit -->
                     <div class="flex flex-col gap-0.5">
-                        <span class="text-[9px] font-semibold text-slate-400 block">2. Select Suit / Aces / NT:</span>
+                        <span class="text-[9px] md:text-xs font-semibold text-slate-400 block">2. Select Suit / Aces / NT:</span>
                         <div class="flex flex-wrap gap-1" id="suit-selector">
-                            <button data-suit="S" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
-                                <span class="text-base leading-none">♤&#xFE0E</span><span class="text-[9px] font-normal text-slate-400">S</span>
+                            <button data-suit="S" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-[10px] md:text-sm flex items-center justify-center gap-1 transition-all h-6 md:h-8" disabled>
+                                <span class="text-base md:text-lg leading-none">♤&#xFE0E</span><span class="text-[9px] md:text-xs font-normal text-slate-400">S</span>
                             </button>
-                            <button data-suit="C" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
-                                <span class="text-base leading-none">♧&#xFE0E</span><span class="text-[9px] font-normal text-emerald-400">C</span>
+                            <button data-suit="C" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-[10px] md:text-sm flex items-center justify-center gap-1 transition-all h-6 md:h-8" disabled>
+                                <span class="text-base md:text-lg leading-none">♧&#xFE0E</span><span class="text-[9px] md:text-xs font-normal text-emerald-400">C</span>
                             </button>
-                            <button data-suit="H" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-rose-500 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
-                                <span class="text-base leading-none">♡&#xFE0E</span><span class="text-[9px] font-normal text-rose-400">H</span>
+                            <button data-suit="H" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-rose-500 font-bold text-[10px] md:text-sm flex items-center justify-center gap-1 transition-all h-6 md:h-8" disabled>
+                                <span class="text-base md:text-lg leading-none">♡&#xFE0E</span><span class="text-[9px] md:text-xs font-normal text-rose-400">H</span>
                             </button>
-                            <button data-suit="D" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sky-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
-                                <span class="text-base leading-none">♢&#xFE0E</span><span class="text-[9px] font-normal text-sky-400">D</span>
+                            <button data-suit="D" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sky-400 font-bold text-[10px] md:text-sm flex items-center justify-center gap-1 transition-all h-6 md:h-8" disabled>
+                                <span class="text-base md:text-lg leading-none">♢&#xFE0E</span><span class="text-[9px] md:text-xs font-normal text-sky-400">D</span>
                             </button>
-                            <button data-suit="ACES" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
+                            <button data-suit="ACES" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[10px] md:text-sm flex items-center justify-center gap-1 transition-all h-6 md:h-8" disabled>
                                 <span>Aces</span>
                             </button>
-                            <button data-suit="NT" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[10px] flex items-center justify-center gap-1 transition-all h-6" disabled>
+                            <button data-suit="NT" class="suit-btn px-2 py-0.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[10px] md:text-sm flex items-center justify-center gap-1 transition-all h-6 md:h-8" disabled>
                                 <span>NT</span>
                             </button>
                         </div>
@@ -234,8 +267,8 @@
 
                 <!-- Auction Log list (Collapsible & Compact) -->
                 <div class="bg-slate-950 rounded-lg p-1.5 border border-slate-800/80">
-                    <span class="text-[9px] uppercase font-bold text-slate-500 block mb-0.5">Round Auction Log</span>
-                    <div id="bidding-history-list" class="space-y-0.5 text-[9px] max-h-12 overflow-y-auto pr-6">
+                    <span class="text-[9px] md:text-[11px] uppercase font-bold text-slate-500 block mb-0.5">Round Auction Log</span>
+                    <div id="bidding-history-list" class="space-y-0.5 text-[9px] md:text-[11px] max-h-12 md:max-h-16 overflow-y-auto pr-6">
                         <!-- Populated dynamically -->
                     </div>
                 </div>
@@ -463,6 +496,16 @@ const state = {
     lastThrowAngle: null,   // Angle of the most recently played card (for min-difference spacing)
     revealAllCards: false,
     fastForwarding: false,  // During the pre-claim reveal: cards shown, input blocked
+    // --- Animation & juice state ---
+    playAnim: null,     // { card, fromX, fromY, toX, toY, angle, start, dur, player } in-flight card
+    dealAnim: null,     // { start, dur } deal fan-out animation
+    trumpBanner: null,  // { text, colorClass, start, dur } center contract reveal
+    handHistory: [],    // per-hand summary rows for the end-game banner
+    // Streak tracking (this game)
+    trickStreakTeam: null, trickStreakLen: 0, bestTrickStreak: [0,0], // consecutive tricks by a team
+    handStreakTeam: null, handStreakLen: 0, bestHandStreak: [0,0],    // consecutive hands "won" (more tricks)
+    handCounter: 0,
+    hoverIndex: -1, hoverAmt: 0, // gentle hover-lift easing for the human's cards
     fourColorDeck: false, // Added: Toggles high-readability 4-color suits
     verboseLog: false,    // Added: Toggles verbose intermediate actions vs final results (default off)
     logHistory: [],       // Added: Persistent logs archive
@@ -477,6 +520,15 @@ const state = {
 };
 
 let aiTimeout = null;
+
+// Session-level completed-game win/loss streak (survives Restart within the page session).
+const sessionStats = { lastWinner: null, streakLen: 0, streakTeam: null, bestWinStreak: [0, 0], games: [0, 0] };
+
+// True while a blocking animation is playing (deal, card-in-flight, trump banner,
+// fast-forward reveal). The human may NOT play a card, but sidebar buttons (settings,
+// log, restart) are unaffected since they live outside the canvas.
+const isInteractionBlocked = () =>
+    state.fastForwarding || !!state.playAnim || !!state.dealAnim || !!state.trumpBanner;
 
 // Per-seat plate rect {x,y,w,h} recorded each frame by drawPlayerPlate; used to
 // anchor the floating "+N" indicator to the right of each player's label.
@@ -493,17 +545,127 @@ const spawnFloatingScore = (seat, amount) => {
     state.floatingScores.push({ seat, amount, start: performance.now() });
 };
 
+// Track the longest run of consecutive tricks by one team this game.
+const recordTrickStreak = (team, count = 1) => {
+    if (state.trickStreakTeam === team) {
+        state.trickStreakLen += count;
+    } else {
+        state.trickStreakTeam = team;
+        state.trickStreakLen = count;
+    }
+    if (state.trickStreakLen > state.bestTrickStreak[team]) {
+        state.bestTrickStreak[team] = state.trickStreakLen;
+    }
+};
+
 // Float a "+N tricks" label above a team's score at hand end (HTML, in the header).
+// Populate and show the end-game summary overlay (hand-by-hand + streaks).
+const showEndgameSummary = () => {
+    const overlay = document.getElementById('endgame-overlay');
+    if (!overlay) return;
+    const T = ['Us', 'Them']; // team 0 = Player & Partner, team 1 = Left & Right
+
+    const titleEl = document.getElementById('endgame-title');
+    const subEl = document.getElementById('endgame-subtitle');
+    const won = state.winnerTeam;
+    const wonUs = (won === 0);
+    titleEl.textContent = wonUs ? 'You Win!' : 'You Lose';
+    titleEl.className = 'text-center text-lg md:text-xl font-black mb-1 ' + (wonUs ? 'text-emerald-400' : 'text-rose-400');
+    subEl.innerHTML = `Final score — <span class="text-emerald-400 font-bold">Us ${state.scores[0]}</span> · <span class="text-rose-400 font-bold">Them ${state.scores[1]}</span>`;
+
+    // Hand-by-hand rows.
+    const handsEl = document.getElementById('endgame-hands');
+    handsEl.innerHTML = '';
+    state.handHistory.forEach(h => {
+        const usWon = h.tricksUs > h.tricksThem;
+        const setNote = h.wasSet
+            ? ` · <span class="text-rose-400 font-semibold">${T[h.biddingTeam]} set by ${h.setBy}</span>`
+            : '';
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between bg-slate-800/40 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] md:text-xs';
+        row.innerHTML =
+            `<span class="text-slate-400 font-semibold shrink-0 w-14">Hand ${h.hand}</span>` +
+            `<span class="flex-1 text-center"><span class="${usWon ? 'text-emerald-400 font-bold' : 'text-slate-300'}">${h.tricksUs} trick${h.tricksUs === 1 ? '' : 's'} Us</span>` +
+            ` <span class="text-slate-500">:</span> ` +
+            `<span class="${!usWon && h.tricksThem > h.tricksUs ? 'text-rose-400 font-bold' : 'text-slate-300'}">${h.tricksThem} trick${h.tricksThem === 1 ? '' : 's'} Them</span></span>` +
+            `<span class="shrink-0 text-right">${setNote}</span>`;
+        handsEl.appendChild(row);
+    });
+    if (state.handHistory.length === 0) {
+        handsEl.innerHTML = '<div class="text-slate-500 text-[11px]">No hands recorded.</div>';
+    }
+
+    // Streaks.
+    const streaksEl = document.getElementById('endgame-streaks');
+    const bestTrick = Math.max(state.bestTrickStreak[0], state.bestTrickStreak[1]);
+    const bestTrickTeam = state.bestTrickStreak[0] >= state.bestTrickStreak[1] ? 0 : 1;
+    const bestHand = Math.max(state.bestHandStreak[0], state.bestHandStreak[1]);
+    const bestHandTeam = state.bestHandStreak[0] >= state.bestHandStreak[1] ? 0 : 1;
+    const sess = sessionStats;
+    const sessLine = (sess.streakTeam === null)
+        ? '—'
+        : `${T[sess.streakTeam]} on a ${sess.streakLen}-game win streak`;
+    streaksEl.innerHTML =
+        `<div>Longest trick streak: <strong class="${bestTrickTeam === 0 ? 'text-emerald-400' : 'text-rose-400'}">${bestTrick} in a row (${T[bestTrickTeam]})</strong></div>` +
+        `<div>Longest hand streak: <strong class="${bestHandTeam === 0 ? 'text-emerald-400' : 'text-rose-400'}">${bestHand} in a row (${T[bestHandTeam]})</strong></div>` +
+        `<div class="pt-1 border-t border-slate-800 mt-1">This session — <span class="text-emerald-400 font-semibold">Us ${sess.games[0]}</span> · <span class="text-rose-400 font-semibold">Them ${sess.games[1]}</span> &nbsp;<span class="text-slate-400">(${sessLine})</span></div>`;
+
+    overlay.classList.remove('hidden');
+    const panel = document.getElementById('endgame-panel');
+    if (panel) {
+        panel.classList.remove('screen-slide-out', 'screen-slide-in');
+        void panel.offsetWidth;
+        panel.classList.add('screen-slide-in');
+    }
+};
+
 const showHandTrickFloat = (elId, tricks) => {
     const el = document.getElementById(elId);
     if (!el) return;
-    el.textContent = '+' + tricks;
-    el.classList.remove('hidden', 'trick-float-anim');
-    // Force reflow so re-adding the animation class restarts it.
+    // Reset any prior animation state.
+    if (el._tickTimer) { clearInterval(el._tickTimer); el._tickTimer = null; }
+    el.classList.remove('hidden', 'trick-float-anim', 'trick-pop-anim');
     void el.offsetWidth;
-    el.classList.add('trick-float-anim');
-    // Hide after the animation completes.
-    setTimeout(() => { el.classList.add('hidden'); }, 3100);
+
+    const target = tricks;
+    let shown = 0;
+    el.textContent = '+' + shown;
+    el.style.opacity = '1';
+
+    const popOnce = () => {
+        el.classList.remove('trick-pop-anim');
+        void el.offsetWidth; // restart the pop animation
+        el.classList.add('trick-pop-anim');
+    };
+
+    const startFloat = () => {
+        // Count-up finished: NOW float up and away.
+        el.classList.remove('trick-pop-anim');
+        void el.offsetWidth;
+        el.classList.add('trick-float-anim');
+        setTimeout(() => { el.classList.add('hidden'); }, 1450);
+    };
+
+    if (target <= 0) {
+        // Nothing to count; briefly show "+0" then float away.
+        popOnce();
+        setTimeout(startFloat, 300);
+        return;
+    }
+
+    // Tick 0 -> target in place, popping each step; float only after the last tick.
+    const stepMs = Math.max(160, Math.round(900 / target));
+    popOnce(); // pop the initial value
+    el._tickTimer = setInterval(() => {
+        shown++;
+        el.textContent = '+' + shown;
+        popOnce();
+        if (shown >= target) {
+            clearInterval(el._tickTimer);
+            el._tickTimer = null;
+            setTimeout(startFloat, 260); // let the final pop settle, then float
+        }
+    }, stepMs);
 };
 
 // Dynamic Sorter function for human player hand grouping and hierarchy sorting
@@ -906,6 +1068,7 @@ const runAutoFinish = () => {
     const playedThisTrick = state.trickQueue.filter(q => q.player === seat).length;
     const remainingTricks = state.hands[seat].length + playedThisTrick;
     state.tricksWon[seat % 2] += remainingTricks; // award to the claiming seat's team
+    recordTrickStreak(seat % 2, remainingTricks);
     spawnFloatingScore(seat, remainingTricks);
     state.hands = [[], [], [], []];
     state.trickQueue = [];
@@ -1063,9 +1226,25 @@ const runReset = () => {
         clearTimeout(aiTimeout);
         aiTimeout = null;
     }
+    const overlay = document.getElementById('endgame-overlay');
+    if (overlay && !overlay.classList.contains('hidden')) {
+        const panel = document.getElementById('endgame-panel');
+        if (panel) {
+            panel.classList.remove('screen-slide-in');
+            void panel.offsetWidth;
+            panel.classList.add('screen-slide-out');
+        }
+        // Hide after the slide-out completes.
+        setTimeout(() => { overlay.classList.add('hidden'); }, 320);
+    }
     state.scores = [0, 0];
     state.dealer = Math.floor(Math.random() * 4);
     state.logHistory = [];
+    // Reset per-game history & streaks (session game-streak persists in sessionStats).
+    state.handHistory = [];
+    state.handCounter = 0;
+    state.trickStreakTeam = null; state.trickStreakLen = 0; state.bestTrickStreak = [0, 0];
+    state.handStreakTeam = null; state.handStreakLen = 0; state.bestHandStreak = [0, 0];
     addLog("=== Iowa Aces Euchre Initialized! ===", false);
     startNewHand();
 };
@@ -1118,10 +1297,15 @@ const startNewHand = () => {
     
     updateHUD();
 
+    // Deal fan-out animation: cards sweep from the dealer to each seat.
+    const dealDur = state.fastMode ? 950 : 1500;
+    state.dealAnim = { start: performance.now(), dur: dealDur };
+
     aiTimeout = setTimeout(() => {
+        state.dealAnim = null;
         state.gameState = 'BIDDING';
         triggerNextTurn();
-    }, scaledDelay(1200));
+    }, scaledDelay(1200) + dealDur);
 };
 
 const triggerNextTurn = () => {
@@ -1159,9 +1343,26 @@ const triggerNextTurn = () => {
                     state.unplayedCounts[state.trumpSuit]++;
                     state.unplayedCounts[getSameColorSuit(state.trumpSuit)]--;
                 }
+
+                // Brief center banner announcing the contract before the first card.
+                const bannerSuit = (state.trumpSuit === 'NT')
+                    ? 'Aces'
+                    : `${state.highestBid} ${ {S:'♠',C:'♣',H:'♥',D:'♦'}[state.trumpSuit] }`;
+                const bannerText = (state.trumpSuit === 'NT')
+                    ? `${state.highestBid} Aces`
+                    : bannerSuit;
+                const bannerDur = state.fastMode ? 900 : 1400;
+                state.trumpBanner = {
+                    text: bannerText,
+                    suit: state.trumpSuit,
+                    bidder: PLAYER_NAMES[state.winningBidder],
+                    start: performance.now(),
+                    dur: bannerDur
+                };
+                setTimeout(() => { state.trumpBanner = null; }, bannerDur);
                 
                 updateHUD();
-                aiTimeout = setTimeout(triggerNextTurn, scaledDelay(1200));
+                aiTimeout = setTimeout(triggerNextTurn, scaledDelay(1200) + bannerDur);
             }
             return;
         }
@@ -1814,53 +2015,62 @@ const handleAIPlay = () => {
 
 const playCard = (playerIdx, cardIdx) => {
     if (state.trickQueue.length >= 4) return;
+    if (state.playAnim) return; // one card in flight at a time
     const card = state.hands[playerIdx].splice(cardIdx, 1)[0];
-    if (state.trickQueue.length === 0) {
-        state.leadSuit = getEffectiveSuit(card, state.trumpSuit);
-    }
 
-    // Void tracking: If a player cannot follow suit, mark them as void in this lead suit
-    if (state.leadSuit && getEffectiveSuit(card, state.trumpSuit) !== state.leadSuit) {
-        if (!state.voids) state.voids = [{}, {}, {}, {}];
-        state.voids[playerIdx][state.leadSuit] = true;
-    }
- 
-    state.playedCards.push({ rank: card.rank, suit: card.suit });
-    // Slight random tilt so the center pile looks hand-thrown; stored so it stays fixed
-    // for this card rather than jittering every frame. Skipped when the Card Rotation
-    // setting is off. When on, each card's tilt differs from the previous card's by at
-    // least a minimum so consecutive cards never look near-parallel.
+    // Compute the throw tilt now so it's stable for the flight and the resting pile.
     let throwAngle = 0;
     if (state.cardRotation) {
-        const maxAngle = Math.PI / 28;   // +/- ~6.4 degrees (reduced 50% from ~12.9)
+        const maxAngle = Math.PI / 28;   // +/- ~6.4 degrees
         const minDiff = Math.PI / 36;    // >= 5 degrees apart from the previous card
         const last = (state.trickQueue.length === 0) ? null : state.lastThrowAngle;
         let candidate = (Math.random() - 0.5) * 2 * maxAngle;
         if (last !== null && Math.abs(candidate - last) < minDiff) {
-            // Nudge to satisfy the min difference, staying within [-maxAngle, maxAngle].
             const up = last + minDiff;
             const down = last - minDiff;
-            if (up <= maxAngle && down >= -maxAngle) {
-                // Both directions valid: pick the one farther from 'last' side randomly.
-                candidate = (Math.random() < 0.5) ? up : down;
-            } else if (up <= maxAngle) {
-                candidate = up;
-            } else {
-                candidate = down;
-            }
+            if (up <= maxAngle && down >= -maxAngle) candidate = (Math.random() < 0.5) ? up : down;
+            else if (up <= maxAngle) candidate = up;
+            else candidate = down;
         }
         throwAngle = candidate;
     }
     state.lastThrowAngle = state.cardRotation ? throwAngle : null;
-    state.trickQueue.push({ card, player: playerIdx, angle: throwAngle });
-    
+
+    // Launch the fly-to-center animation. The card is out of the hand but not yet in the
+    // trick queue; commitPlayedCard() finishes the game logic when the flight lands.
+    state.playAnim = {
+        card, player: playerIdx, angle: throwAngle,
+        fromCardIndex: cardIdx, // (informational)
+        start: performance.now(),
+        dur: state.fastMode ? 130 : 200
+    };
+    state.selectedCardIndex = -1;
+};
+
+// Finish a played card once its fly-in animation completes.
+const commitPlayedCard = () => {
+    const anim = state.playAnim;
+    if (!anim) return;
+    const { card, player: playerIdx, angle } = anim;
+    state.playAnim = null;
+
+    if (state.trickQueue.length === 0) {
+        state.leadSuit = getEffectiveSuit(card, state.trumpSuit);
+    }
+    // Void tracking: if a player cannot follow suit, mark them void in the lead suit.
+    if (state.leadSuit && getEffectiveSuit(card, state.trumpSuit) !== state.leadSuit) {
+        if (!state.voids) state.voids = [{}, {}, {}, {}];
+        state.voids[playerIdx][state.leadSuit] = true;
+    }
+
+    state.playedCards.push({ rank: card.rank, suit: card.suit });
+    state.trickQueue.push({ card, player: playerIdx, angle });
     state.unplayedCounts[getEffectiveSuit(card, state.trumpSuit)]--;
-    
+
     const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '♢\uFE0E' };
     const textCol = getSuitColorClass(getEffectiveSuit(card, state.trumpSuit));
     addLog(`<strong>${PLAYER_NAMES[playerIdx]}</strong> played <strong>${card.rank === '10' ? '10' : card.rank}<span class="${textCol}">${suitIcons[card.suit]}</span></strong>.`);
-    
-    state.selectedCardIndex = -1; // Reset selection index
+
     state.currentPlayer = (state.currentPlayer + 1) % 4;
     triggerNextTurn();
 };
@@ -1879,6 +2089,7 @@ const resolveTrick = () => {
 
     state.tricksWon[winner % 2]++;
     spawnFloatingScore(winner, 1);
+    recordTrickStreak(winner % 2);
     addLog(`Trick won by <strong>${PLAYER_NAMES[winner]}</strong>.`);
     state.trickQueue = [];
     state.leadSuit = null;
@@ -1927,6 +2138,28 @@ const resolveHand = () => {
     state.scores[0] += points1;
     state.scores[1] += points2;
 
+    // Record this hand for the end-game summary.
+    state.handCounter++;
+    const wasSet = tricksSecured < state.highestBid;
+    state.handHistory.push({
+        hand: state.handCounter,
+        tricksUs: state.tricksWon[0],
+        tricksThem: state.tricksWon[1],
+        biddingTeam,
+        bid: state.highestBid,
+        wasSet,
+        setBy: wasSet ? state.highestBid : 0
+    });
+    // Hand streak: team that won more tricks this hand.
+    if (state.tricksWon[0] !== state.tricksWon[1]) {
+        const handWinner = state.tricksWon[0] > state.tricksWon[1] ? 0 : 1;
+        if (state.handStreakTeam === handWinner) state.handStreakLen++;
+        else { state.handStreakTeam = handWinner; state.handStreakLen = 1; }
+        if (state.handStreakLen > state.bestHandStreak[handWinner]) {
+            state.bestHandStreak[handWinner] = state.handStreakLen;
+        }
+    }
+
     updateHUD();
 
     if (state.scores[0] >= 21 || state.scores[1] >= 21) {
@@ -1947,6 +2180,19 @@ const resolveHand = () => {
             winnerMsg = state.winnerTeam === 0 ? "PLAYER & PARTNER WIN THE GAME!" : "LEFT & RIGHT WIN THE GAME!";
         }
         addLog(`<strong>=== ${winnerMsg} ===</strong>`, false);
+
+        // Session-level completed-game streak (survives Restart within the page).
+        const w = state.winnerTeam;
+        sessionStats.games[w]++;
+        if (sessionStats.streakTeam === w) sessionStats.streakLen++;
+        else { sessionStats.streakTeam = w; sessionStats.streakLen = 1; }
+        if (sessionStats.streakLen > sessionStats.bestWinStreak[w]) {
+            sessionStats.bestWinStreak[w] = sessionStats.streakLen;
+        }
+        sessionStats.lastWinner = w;
+
+        // Show the summary overlay (slight delay so the final score float lands first).
+        setTimeout(showEndgameSummary, 700);
     } else {
         aiTimeout = setTimeout(startNewHand, scaledDelay(3000));
     }
@@ -2012,7 +2258,7 @@ ctx.fillText(suitIcons[card.suit], 0, 6);
     ctx.restore();
 };
 
-const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, highlight = false, isHovered = false) => {
+const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, highlight = false, isHovered = false, liftAmt = 1) => {
     ctx.save();
     
     if (state.trickQueue.length >= 4) isHovered = false;
@@ -2020,12 +2266,13 @@ const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, hig
     ctx.translate(x, y);
     ctx.rotate(angle);
     
-    const finalY = isHovered ? -16 : 0;
+    const lift = isHovered ? (16 * liftAmt) : 0;
+    const finalY = -lift;
     ctx.translate(0, finalY);
     
     ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-    ctx.shadowBlur = isHovered ? 14 : 5;
-    ctx.shadowOffsetY = isHovered ? 10 : 2;
+    ctx.shadowBlur = isHovered ? (5 + 9 * liftAmt) : 5;
+    ctx.shadowOffsetY = isHovered ? (2 + 8 * liftAmt) : 2;
 
     ctx.fillStyle = faceUp ? '#ffffff' : '#1e3a8a';
     ctx.strokeStyle = highlight ? '#10b981' : '#475569';
@@ -2324,6 +2571,55 @@ const showIcon = !isMobile;
 
     if (!state.hands) return;
 
+    // --- Deal animation: cards sweep from the dealer's seat to each player, staggered.
+    // Fully isolated: while dealing we draw the animation and skip normal hand rendering.
+    if (state.dealAnim) {
+        const now = performance.now();
+        const prog = Math.min(1, (now - state.dealAnim.start) / state.dealAnim.dur);
+        const dealer = state.dealer;
+        const src = getPlayerCoords(dealer, width, height);
+        // 24 cards dealt in rounds; each card i (0..5) per seat lands in sequence.
+        const totalCards = 24;
+        let dealt = 0;
+        // Deal order: round by round, seat order starting left of dealer.
+        for (let round = 0; round < 6; round++) {
+            for (let s = 0; s < 4; s++) {
+                const p = (dealer + 1 + s) % 4;
+                const cardOrder = dealt; // 0..23
+                dealt++;
+                // Each card launches in sequence (stagger) but travels over a longer,
+                // overlapping window so the motion flows instead of snapping per-card.
+                const launchSpan = 0.62;        // all cards have launched by 62% of the timeline
+                const travelFrac = 0.30;        // each card takes 30% of the timeline to arrive
+                const launch = (cardOrder / totalCards) * launchSpan;
+                const cardProg = Math.max(0, Math.min(1, (prog - launch) / travelFrac));
+                if (cardProg <= 0) continue;
+                const ease = 1 - Math.pow(1 - cardProg, 3);
+                // Target = this card's resting slot in seat p's fan.
+                const pos = getPlayerCoords(p, width, height);
+                const isSide = (p === 1 || p === 3);
+                const step = getFanStep(p, isMobile);
+                const spread = 5 * step;
+                let tx, ty;
+                if (p === 0) { tx = pos.x - spread / 2 + round * step; ty = pos.y; }
+                else if (p === 2) { tx = pos.x - spread / 2 + round * step; ty = pos.y; }
+                else { tx = pos.x; ty = pos.y - spread / 2 + round * step; }
+                const x = src.x + (tx - src.x) * ease;
+                const y = src.y + (ty - src.y) * ease;
+                const rot = isSide ? Math.PI / 2 : 0;
+                drawRotatedCard({ rank: '', suit: 'S' }, x, y, rot * ease, false, false, false, false);
+            }
+        }
+        // Keep plates/labels visible during the deal for context.
+        for (let p = 0; p < 4; p++) {
+            const pos = getPlayerCoords(p, width, height);
+            drawPlayerPlate(p, PLAYER_NAMES[p], pos, width, height, getMaxSpread(p, width, height));
+        }
+        pointer.justPressed = false;
+        requestAnimationFrame(renderLoop);
+        return;
+    }
+
     // Track dynamic spreads to align relocated plates and bids flawlessly
     const playerSpreads = [0, 0, 0, 0];
 
@@ -2354,7 +2650,7 @@ const showIcon = !isMobile;
                     
                     touchedAnyCardAtAll = true; // Registered hit on any card boundary
 
-                    if (state.gameState === 'PLAYING' && state.currentPlayer === 0 && !state.fastForwarding) {
+                    if (state.gameState === 'PLAYING' && state.currentPlayer === 0 && !isInteractionBlocked()) {
                         let hasLead = state.hands[0].some(c => getEffectiveSuit(c, state.trumpSuit) === state.leadSuit);
                         let isLegal = !state.leadSuit || !hasLead || getEffectiveSuit(card, state.trumpSuit) === state.leadSuit;
                         
@@ -2391,6 +2687,18 @@ const showIcon = !isMobile;
                 state.selectedCardIndex = -1;
             }
 
+            // Ease the hover-lift toward the currently hovered/selected card.
+            const targetHover = isMobile ? state.selectedCardIndex : hoveredIndex;
+            if (targetHover !== state.hoverIndex) {
+                state.hoverIndex = targetHover;
+                state.hoverAmt = 0; // restart the gentle rise on a new card
+            }
+            if (state.hoverIndex !== -1) {
+                state.hoverAmt = Math.min(1, state.hoverAmt + 0.18); // ~5 frames to full
+            } else {
+                state.hoverAmt = Math.max(0, state.hoverAmt - 0.18);
+            }
+
             // Draw Human Cards
             const bossBadges = []; // collect boss markers to draw AFTER all cards, so no card paints over a badge
             hand.forEach((card, i) => {
@@ -2414,16 +2722,13 @@ const showIcon = !isMobile;
                     }
                 }
                 
-                drawRotatedCard(card, ox, oy, 0, true, showIcon, highlight, isHovered);
+                const liftAmt = (i === state.hoverIndex) ? state.hoverAmt : 0;
+                drawRotatedCard(card, ox, oy, 0, true, showIcon, highlight, isHovered, liftAmt);
 
                 // Boss marker: amber pill with dark "B" in the card's top-right corner.
-                // Placed ON the card (top-right is empty; rank glyphs are top-left & bottom-right)
-                // so it never overlaps the Player plate/bid that float above the cards, and never
-                // clips off-canvas. Recomputed every frame so it reassigns as tricks are played.
-                // Collected here and drawn in a later pass so a neighboring card can't paint over it.
                 if (state.showBossMarkers && state.gameState === 'PLAYING' &&
                     isBossCardForPlayer(card, state.trumpSuit, state.hands[0], state.playedCards)) {
-                    const liftY = isHovered ? oy - 16 : oy;
+                    const liftY = isHovered ? oy - 16 * liftAmt : oy;
                     const bw = isMobile ? 15 : 17;
                     const bh = isMobile ? 13 : 15;
                     const bx = ox + cardW / 2 - bw / 2 - 3; // top-right corner, inset
@@ -2500,6 +2805,27 @@ const showIcon = !isMobile;
         drawPlayerBid(p, pos, width, height, playerSpreads[p]);
     }
 
+    // In-flight played card: flies from the player's seat to its center-pile spot.
+    if (state.playAnim) {
+        const a = state.playAnim;
+        const now = performance.now();
+        let t = (now - a.start) / a.dur;
+        if (t >= 1) {
+            commitPlayedCard(); // lands -> becomes part of the trick pile
+        } else {
+            const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+            const src = getPlayerCoords(a.player, width, height);
+            const cx = width / 2, cy = height / 2;
+            let dx = src.x - cx, dy = src.y - cy;
+            const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+            const offset = cardW * 0.935;
+            const destX = cx + dx * offset, destY = cy + dy * offset;
+            const fx = src.x + (destX - src.x) * ease;
+            const fy = src.y + (destY - src.y) * ease;
+            drawRotatedCard(a.card, fx, fy, (a.angle || 0) * ease, true, !isMobile);
+        }
+    }
+
     // Draw Center Table Trick queue — cluster tightly at the center like a real trick
     // pile. Each card sits at the center, nudged a small FIXED distance toward its
     // player's seat (scaled to card size, not canvas size) so they stay close together
@@ -2529,8 +2855,24 @@ const showIcon = !isMobile;
         state.floatingScores.forEach(fs => {
             const t = (now - fs.start) / dur; // 0..1 progress
             const rect = plateRects[fs.seat];
-            const label = '+' + fs.amount;
+            // Count up from 1 to the full amount over the first 40% of the lifetime,
+            // then hold and drift away.
+            const countProg = Math.min(1, t / 0.4);
+            const shown = Math.max(1, Math.min(fs.amount, Math.ceil(countProg * fs.amount)));
+            const label = '+' + shown;
             const fontSize = isMobile ? 18 : 22;
+
+            // "Pop" on each tick: when the shown value changes, briefly scale up then settle.
+            if (fs._lastShown !== shown) { fs._lastShown = shown; fs._popStart = now; }
+            let pop = 1;
+            if (fs._popStart != null) {
+                const pt = (now - fs._popStart) / 280; // 280ms pop
+                if (pt < 1) {
+                    // up to 1.45x at ~35% then back to 1
+                    pop = pt < 0.35 ? 1 + (0.45 * (pt / 0.35)) : 1 + 0.45 * (1 - (pt - 0.35) / 0.65);
+                }
+            }
+
             let ax, ay, align;
             if (rect) {
                 const gap = isMobile ? 12 : 16;
@@ -2542,9 +2884,6 @@ const showIcon = !isMobile;
                 const leftX  = rect.x - rect.w / 2 - gap;       // just left of the plate
                 const fitsRight = (rightX + labelW <= width - 2);
                 const fitsLeft  = (leftX - labelW >= 2);
-                // Prefer the side with more room; this puts the Right seat's "+N" to the
-                // LEFT of its label (its plate hugs the right edge). Always sits OUTSIDE
-                // the plate rect, so it never covers the name or the dealer "D".
                 const roomRight = width - rightX;
                 const roomLeft = leftX;
                 if (fitsRight && (roomRight >= roomLeft || !fitsLeft)) {
@@ -2553,12 +2892,11 @@ const showIcon = !isMobile;
                     ax = leftX; align = 'right';
                 }
             } else {
-                // Fallback if the plate hasn't been drawn yet this frame.
                 const pos = getPlayerCoords(fs.seat, width, height);
                 ax = pos.x; ay = pos.y; align = 'left';
             }
-            const rise = 26 * t;                       // drift straight up (x fixed beside plate)
-            // Fade in quickly, hold, then fade out.
+            const riseProg = Math.max(0, (t - 0.4) / 0.6);
+            const rise = 26 * riseProg;                // hold during count-up, then drift up
             let alpha;
             if (t < 0.15) alpha = t / 0.15;
             else if (t > 0.6) alpha = Math.max(0, 1 - (t - 0.6) / 0.4);
@@ -2571,10 +2909,58 @@ const showIcon = !isMobile;
             ctx.lineWidth = 3;
             ctx.strokeStyle = 'rgba(2, 6, 23, 0.85)';  // dark outline for contrast on felt
             ctx.fillStyle = '#facc15';                  // gold
-            ctx.strokeText(label, ax, ay - rise);
-            ctx.fillText(label, ax, ay - rise);
+            // Apply the pop scale about the anchor point so it grows/settles in place.
+            ctx.translate(ax, ay - rise);
+            ctx.scale(pop, pop);
+            ctx.strokeText(label, 0, 0);
+            ctx.fillText(label, 0, 0);
             ctx.restore();
         });
+    }
+
+    // Trump / contract reveal banner: slides in from the left, holds, slides out right.
+    if (state.trumpBanner) {
+        const b = state.trumpBanner;
+        const now = performance.now();
+        const t = Math.min(1, (now - b.start) / b.dur);
+        const slideDist = Math.min(width * 0.5, 260);
+        let xOffset = 0, alpha = 1;
+        const inEnd = 0.22, outStart = 0.78;
+        if (t < inEnd) {
+            const e = 1 - Math.pow(1 - t / inEnd, 3);      // ease-out in
+            xOffset = -slideDist * (1 - e);
+            alpha = e;
+        } else if (t > outStart) {
+            const e = Math.pow((t - outStart) / (1 - outStart), 2); // ease-in out
+            xOffset = slideDist * e;
+            alpha = 1 - e;
+        }
+        const cx = width / 2, cy = height / 2;
+        const bw = Math.min(width * 0.7, 340);
+        const bh = (isMobile ? 70 : 84);
+        const suitColor = (b.suit === 'H' || b.suit === 'D') ? '#f87171'
+                        : (b.suit === 'NT') ? '#fbbf24' : '#e2e8f0';
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, alpha);
+        ctx.translate(xOffset, 0);
+        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 6;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+        ctx.strokeStyle = suitColor; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(cx - bw / 2, cy - bh / 2, bw, bh, 14);
+        ctx.fill(); ctx.stroke();
+        ctx.shadowColor = 'transparent';
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = `bold ${isMobile ? 10 : 11}px "Inter", sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('CONTRACT', cx, cy - bh * 0.26);
+        ctx.fillStyle = suitColor;
+        ctx.font = `900 ${isMobile ? 26 : 32}px "Inter", sans-serif`;
+        ctx.fillText(b.text, cx, cy + bh * 0.05);
+        ctx.fillStyle = '#64748b';
+        ctx.font = `${isMobile ? 9 : 10}px "Inter", sans-serif`;
+        ctx.fillText('bid by ' + b.bidder, cx, cy + bh * 0.34);
+        ctx.restore();
     }
 
     if (state.gameState === 'GAMEOVER') {
@@ -2653,6 +3039,10 @@ toggleVerboseLog.addEventListener('change', (e) => {
 });
 
 document.getElementById('btn-reset').onclick = () => {
+    runReset();
+};
+
+document.getElementById('btn-endgame-restart').onclick = () => {
     runReset();
 };
 
