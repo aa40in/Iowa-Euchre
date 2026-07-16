@@ -70,6 +70,14 @@
         }
         .screen-slide-in  { animation: screenSlideIn 0.35s cubic-bezier(0.22,1,0.36,1) forwards; }
         .screen-slide-out { animation: screenSlideOut 0.30s ease-in forwards; }
+        /* On mobile, add the device safe-area inset (notch/home indicator) on top of the
+           sidebar's bottom padding so the bottom options aren't hidden by the phone
+           bezel or browser chrome. */
+        @media (max-width: 767px) {
+            #sidebar-scrollable-content {
+                padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+            }
+        }
     </style>
 </head>
 <body class="h-screen w-screen overflow-hidden text-slate-100 flex flex-col select-none bg-slate-950">
@@ -307,7 +315,7 @@
             </div>
 
             <!-- Scrollable Sidebar Content Container -->
-            <div id="sidebar-scrollable-content" class="p-3 md:p-4 space-y-3 flex-1 flex flex-col overflow-y-auto min-h-0 md:order-3 md:flex-none md:overflow-y-auto md:max-h-[calc(100%-7rem)]">
+            <div id="sidebar-scrollable-content" class="p-3 md:p-4 pb-20 md:pb-4 space-y-3 flex-1 flex flex-col overflow-y-auto min-h-0 md:order-3 md:flex-none md:overflow-y-auto md:max-h-[calc(100%-7rem)]">
 
                 <!-- Collapsible Game Settings Accordion -->
                 <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-800/20 shrink-0">
@@ -438,6 +446,8 @@
                         </div>
                     </div>
                 </div>
+                <!-- Version -->
+                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.49</div>
             </div>
         </aside>
 
@@ -2288,15 +2298,18 @@ const suitIcons = { 'S': '♠\uFE0E', 'C': '♣\uFE0E', 'H': '♥\uFE0E', 'D': '
         
 if (showIcon) {
 ctx.font = `bold ${centerFont}px "Inter", sans-serif`;
-ctx.textAlign = 'center';
+ctx.textAlign = 'left';
 ctx.textBaseline = 'middle';
-ctx.fillText(suitIcons[card.suit], 0, 6);
+const ci = suitIcons[card.suit];
+ctx.fillText(ci, -ctx.measureText(ci).width / 2, 6);
 }
 
         ctx.font = `bold ${cornerFont}px "Inter", sans-serif`;
-        ctx.textAlign = 'right';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, cardW / 2 - inX, cardH / 2 - inY);
+        const brLabel = `${card.rank}${suitIcons[card.suit]}`;
+        const brW = ctx.measureText(brLabel).width;
+        ctx.fillText(brLabel, (cardW / 2 - inX) - brW, cardH / 2 - inY);
     } else {
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1.5;
@@ -2352,15 +2365,18 @@ const drawRotatedCard = (card, x, y, angle, faceUp = true, showIcon = false, hig
         
 if (showIcon) {
 ctx.font = `bold ${centerFont}px "Inter", sans-serif`;
-ctx.textAlign = 'center';
+ctx.textAlign = 'left';
 ctx.textBaseline = 'middle';
-ctx.fillText(suitIcons[card.suit], 0, 6);
+const ci = suitIcons[card.suit];
+ctx.fillText(ci, -ctx.measureText(ci).width / 2, 6);
 }
 
         ctx.font = `bold ${cornerFont}px "Inter", sans-serif`;
-        ctx.textAlign = 'right';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(`${card.rank}${suitIcons[card.suit]}`, cardW / 2 - inX, cardH / 2 - inY);
+        const brLabel = `${card.rank}${suitIcons[card.suit]}`;
+        const brW = ctx.measureText(brLabel).width;
+        ctx.fillText(brLabel, (cardW / 2 - inX) - brW, cardH / 2 - inY);
     } else {
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1.5;
@@ -2502,8 +2518,9 @@ const drawPlayerPlate = (p, name, pos, width, height, spread) => {
         ctx.fillStyle = (state.currentPlayer === p && state.gameState !== 'SCORING' && state.gameState !== 'GAMEOVER') ? '#fbbf24' : '#f8fafc';
         ctx.fillText(name, startX + dW + dGap, ly + 0.5);
     } else {
-        ctx.textAlign = 'center';
-        ctx.fillText(name, lx, ly + 0.5);
+        ctx.textAlign = 'left';
+        const nmW = ctx.measureText(name).width;
+        ctx.fillText(name, lx - nmW / 2, ly + 0.5);
     }
 
     ctx.restore();
@@ -2606,9 +2623,13 @@ const drawPlayerBid = (p, pos, width, height, spread) => {
         ctx.fillStyle = getSuitColorDark(bidInfo.suit);
     }
     
-    ctx.textAlign = 'center';
+    // Draw the text with explicit left-align and a manually computed x so centering
+    // never depends on ctx.textAlign (which was rendering as left-aligned on mobile,
+    // pushing the text to the right half of the badge). This is align-independent.
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, bx, by);
+    const drawW = ctx.measureText(text).width;
+    ctx.fillText(text, bx - drawW / 2, by);
     ctx.restore();
 };
 
@@ -2808,9 +2829,9 @@ const showIcon = !isMobile;
                 ctx.shadowColor = 'transparent';
                 ctx.fillStyle = '#1c1917';         // near-black text
                 ctx.font = (bw < 16) ? 'bold 10px "Inter", sans-serif' : 'bold 11px "Inter", sans-serif';
-                ctx.textAlign = 'center';
+                ctx.textAlign = 'left';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('B', bx, by + 0.5);
+                ctx.fillText('B', bx - ctx.measureText('B').width / 2, by + 0.5);
                 ctx.restore();
             });
         } else if (p === 2) {
@@ -3007,14 +3028,16 @@ const showIcon = !isMobile;
         ctx.shadowColor = 'transparent';
         ctx.fillStyle = '#94a3b8';
         ctx.font = `bold ${isMobile ? 10 : 11}px "Inter", sans-serif`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('CONTRACT', cx, cy - bh * 0.26);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        const l1 = 'CONTRACT';
+        ctx.fillText(l1, cx - ctx.measureText(l1).width / 2, cy - bh * 0.26);
         ctx.fillStyle = suitColor;
         ctx.font = `900 ${isMobile ? 26 : 32}px "Inter", sans-serif`;
-        ctx.fillText(b.text, cx, cy + bh * 0.05);
+        ctx.fillText(b.text, cx - ctx.measureText(b.text).width / 2, cy + bh * 0.05);
         ctx.fillStyle = '#64748b';
         ctx.font = `${isMobile ? 9 : 10}px "Inter", sans-serif`;
-        ctx.fillText('bid by ' + b.bidder, cx, cy + bh * 0.34);
+        const l3 = 'bid by ' + b.bidder;
+        ctx.fillText(l3, cx - ctx.measureText(l3).width / 2, cy + bh * 0.34);
         ctx.restore();
     }
 
