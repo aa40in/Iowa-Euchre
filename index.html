@@ -615,6 +615,7 @@ const showEndgameSummary = () => {
     if (panel) {
         panel.classList.remove('screen-slide-out', 'screen-slide-in');
         void panel.offsetWidth;
+        panel.style.animationDuration = state.fastMode ? '' : '0.6s';
         panel.classList.add('screen-slide-in');
     }
 };
@@ -1229,13 +1230,15 @@ const runReset = () => {
     const overlay = document.getElementById('endgame-overlay');
     if (overlay && !overlay.classList.contains('hidden')) {
         const panel = document.getElementById('endgame-panel');
+        const outMs = state.fastMode ? 300 : 500;
         if (panel) {
             panel.classList.remove('screen-slide-in');
             void panel.offsetWidth;
+            panel.style.animationDuration = state.fastMode ? '' : '0.5s';
             panel.classList.add('screen-slide-out');
         }
         // Hide after the slide-out completes.
-        setTimeout(() => { overlay.classList.add('hidden'); }, 320);
+        setTimeout(() => { overlay.classList.add('hidden'); }, outMs + 20);
     }
     state.scores = [0, 0];
     state.dealer = Math.floor(Math.random() * 4);
@@ -1351,7 +1354,7 @@ const triggerNextTurn = () => {
                 const bannerText = (state.trumpSuit === 'NT')
                     ? `${state.highestBid} Aces`
                     : bannerSuit;
-                const bannerDur = state.fastMode ? 900 : 1400;
+                const bannerDur = state.fastMode ? 1000 : 2000;
                 state.trumpBanner = {
                     text: bannerText,
                     suit: state.trumpSuit,
@@ -2925,7 +2928,7 @@ const showIcon = !isMobile;
         const t = Math.min(1, (now - b.start) / b.dur);
         const slideDist = Math.min(width * 0.5, 260);
         let xOffset = 0, alpha = 1;
-        const inEnd = 0.22, outStart = 0.78;
+        const inEnd = 0.18, outStart = 0.86;
         if (t < inEnd) {
             const e = 1 - Math.pow(1 - t / inEnd, 3);      // ease-out in
             xOffset = -slideDist * (1 - e);
@@ -3065,11 +3068,12 @@ document.getElementById('btn-auto-finish').onclick = () => {
     // then run the claim. Input is gated on state.fastForwarding elsewhere.
     state.fastForwarding = true;
     if (aiTimeout) { clearTimeout(aiTimeout); aiTimeout = null; }
+    state.floatingScores = [];   // clear any lingering per-trick "+1" so only the claim's "+N" shows
     updateContractUI();                            // hide the button while fast-forwarding
     setTimeout(() => {
         state.fastForwarding = false;
         runAutoFinish();
-    }, 2000);
+    }, 1500);
 };
 
 // Start deal and execution
