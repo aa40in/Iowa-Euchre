@@ -449,7 +449,7 @@
                     </div>
                 </div>
                 <!-- Version -->
-                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.51</div>
+                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.53</div>
             </div>
         </aside>
 
@@ -680,8 +680,9 @@ const showHandTrickFloat = (elId, tricks) => {
     void el.offsetWidth;
 
     const target = tricks;
+    const fmt = (v) => (v > 0 ? '+' + v : '' + v); // "+3", "0", "-2"
     let shown = 0;
-    el.textContent = '+' + shown;
+    el.textContent = fmt(shown);
     el.style.opacity = '1';
 
     const popOnce = () => {
@@ -691,28 +692,31 @@ const showHandTrickFloat = (elId, tricks) => {
     };
 
     const startFloat = () => {
-        // Count-up finished: NOW fade out in place (no drift).
+        // Count finished: NOW fade out in place (no drift).
         el.classList.remove('trick-pop-anim');
         void el.offsetWidth;
         el.classList.add('trick-float-anim');
         setTimeout(() => { el.classList.add('hidden'); }, 1050);
     };
 
-    if (target <= 0) {
-        // Nothing to count; briefly show "+0" then float away.
+    if (target === 0) {
+        // Nothing to count; briefly show "0" then float away.
         popOnce();
         setTimeout(startFloat, 300);
         return;
     }
 
-    // Tick 0 -> target in place, popping each step; float only after the last tick.
-    const stepMs = Math.max(160, Math.round(900 / target));
-    popOnce(); // pop the initial value
+    // Count from 0 toward the target (up for gains, down for a set penalty), popping
+    // each step; float only after the last tick.
+    const dir = target > 0 ? 1 : -1;
+    const magnitude = Math.abs(target);
+    const stepMs = Math.max(160, Math.round(900 / magnitude));
+    popOnce(); // pop the initial "0"
     el._tickTimer = setInterval(() => {
-        shown++;
-        el.textContent = '+' + shown;
+        shown += dir;
+        el.textContent = fmt(shown);
         popOnce();
-        if (shown >= target) {
+        if (shown === target) {
             clearInterval(el._tickTimer);
             el._tickTimer = null;
             setTimeout(startFloat, 260); // let the final pop settle, then float
@@ -2179,10 +2183,6 @@ const resolveTrick = () => {
 const resolveHand = () => {
     state.gameState = 'SCORING';
 
-    // Floating "+tricks" above each score showing tricks collected this hand.
-    showHandTrickFloat('trick-float-us', state.tricksWon[0]);
-    showHandTrickFloat('trick-float-them', state.tricksWon[1]);
-
     const biddingTeam = state.winningBidder % 2;
     const tricksSecured = state.tricksWon[biddingTeam];
     
@@ -2207,6 +2207,11 @@ const resolveHand = () => {
         }
         addLog(`<strong>Set!</strong> Team <strong>${activeTeamName}</strong> fails their contract. Suffers a penalty of <strong>-${state.highestBid} points</strong>.`, false);
     }
+
+    // Floating point-change above each score: counts UP for gains (+1,+2...) and DOWN
+    // for a set penalty (-1,-2...), each with a pop.
+    showHandTrickFloat('trick-float-us', points1);
+    showHandTrickFloat('trick-float-them', points2);
 
     state.scores[0] += points1;
     state.scores[1] += points2;
@@ -2405,6 +2410,21 @@ ctx.fillText(ci, -ctx.measureText(ci).width / 2, 6);
 // anchor to the widest the fan ever gets and don't drift as cards are played.
 // Per-seat horizontal/vertical step between fanned cards. Mobile steps scale with
 // the (now dynamic) card width so fans and their anchored labels grow together.
+// Vertical center of the played-card pile. On mobile the canvas is short, so bias the
+// pile up from the middle to clear the player's bottom labels — but keep a guaranteed
+// minimum gap below the partner (top seat) label so raising it never overlaps there.
+const getPileCenterY = (height, isMobile) => {
+    if (!isMobile) return height / 2;
+    const partnerAnchorY = -cardH * 0.2;
+    const plateHP = Math.round(22 * Math.max(1, cardW / 44));
+    const partnerLabelBottom = partnerAnchorY + cardH / 2 + 6 + plateHP;
+    const mobileOffset = cardW * 0.72;
+    const floorY = partnerLabelBottom + 20 + mobileOffset + cardH / 2; // clear partner by >=20px
+    let y = Math.max(height * 0.42, floorY);
+    y = Math.min(y, height * 0.5); // don't drift so low it crowds the player
+    return y;
+};
+
 const getFanStep = (p, isMobile) => {
     const mScale = cardW / 44; // baseline mobile card width is 44
     if (p === 0) return isMobile ? 42 * mScale : (cardW + 8);
@@ -2894,50 +2914,62 @@ const showIcon = !isMobile;
         drawPlayerBid(p, pos, width, height, playerSpreads[p]);
     }
 
-    // In-flight played card: flies from the player's seat to its center-pile spot.
+    // In-flight played card: commit it to the trick the moment its flight lands, so it
+    // appears in the resting pile with no gap. The actual in-flight DRAWING happens after
+    // the pile below, so the flying card always renders ON TOP of already-played cards
+    // instead of underneath them.
     if (state.playAnim) {
         const a = state.playAnim;
-        const now = performance.now();
-        let t = (now - a.start) / a.dur;
-        if (t >= 1) {
-            commitPlayedCard(); // lands -> becomes part of the trick pile
-        } else {
-            const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
-            const src = getPlayerCoords(a.player, width, height);
-            const cx = width / 2;
-            const pcy = isMobile ? height * 0.42 : height / 2; // match resting pile center
-            let dx = src.x - cx, dy = src.y - pcy;
-            const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
-            const offset = (isMobile ? cardW * 0.72 : cardW * 0.935);
-            const destX = cx + dx * offset, destY = pcy + dy * offset;
-            const fx = src.x + (destX - src.x) * ease;
-            const fy = src.y + (destY - src.y) * ease;
-            drawRotatedCard(a.card, fx, fy, (a.angle || 0) * ease, true, !isMobile);
-        }
+        const t = (performance.now() - a.start) / a.dur;
+        if (t >= 1) commitPlayedCard(); // lands -> becomes part of the trick pile
     }
 
     // Draw Center Table Trick queue — cluster tightly at the center like a real trick
     // pile. Each card sits at the center, nudged a small FIXED distance toward its
     // player's seat (scaled to card size, not canvas size) so they stay close together
     // regardless of window size while still showing who played what.
+    // Compute the pile center once (shared with the fly-in animation).
+    let pileCenterY = getPileCenterY(height, isMobile);
+
     state.trickQueue.forEach((q) => {
         const p = q.player;
         const target = getPlayerCoords(p, width, height);
         const cx = width / 2;
-        // On mobile the canvas is short and the player's plate/bid sit at the bottom, so
-        // anchor the trick pile a bit ABOVE the canvas middle to keep played cards clear
-        // of the player's (and raised Left/Right) labels. Desktop keeps the true center.
-        const cy = isMobile ? height * 0.42 : height / 2;
+        const cy = pileCenterY;
         // Unit direction from the pile center toward the player's seat.
         let dx = target.x - cx, dy = target.y - cy;
         const len = Math.hypot(dx, dy) || 1;
         dx /= len; dy /= len;
-        const offset = (isMobile ? cardW * 0.72 : cardW * 0.935); // tighter on mobile to clear labels
+        let offset = (isMobile ? cardW * 0.72 : cardW * 0.935); // tighter on mobile to clear labels
+        // Left/Right (side seats) get a bit more offset so their played cards sit further
+        // apart horizontally instead of nearly touching in the middle.
+        if (p === 1 || p === 3) offset *= 1.35;
         const tx = cx + dx * offset;
         const ty = cy + dy * offset;
         const showIcon = !isMobile;
         drawRotatedCard(q.card, tx, ty, q.angle || 0, true, showIcon);
     });
+
+    // In-flight card DRAW (on top of the resting pile). Uses the same pile center/offset
+    // so it lands exactly where the committed card will sit.
+    if (state.playAnim) {
+        const a = state.playAnim;
+        const t = (performance.now() - a.start) / a.dur;
+        if (t < 1) {
+            const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+            const src = getPlayerCoords(a.player, width, height);
+            const cx = width / 2;
+            const pcy = pileCenterY;
+            let dx = src.x - cx, dy = src.y - pcy;
+            const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+            let offset = (isMobile ? cardW * 0.72 : cardW * 0.935);
+            if (a.player === 1 || a.player === 3) offset *= 1.35;
+            const destX = cx + dx * offset, destY = pcy + dy * offset;
+            const fx = src.x + (destX - src.x) * ease;
+            const fy = src.y + (destY - src.y) * ease;
+            drawRotatedCard(a.card, fx, fy, (a.angle || 0) * ease, true, !isMobile);
+        }
+    }
 
     // Floating "+N" trick-win indicators: fade in, drift up, fade out.
     // Placed beside the winning seat's name plate (never over the label or dealer icon),
