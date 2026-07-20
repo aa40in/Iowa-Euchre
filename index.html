@@ -126,11 +126,11 @@
                     <div id="endgame-panel" class="w-full max-w-md max-h-full overflow-y-auto bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 md:p-5">
                         <div id="endgame-title" class="text-center text-lg md:text-xl font-black mb-1">Game Over</div>
                         <div id="endgame-subtitle" class="text-center text-[11px] md:text-xs text-slate-400 mb-3"></div>
+                        <button id="btn-endgame-restart" class="w-full py-2.5 mb-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all text-xs md:text-sm">Play Again</button>
                         <div class="text-[10px] md:text-xs uppercase tracking-widest text-slate-500 font-bold mb-1.5">Hand-by-hand</div>
                         <div id="endgame-hands" class="space-y-1 mb-4"></div>
                         <div class="text-[10px] md:text-xs uppercase tracking-widest text-slate-500 font-bold mb-1.5">Streaks</div>
-                        <div id="endgame-streaks" class="space-y-1 mb-4 text-[11px] md:text-xs text-slate-300"></div>
-                        <button id="btn-endgame-restart" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all text-xs md:text-sm">Play Again</button>
+                        <div id="endgame-streaks" class="space-y-1 text-[11px] md:text-xs text-slate-300"></div>
                     </div>
                 </div>
             </div>
@@ -479,7 +479,7 @@
                     </div>
                 </div>
                 <!-- Version -->
-                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.55</div>
+                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.58</div>
             </div>
         </aside>
 
@@ -1834,17 +1834,39 @@ const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '
         chosenBid.moon = !!(wantsGamble || desperate);
     }
 
-    // Don't step on your partner: if the AI's partner already controls the bid, only
-    // overbid them when the hand clearly justifies going higher. Cautious AIs defer more
-    // readily; ruthless AIs are willing to take the contract themselves. This avoids the
-    // common mistake of raising a partner's good low bid for no benefit.
+    // Don't step on your partner. When the AI's partner already controls the bid, the team
+    // is ALREADY winning the auction, so raising is usually pure downside (it only inflates
+    // our own trick requirement). Policy for a self-generated bid here:
+    //   • DIFFERENT suit/strain: allowed only if it's a genuine correction — the AI has a
+    //     clearly better hand in that other strain AND little support for the partner's suit.
+    //   • SAME suit/strain: only worthwhile as a DEFENSIVE push when the AI is the 3rd
+    //     bidder (one opponent still to act, seat count === 2), to deny the 4th bidder room
+    //     to seize control. As the last bidder (=== 3) or otherwise, just defer.
     if (chosenBid && partnerControls && chosenBid.bid > state.highestBid) {
-        const margin = chosenBid.bid - state.highestBid; // how much higher we'd go
-        // Require the hand's raw strength to exceed the new level by a cushion that
-        // shrinks as aggression rises. At low aggression, almost always defer.
+        const isThirdBidder = (state.biddingTurnsCount === 2); // one opponent acts after us
+        const sameStrain = (chosenBid.suit === state.trumpSuit); // same suit, or both NT/Aces
         const rawStrength = Math.max(bestScore, acesScore);
-        const cushion = 0.6 + (1 - Math.min(1, aggr)) * 1.2; // ~0.6 (ruthless) .. ~1.8 (cautious)
-        if (!(rawStrength >= chosenBid.bid + cushion) || margin <= 0) {
+        const partnerSuitSupport = evaluateAIHand(hand, state.trumpSuit); // our support for partner's suit
+
+        let keep = false;
+        if (!sameStrain) {
+            // Different-suit correction: switch only if our hand is clearly stronger in the
+            // new strain than the support we could offer the partner's suit — i.e. we'd be
+            // moving to a genuinely better trump, not just overbidding. Judge against the
+            // level we'd actually bid to.
+            const switchMargin = 1.0 + (1 - Math.min(1, aggr)) * 0.6; // ~1.0 (ruthless)..~1.6 (cautious)
+            const clearlyBetterSuit = rawStrength >= state.highestBid + 1 + 0.3
+                                       && (rawStrength - partnerSuitSupport) >= switchMargin;
+            const weakForPartner = partnerSuitSupport < 1.5; // little to offer partner's suit
+            keep = clearlyBetterSuit && weakForPartner;
+        } else {
+            // Same-suit raise: only as a defensive push while a 4th bidder can still act,
+            // and only with a strong enough hand to justify the higher level.
+            const pushCushion = 1.0 + (1 - Math.min(1, aggr)) * 1.0;
+            keep = isThirdBidder && (rawStrength >= chosenBid.bid + pushCushion);
+        }
+
+        if (!keep) {
             addLog(`<strong>${PLAYER_NAMES[p]}</strong> defers to partner's bid.`);
             chosenBid = null;
         }
@@ -1875,17 +1897,40 @@ const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '
     if (!bidMade && state.aiSupportPartnerTrumpToggle && state.winningBidder === partner) {
         const partnerSuit = state.trumpSuit;
         const supportTricks = evaluateAIHand(hand, partnerSuit);
-        
-        if (supportTricks >= 1.0 && state.highestBid < 6) {
+        const isThirdBidder = (state.biddingTurnsCount === 2); // one opponent (4th) still to act
+
+        // Raising the partner in their OWN suit is only worthwhile as a DEFENSIVE push: when
+        // the AI is the 3rd bidder, bumping the level can deny the 4th bidder (an opponent)
+        // the room to jump in and seize the contract. If the AI is the last bidder, the
+        // auction is already secured — a same-suit raise would only inflate our own trick
+        // requirement for at most +1, so we simply pass. Even the defensive push requires a
+        // real hand so we don't set ourselves.
+        const targetLevel = state.highestBid + 1;
+        const pushCushion = 1.0 + (1 - Math.min(1, aggr)) * 1.0; // ~1.0 (ruthless)..~2.0 (cautious)
+        const catchUpEase = behindBy >= 6 ? 0.4 : 0;
+        const strongEnough = supportTricks >= (targetLevel + pushCushion - 1 - catchUpEase);
+        if (isThirdBidder && strongEnough && state.highestBid < 6) {
             state.highestBid++;
             state.winningBidder = p;
             const icon = suitIcons[partnerSuit] || '';
             const suitColClass = getSuitColorClass(partnerSuit);
             const boostLabel = partnerSuit === 'NT' ? 'Aces' : `<span class="${suitColClass}">${icon} ${partnerSuit}</span>`;
-            addLog(`<strong>${PLAYER_NAMES[p]}</strong> trusts partner's <strong>${boostLabel}</strong> and raises the bid to <strong>${state.highestBid}</strong>!`);
+            addLog(`<strong>${PLAYER_NAMES[p]}</strong> raises partner's <strong>${boostLabel}</strong> to <strong>${state.highestBid}</strong> to shut out the last bidder!`);
             bidMade = true;
             state.bidsThisRound.push({ player: p, bid: state.highestBid, suit: partnerSuit, passed: false });
             state.playerBids[p] = { bid: state.highestBid, suit: partnerSuit, passed: false };
+        } else {
+            // Defer — UNLESS the partner opened an NT convention signal (1NT/2NT) that still
+            // requires a forced response; in that case fall through to the rule below.
+            const pBid = state.playerBids[partner];
+            const mustRespond = pBid && !pBid.passed &&
+                (pBid.convention === '1NT' || pBid.convention === '2NT') &&
+                (state.highestBid <= pBid.bid);
+            if (!mustRespond) {
+                addLog(`<strong>${PLAYER_NAMES[p]}</strong> is content with partner's bid.`);
+                bidMade = true; // effectively a pass; don't fall through to other raise paths
+                state.bidsThisRound.push({ player: p, passed: true });
+            }
         }
     }
 
