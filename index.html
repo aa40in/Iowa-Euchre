@@ -479,7 +479,7 @@
                     </div>
                 </div>
                 <!-- Version -->
-                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.58</div>
+                <div class="text-center text-[9px] text-slate-600 font-mono pt-1 shrink-0">v0.59</div>
             </div>
         </aside>
 
@@ -1930,6 +1930,7 @@ const suitIcons = { 'S': '♤\uFE0E', 'C': '♧\uFE0E', 'H': '♡\uFE0E', 'D': '
                 addLog(`<strong>${PLAYER_NAMES[p]}</strong> is content with partner's bid.`);
                 bidMade = true; // effectively a pass; don't fall through to other raise paths
                 state.bidsThisRound.push({ player: p, passed: true });
+                state.playerBids[p] = { passed: true }; // show a Pass badge on this seat's plate
             }
         }
     }
